@@ -3,560 +3,521 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Planner v5.2 (UI Fix)</title>
     
-    <!-- SOCIAL SHARING TAGS (Makes it look good when shared) -->
-    <title>Retirement Monte Carlo Planner</title>
-    <meta name="description" content="A private, interactive retirement simulator. Run 500 scenarios to test your financial future.">
-    <meta property="og:title" content="Retirement Monte Carlo Planner">
-    <meta property="og:description" content="Interactive financial simulation. Test your retirement success rate against market volatility.">
-    <meta property="og:type" content="website">
-    <!-- You can add an og:image here if you host an image file later -->
-
     <style>
         :root {
             --bg-dark: #0f172a;
             --panel-bg: #1e293b;
-            --text-main: #e2e8f0;
+            --text-main: #f1f5f9;
             --text-muted: #94a3b8;
             --accent-blue: #38bdf8;
             --accent-green: #4ade80;
             --accent-red: #f87171;
             --accent-yellow: #facc15;
-            --accent-purple: #c084fc;
+            --border: #334155;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        body { background-color: var(--bg-dark); color: var(--text-main); padding: 20px; font-size: 16px; }
+        body { background-color: var(--bg-dark); color: var(--text-main); padding: 20px; font-size: 15px; line-height: 1.5; }
 
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         
-        h1 { font-size: 1.5rem; margin-bottom: 20px; text-align: center; color: var(--accent-blue); letter-spacing: -0.5px; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 1.8rem; letter-spacing: -0.5px; margin-bottom: 5px; }
+        .subtitle { color: var(--text-muted); font-size: 0.9rem; }
 
-        /* Card Styles */
-        .card { background: var(--panel-bg); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #334155; }
+        .layout-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+        @media (max-width: 850px) { .layout-grid { grid-template-columns: 1fr; } }
+
+        .card { background: var(--panel-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .section-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-blue); font-weight: bold; margin-bottom: 16px; display: block; }
         
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
-        .input-row { display: flex; align-items: center; gap: 10px; }
+        .input-wrapper { margin-bottom: 16px; }
+        .input-label { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 6px; }
+        .input-control { width: 100%; background: #0f172a; border: 1px solid var(--border); color: white; padding: 10px 12px; border-radius: 8px; font-size: 1rem; transition: border 0.2s; }
+        .input-control:focus { outline: none; border-color: var(--accent-blue); }
+        .input-control.slider { height: 6px; padding: 0; accent-color: var(--accent-blue); background: var(--border); border: none; margin-top: 8px; }
+
+        .hero-stats { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .big-percent { font-size: 3.5rem; font-weight: 800; line-height: 1; letter-spacing: -2px; }
+        .hero-text { flex: 1; font-size: 0.95rem; color: #e2e8f0; }
+
+        .chart-box { height: 350px; width: 100%; background: #1e293b; border-radius: 12px; overflow: hidden; position: relative; }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .adv-toggle-btn { 
+            width: 100%; background: transparent; border: 1px dashed var(--border); color: var(--text-muted); 
+            padding: 12px; border-radius: 8px; margin-top: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
+        }
+        .adv-toggle-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
         
-        input[type="range"] { flex-grow: 1; accent-color: var(--accent-blue); height: 6px; border-radius: 3px; background: #334155; -webkit-appearance: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: white; border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        .advanced-panel { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); animation: slideDown 0.3s ease; }
+        .advanced-panel.open { display: block; }
 
-        .val-display { font-family: monospace; color: var(--accent-blue); font-weight: bold; width: 60px; text-align: right; }
-        
-        input[type="text"] { background: #0f172a; border: 1px solid #334155; color: white; padding: 8px; border-radius: 6px; font-family: monospace; width: 100px; text-align: right; }
+        .sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .small-input-group label { font-size: 0.75rem; color: var(--text-muted); }
+        .small-input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; padding: 6px; border-radius: 4px; font-size: 0.85rem; text-align: right; }
 
-        /* Toggle & Checkbox */
-        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        
-        /* Stats Panel */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .stat-box { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; text-align: center; }
-        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .stat-val { font-size: 1.25rem; font-weight: bold; margin-top: 5px; }
+        /* Updated Event Row Styling (Grid for inputs) */
+        .event-row { display: grid; grid-template-columns: 1fr 60px 50px 70px 20px; gap: 5px; align-items: center; margin-bottom: 6px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 6px; }
+        .event-row select, .event-row input { background: #0f172a; border: 1px solid #334155; color: white; padding: 4px; border-radius: 4px; font-size: 0.75rem; width: 100%; }
+        .event-row.income { border-left: 2px solid var(--accent-green); }
+        .event-row.expense { border-left: 2px solid var(--accent-red); }
 
-        /* Chart Area */
-        .chart-container { position: relative; height: 300px; width: 100%; margin-top: 10px; background: #1e293b; border-radius: 8px; overflow: hidden; }
-        canvas { display: block; width: 100%; height: 100%; }
-
-        /* Allocation Selector */
-        .risk-selector { display: flex; gap: 5px; margin-bottom: 15px; background: #0f172a; padding: 4px; border-radius: 8px; }
-        .risk-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
-        .risk-btn.active { background: var(--panel-bg); color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .allocation-bar { height: 8px; border-radius: 4px; display: flex; overflow: hidden; margin-top: 8px; }
-        .alloc-stocks { background: var(--accent-green); height: 100%; transition: width 0.3s; }
-        .alloc-bonds { background: var(--accent-blue); height: 100%; transition: width 0.3s; }
-
-        /* Buttons */
-        .action-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: transform 0.1s; background: var(--accent-blue); color: #0f172a; margin-top: 5px; }
-        .action-btn:active { transform: scale(0.98); }
-        .btn-outline { background: transparent; border: 1px solid var(--accent-blue); color: var(--accent-blue); }
-
-        .event-chip { display: flex; justify-content: space-between; background: #334155; padding: 8px 12px; border-radius: 20px; margin-bottom: 6px; font-size: 0.85rem; align-items: center; }
-
-        /* Save/Load UI */
-        .share-box { margin-top: 30px; padding: 20px; background: #1e293b; border-radius: 12px; border: 1px solid #475569; }
-        .share-controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        .share-input { flex-grow: 1; padding: 10px; border-radius: 6px; border: none; background: #0f172a; color: #e2e8f0; font-family: monospace; font-size: 0.8rem; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .badge { background: var(--accent-green); color: #064e3b; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; vertical-align: middle; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Retirement Planner</h1>
+    <header>
+        <h1>Retirement Planner <span class="badge">v5.2 UI Fix</span></h1>
+        <div class="subtitle">Secure, private, and professional-grade financial modeling.</div>
+    </header>
 
-    <!-- 1. INPUTS PANEL -->
-    <div class="card">
-        <div class="input-group">
-            <div class="toggle-row">
-                <label>Current Age</label>
-                <span class="val-display" id="val-age">35</span>
+    <div class="layout-grid">
+        <!-- CONTROLS COLUMN -->
+        <div class="controls-col">
+            <div class="card">
+                <span class="section-label">Basic Inputs</span>
+                
+                <!-- Simple Inputs -->
+                <div class="input-wrapper">
+                    <div class="input-label"><span>Current Age</span> <span id="lbl-age" style="color:white; font-weight:bold;">35</span></div>
+                    <input type="range" id="age" min="20" max="80" value="35" class="input-control slider">
+                </div>
+
+                <div class="input-wrapper">
+                    <div class="input-label"><span>Retirement Age</span> <span id="lbl-ret" style="color:white; font-weight:bold;">65</span></div>
+                    <input type="range" id="retAge" min="40" max="95" value="65" class="input-control slider">
+                </div>
+
+                <div class="input-wrapper">
+                    <div class="input-label"><span>Total Savings</span></div>
+                    <input type="text" id="simpleTotalSavings" value="135,000" class="input-control">
+                </div>
+
+                <div class="input-wrapper">
+                    <div class="input-label"><span>Monthly Contribution</span></div>
+                    <input type="text" id="simpleMonthlySave" value="2,000" class="input-control">
+                </div>
+
+                <div class="input-wrapper">
+                    <div class="input-label"><span>Monthly Spending Goal</span></div>
+                    <input type="text" id="spend" value="6,500" class="input-control">
+                </div>
+
+                <!-- Advanced Toggle -->
+                <button class="adv-toggle-btn" onclick="toggleAdvanced()">
+                    ⚙️ Advanced Settings
+                </button>
+
+                <!-- ADVANCED PANEL (Hidden by default) -->
+                <div id="advPanel" class="advanced-panel">
+                    
+                    <span class="section-label">1. Portfolio Breakdown</span>
+                    <div class="sub-grid" style="margin-bottom:15px;">
+                        <div class="small-input-group">
+                            <label style="color:var(--accent-blue)">Taxable</label>
+                            <input type="text" id="balTaxable" class="small-input" value="20,000">
+                        </div>
+                        <div class="small-input-group">
+                            <label style="color:var(--accent-blue)">Mo. Add</label>
+                            <input type="text" id="conTaxable" class="small-input" value="500">
+                        </div>
+                        
+                        <div class="small-input-group">
+                            <label style="color:var(--accent-yellow)">401k/IRA</label>
+                            <input type="text" id="balDeferred" class="small-input" value="100,000">
+                        </div>
+                        <div class="small-input-group">
+                            <label style="color:var(--accent-yellow)">Mo. Add</label>
+                            <input type="text" id="conDeferred" class="small-input" value="1,500">
+                        </div>
+
+                        <div class="small-input-group">
+                            <label style="color:var(--accent-green)">Roth/HSA</label>
+                            <input type="text" id="balRoth" class="small-input" value="15,000">
+                        </div>
+                        <div class="small-input-group">
+                            <label style="color:var(--accent-green)">Mo. Add</label>
+                            <input type="text" id="conRoth" class="small-input" value="0">
+                        </div>
+                    </div>
+
+                    <span class="section-label">2. Strategy & Assumptions</span>
+                    <div class="input-wrapper">
+                        <div class="input-label"><span>Stock Allocation</span> <span id="lbl-alloc">80%</span></div>
+                        <input type="range" id="alloc" min="0" max="100" step="5" value="80" class="input-control slider">
+                    </div>
+                    
+                    <div class="input-wrapper">
+                        <div class="input-label"><span>Spending Flexibility</span></div>
+                        <select id="flexRule" class="input-control" style="font-size:0.85rem;">
+                            <option value="none">Rigid (Never Adjust)</option>
+                            <option value="flexible_10">Flexible (Cut 10% in crash)</option>
+                            <option value="flexible_20">Aggressive (Cut 20% in crash)</option>
+                        </select>
+                    </div>
+
+                    <div class="sub-grid">
+                        <div class="small-input-group">
+                            <label>SS Start Age</label>
+                            <input type="text" id="ssAge" class="small-input" value="67">
+                        </div>
+                        <div class="small-input-group">
+                            <label>SS Benefit</label>
+                            <input type="text" id="ssAmt" class="small-input" value="2,800">
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px;">
+                        <span class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+                            Life Events <button style="background:none; border:none; color:var(--accent-blue); cursor:pointer;" onclick="addEventUI()">+ Add</button>
+                        </span>
+                        
+                        <!-- Event Headers -->
+                        <div style="display:grid; grid-template-columns: 1fr 60px 50px 70px 20px; gap:5px; font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">
+                            <span>Name</span><span>Amt $</span><span>Age</span><span>Type</span><span></span>
+                        </div>
+                        
+                        <div id="eventsList"></div>
+                        <div style="font-size:0.75rem; color:#64748b; margin-top:5px;">Events auto-update results.</div>
+                    </div>
+                </div>
             </div>
-            <input type="range" id="currentAge" min="18" max="80" value="35">
         </div>
 
-        <div class="input-group">
-            <div class="toggle-row">
-                <label>Retirement Age</label>
-                <span class="val-display" id="val-ret-age">65</span>
+        <!-- RESULTS COLUMN -->
+        <div class="results-col">
+            <div class="card">
+                <span class="section-label">Simulation Results (500 Scenarios)</span>
+                
+                <div class="hero-stats">
+                    <div class="big-percent" id="res-success" style="color:var(--accent-green)">--%</div>
+                    <div class="hero-text" id="narrative-text">
+                        Loading analysis...
+                    </div>
+                </div>
+
+                <div class="chart-box">
+                    <canvas id="mainChart"></canvas>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:0.85rem; color:var(--text-muted);">
+                    <div>Median Wealth @ 95: <span id="res-median" style="color:white; font-weight:bold;">--</span></div>
+                    <div style="cursor:pointer; text-decoration:underline;" onclick="exportConfig()">Save / Share Plan</div>
+                </div>
             </div>
-            <input type="range" id="retirementAge" min="40" max="90" value="65">
-        </div>
-
-        <div class="input-group">
-            <label>Current Savings ($)</label>
-            <input type="text" id="currentSavings" value="100,000">
-        </div>
-
-        <div class="input-group">
-            <label>Monthly Contribution ($)</label>
-            <input type="text" id="monthlyContribution" value="2,000">
-        </div>
-
-        <div class="input-group">
-            <label>Retirement Spending (Monthly $)</label>
-            <input type="text" id="retirementSpending" value="6,000">
-        </div>
-        
-        <div class="input-group" style="margin-top:20px; padding-top:10px; border-top:1px dashed #334155">
-            <div class="toggle-row">
-                <label>Inflation Rate</label>
-                <span class="val-display" id="val-inf">3%</span>
-            </div>
-            <input type="range" id="inflation" min="0" max="10" step="0.5" value="3">
-        </div>
-
-        <div class="toggle-row" style="margin-top:15px">
-            <label>Include Social Security</label>
-            <input type="checkbox" id="includeSocialSecurity" checked style="accent-color: var(--accent-blue); width:20px; height:20px;">
         </div>
     </div>
-
-    <!-- 2. STRATEGY PANEL -->
-    <div class="card">
-        <div class="toggle-row">
-            <label style="color:white; font-weight:bold;">Investment Strategy</label>
-        </div>
-        
-        <div class="risk-selector">
-            <button class="risk-btn" id="btn-con" onclick="setRisk('conservative')">Conservative</button>
-            <button class="risk-btn" id="btn-bal" onclick="setRisk('balanced')">Balanced</button>
-            <button class="risk-btn active" id="btn-agg" onclick="setRisk('aggressive')">Aggressive</button>
-        </div>
-        
-        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">
-            <span>Stocks: <span id="val-stocks">80%</span></span>
-            <span>Bonds: <span id="val-bonds">20%</span></span>
-        </div>
-        <div class="allocation-bar">
-            <div class="alloc-stocks" id="bar-stocks" style="width: 80%"></div>
-            <div class="alloc-bonds" id="bar-bonds" style="width: 20%"></div>
-        </div>
-    </div>
-
-    <!-- 3. EVENTS -->
-    <div class="card">
-        <div class="toggle-row">
-            <label style="color:white; font-weight:bold;">Major Life Events</label>
-            <button class="action-btn btn-outline" style="width:auto; padding:4px 10px; font-size:0.8rem;" onclick="addLifeEvent()">+ Add Event</button>
-        </div>
-        <div id="life-events-list">
-            <!-- Events added via JS -->
-        </div>
-    </div>
-
-    <!-- 4. RESULTS -->
-    <div class="card">
-        <div class="toggle-row">
-            <label style="color:white; font-weight:bold;">Monte Carlo Simulation (500 runs)</label>
-            <button class="action-btn" id="btn-crash" style="width:auto; padding:4px 10px; font-size:0.7rem; background:rgba(255,255,255,0.05); color: #e2e8f0; border:1px solid #475569;" onclick="toggleCrash()">Simulate Crash</button>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-label">Success Rate</div>
-                <div class="stat-val" id="successRate" style="color:var(--accent-green)">98%</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Median Result</div>
-                <div class="stat-val" id="medianOutcome" style="color:var(--accent-blue)">$2.4M</div>
-            </div>
-        </div>
-
-        <div class="chart-container">
-            <canvas id="chartCanvas"></canvas>
-        </div>
-    </div>
-
-    <!-- SAVE / LOAD SECTION -->
-    <div class="share-box">
-        <div style="font-weight:bold; font-size:0.9rem; color:var(--accent-purple)">Backup & Restore Plan</div>
-        <div style="font-size:0.75rem; color:#94a3b8; margin-top:5px;">
-            Your data saves automatically to this device. Use the codes below to move your plan to another device.
-        </div>
-        
-        <div class="share-controls">
-            <button class="action-btn" onclick="exportData()">Copy Plan Code</button>
-        </div>
-        
-        <div class="share-controls" style="margin-top:15px; border-top:1px dashed #475569; padding-top:10px;">
-            <input type="text" id="import-input" class="share-input" placeholder="Paste Plan Code here...">
-            <button class="action-btn" onclick="importData()">Load Plan</button>
-        </div>
-    </div>
-
 </div>
 
 <script>
-    // --- Constants & Config ---
+    // --- CONFIG ---
     const DEATH_AGE = 95;
-    
-    // --- State ---
-    let inputs = {
-        currentAge: document.getElementById('currentAge'),
-        retirementAge: document.getElementById('retirementAge'),
-        currentSavings: document.getElementById('currentSavings'),
-        monthlyContribution: document.getElementById('monthlyContribution'),
-        retirementSpending: document.getElementById('retirementSpending'),
-        inflation: document.getElementById('inflation'),
-        includeSocialSecurity: document.getElementById('includeSocialSecurity')
+    const SIMS = 500;
+
+    // --- STATE ---
+    let els = {};
+    let lifeEvents = []; 
+    let isUpdating = false;
+
+    // --- IDS ---
+    const simpleIds = ['simpleTotalSavings', 'simpleMonthlySave'];
+    const advIds = ['balTaxable', 'balDeferred', 'balRoth', 'conTaxable', 'conDeferred', 'conRoth'];
+    const commonIds = ['age', 'retAge', 'spend', 'alloc', 'flexRule', 'ssAge', 'ssAmt'];
+
+    window.onload = () => {
+        // Cache Elements
+        [...simpleIds, ...advIds, ...commonIds].forEach(id => els[id] = document.getElementById(id));
+        
+        // Listeners
+        commonIds.forEach(id => els[id].addEventListener('input', () => { updateUI(); runSim(); }));
+        
+        els.simpleTotalSavings.addEventListener('change', () => distributeSavings());
+        els.simpleMonthlySave.addEventListener('change', () => distributeContrib());
+        advIds.forEach(id => els[id].addEventListener('change', () => sumUpAdvanced()));
+
+        // Add default event
+        // lifeEvents.push({ id: Date.now(), name: 'Home Purchase', type: 'expense', cost: 50000, age: 40 });
+        // renderEvents();
+
+        runSim();
+        updateUI();
     };
 
-    let allocation = { stocks: 0.8, bonds: 0.2 }; // Default Aggressive
-    let lifeEvents = [];
-    let isCrashed = false;
+    // --- UI LOGIC ---
+    function toggleAdvanced() {
+        document.getElementById('advPanel').classList.toggle('open');
+        const btn = document.querySelector('.adv-toggle-btn');
+        btn.innerText = document.getElementById('advPanel').classList.contains('open') ? "Hide Advanced" : "⚙️ Advanced Settings";
+    }
 
-    // --- Core Logic: Monte Carlo Simulation ---
-    function runSimulation() {
-        const currentAge = parseInt(inputs.currentAge.value);
-        const retirementAge = parseInt(inputs.retirementAge.value);
-        const currentSavings = parseInt(inputs.currentSavings.value.replace(/,/g, '')) || 0;
-        const monthlyContrib = parseInt(inputs.monthlyContribution.value.replace(/,/g, '')) || 0;
-        const monthlySpend = parseInt(inputs.retirementSpending.value.replace(/,/g, '')) || 0;
-        const inflationRate = parseFloat(inputs.inflation.value) / 100;
-        const useSS = inputs.includeSocialSecurity.checked;
+    function updateUI() {
+        document.getElementById('lbl-age').innerText = els.age.value;
+        document.getElementById('lbl-ret').innerText = els.retAge.value;
+        document.getElementById('lbl-alloc').innerText = els.alloc.value + "%";
+    }
 
-        if (isNaN(currentAge) || isNaN(retirementAge)) return;
+    // --- SMART SYNC LOGIC ---
+    function pVal(id) { return parseFloat(els[id].value.replace(/,/g, '')) || 0; }
+    function setVal(id, v) { els[id].value = Math.round(v).toLocaleString(); }
 
-        const monthsToSimulate = (DEATH_AGE - currentAge) * 12;
-        const retirementMonth = (retirementAge - currentAge) * 12;
+    function distributeSavings() {
+        if(isUpdating) return;
+        isUpdating = true;
+        const total = pVal('simpleTotalSavings');
+        setVal('balTaxable', total * 0.15);
+        setVal('balDeferred', total * 0.75);
+        setVal('balRoth', total * 0.10);
+        isUpdating = false;
+        runSim();
+    }
+
+    function distributeContrib() {
+        if(isUpdating) return;
+        isUpdating = true;
+        const total = pVal('simpleMonthlySave');
+        setVal('conDeferred', total * 0.75);
+        setVal('conTaxable', total * 0.25);
+        setVal('conRoth', 0);
+        isUpdating = false;
+        runSim();
+    }
+
+    function sumUpAdvanced() {
+        if(isUpdating) return;
+        isUpdating = true;
+        const totSav = pVal('balTaxable') + pVal('balDeferred') + pVal('balRoth');
+        const totCon = pVal('conTaxable') + pVal('conDeferred') + pVal('conRoth');
+        setVal('simpleTotalSavings', totSav);
+        setVal('simpleMonthlySave', totCon);
+        isUpdating = false;
+        runSim();
+    }
+
+    // --- EVENTS UI (FIXED) ---
+    // No prompts. Direct rendering of inputs.
+    function addEventUI() {
+        const id = Date.now();
+        // Add a default event
+        lifeEvents.push({ id, name: 'New Event', type: 'expense', cost: 20000, age: parseInt(els.age.value)+5 });
+        renderEvents();
+        runSim();
+    }
+
+    function renderEvents() {
+        const div = document.getElementById('eventsList');
+        div.innerHTML = '';
+        lifeEvents.forEach(ev => {
+            const el = document.createElement('div');
+            el.className = `event-row ${ev.type}`;
+            el.innerHTML = `
+                <input type="text" value="${ev.name}" onchange="updateEvent(${ev.id}, 'name', this.value)">
+                <input type="text" value="${ev.cost}" onchange="updateEvent(${ev.id}, 'cost', this.value)">
+                <input type="number" value="${ev.age}" onchange="updateEvent(${ev.id}, 'age', this.value)">
+                <select onchange="updateEvent(${ev.id}, 'type', this.value)">
+                    <option value="expense" ${ev.type === 'expense' ? 'selected' : ''}>Exp</option>
+                    <option value="income" ${ev.type === 'income' ? 'selected' : ''}>Inc</option>
+                </select>
+                <span style="cursor:pointer; color:#f87171; text-align:center;" onclick="removeEvent(${ev.id})">×</span>
+            `;
+            div.appendChild(el);
+        });
+    }
+
+    window.updateEvent = (id, field, val) => {
+        const ev = lifeEvents.find(e => e.id === id);
+        if(ev) {
+            if(field === 'cost' || field === 'age') ev[field] = parseFloat(val.toString().replace(/,/g,'')) || 0;
+            else ev[field] = val;
+            runSim();
+            // Re-render to update classes if type changed
+            if(field === 'type') renderEvents(); 
+        }
+    }
+
+    window.removeEvent = (id) => { lifeEvents = lifeEvents.filter(e => e.id !== id); renderEvents(); runSim(); };
+
+    // --- SIMULATION ENGINE ---
+    function runSim() {
+        const curAge = parseInt(els.age.value);
+        const retAge = parseInt(els.retAge.value);
+        const months = (DEATH_AGE - curAge) * 12;
+        const retMonth = (retAge - curAge) * 12;
+        const flexRule = els.flexRule.value;
+        const ssMonth = (pVal('ssAge') - curAge) * 12;
         
-        const SIMULATIONS = 500;
-        const trajectories = [];
+        const infRate = 0.03; 
+        const muS = 0.07/12; const sigS = 0.15/Math.sqrt(12);
+        const muB = 0.03/12; const sigB = 0.05/Math.sqrt(12);
+        const stockAlloc = parseInt(els.alloc.value) / 100;
+
         let successCount = 0;
+        const trajectories = [];
 
-        // Market Assumptions (Monthly)
-        // Stocks: 7% real return, 15% std dev
-        // Bonds: 3% real return, 5% std dev
-        const muStocks = 0.07 / 12;
-        const sigmaStocks = 0.15 / Math.sqrt(12);
-        const muBonds = 0.03 / 12;
-        const sigmaBonds = 0.05 / Math.sqrt(12);
-
-        for (let i = 0; i < SIMULATIONS; i++) {
-            let balance = currentSavings;
-            const path = [];
+        for (let i = 0; i < SIMS; i++) {
+            let bTax = pVal('balTaxable');
+            let bDef = pVal('balDeferred');
+            let bRoth = pVal('balRoth');
             let failed = false;
+            const path = [];
+            let prevYearBal = bTax + bDef + bRoth;
 
-            for (let m = 0; m < monthsToSimulate; m++) {
-                // Determine crash scenario (simulating a 40% drop at retirement if toggle is on)
-                let crashFactor = 0;
-                if (isCrashed && i < SIMULATIONS * 0.2 && m === retirementMonth) { 
-                    // 20% of simulations get hit by a massive crash right at retirement
-                    crashFactor = -0.40; 
-                }
+            for (let m = 0; m < months; m++) {
+                const simAge = curAge + (m/12);
 
-                // Random Market Return (Box-Muller transform for normal distribution)
-                const u1 = Math.random();
-                const u2 = Math.random();
+                // 1. Returns
+                const u1 = Math.random(); const u2 = Math.random();
                 const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-
-                const stockReturn = muStocks + sigmaStocks * z + crashFactor;
-                const bondReturn = muBonds + sigmaBonds * z;
-
-                const blendedReturn = (stockReturn * allocation.stocks) + (bondReturn * allocation.bonds);
-
-                // Apply Growth
-                balance = balance * (1 + blendedReturn);
-
-                // Cashflows
-                if (m < retirementMonth) {
-                    // Accumulation
-                    balance += monthlyContrib;
-                } else {
-                    // Decumulation (Inflation adjusted spending)
-                    // We simply inflate the spending need, or assume real returns. 
-                    // Let's inflate the nominal spending need.
-                    const yearsInRetirement = (m - retirementMonth) / 12;
-                    let currentMonthlySpend = monthlySpend * Math.pow(1 + inflationRate, yearsInRetirement + (retirementAge - currentAge));
-                    
-                    // Social Security Offset (Simplified: starts at retirement)
-                    if (useSS) {
-                        currentMonthlySpend -= 2500; // rough average monthly SS
-                    }
-
-                    balance -= currentMonthlySpend;
-                }
+                const ret = ((muS + sigS * z) * stockAlloc) + ((muB + sigB * z) * (1-stockAlloc));
                 
-                // Events Logic
-                const currentSimAge = currentAge + (m/12);
+                bTax *= (1+ret); bDef *= (1+ret); bRoth *= (1+ret);
+                
+                // 2. Events Check
+                let eventExpense = 0;
+                let eventIncome = 0;
                 lifeEvents.forEach(ev => {
-                    if(Math.abs(currentSimAge - ev.age) < 0.1) {
-                         const eventMonthIndex = Math.round((ev.age - currentAge) * 12);
-                         if(m === eventMonthIndex) {
-                             balance -= ev.cost;
-                         }
+                    if (Math.abs(simAge - ev.age) < 0.1) {
+                        const evtMonth = Math.round((ev.age - curAge)*12);
+                        if(m === evtMonth) {
+                            if (ev.type === 'expense') eventExpense += ev.cost;
+                            else eventIncome += ev.cost;
+                        }
                     }
                 });
 
-                if (balance < 0) {
-                    balance = 0;
-                    failed = true;
-                }
-                path.push(balance);
-            }
-            trajectories.push(path);
-            if (!failed) successCount++;
-        }
+                if(eventIncome > 0) bTax += eventIncome;
 
-        drawChart(trajectories, monthsToSimulate, retirementMonth);
-        updateStats(successCount, SIMULATIONS, trajectories);
-        saveToLocal();
-    }
-
-    // --- Visualization ---
-    function drawChart(trajectories, totalMonths, retirementMonth) {
-        const canvas = document.getElementById('chartCanvas');
-        const ctx = canvas.getContext('2d');
-        const rect = canvas.parentElement.getBoundingClientRect();
-        
-        // High DPI Handling (Crispness Fix)
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = rect.width * dpr;
-        canvas.height = 300 * dpr;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = "300px";
-        ctx.scale(dpr, dpr);
-        
-        const logicalWidth = rect.width;
-        const logicalHeight = 300;
-
-        // Clear
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(0, 0, logicalWidth, logicalHeight);
-
-        // Find Max for scaling (cap at reasonable high to keep chart readable)
-        let maxVal = 0;
-        trajectories.forEach(t => {
-            const peak = Math.max(...t);
-            if(peak > maxVal) maxVal = peak;
-        });
-        // Cap max view if outlier is crazy high
-        const savings = parseInt(inputs.currentSavings.value.replace(/,/g, '')) || 100000;
-        if(maxVal > savings * 50) maxVal = savings * 50; 
-
-        const xScale = logicalWidth / totalMonths;
-        const yScale = logicalHeight / maxVal;
-
-        // Draw Retirement Line
-        const retX = retirementMonth * xScale;
-        ctx.beginPath();
-        ctx.strokeStyle = '#f59e0b';
-        ctx.setLineDash([5, 5]);
-        ctx.moveTo(retX, 0);
-        ctx.lineTo(retX, logicalHeight);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        
-        // Draw Label for Retirement
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = '10px sans-serif';
-        ctx.fillText("RETIREMENT", retX + 5, 20);
-
-        // Draw Paths (Sample only 50 to save performance, plus failures)
-        trajectories.slice(0, 50).forEach((path, idx) => {
-            ctx.beginPath();
-            ctx.strokeStyle = path[path.length-1] > 0 ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.2)';
-            ctx.lineWidth = 1;
-            
-            for(let m=0; m<path.length; m++) {
-                const x = m * xScale;
-                const y = logicalHeight - (path[m] * yScale);
-                if(m===0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-        });
-    }
-
-    function updateStats(successes, total, trajectories) {
-        const rate = Math.round((successes / total) * 100);
-        const el = document.getElementById('successRate');
-        el.innerText = rate + "%";
-        
-        if(rate >= 90) el.style.color = 'var(--accent-green)';
-        else if(rate >= 75) el.style.color = 'var(--accent-yellow)';
-        else el.style.color = 'var(--accent-red)';
-
-        // Median Ending Balance
-        const endings = trajectories.map(t => t[t.length-1]).sort((a,b) => a-b);
-        const median = endings[Math.floor(endings.length/2)];
-        document.getElementById('medianOutcome').innerText = "$" + median.toLocaleString(undefined, {maximumFractionDigits:0});
-    }
-
-    // --- Inputs & Event Handling ---
-    function updateLabels() {
-        document.getElementById('val-stocks').innerText = Math.round(allocation.stocks * 100) + "%";
-        document.getElementById('val-bonds').innerText = Math.round(allocation.bonds * 100) + "%";
-        
-        document.getElementById('val-age').innerText = inputs.currentAge.value;
-        document.getElementById('val-ret-age').innerText = inputs.retirementAge.value;
-        document.getElementById('val-inf').innerText = inputs.inflation.value + "%";
-        
-        // Bars update
-        document.getElementById('bar-stocks').style.width = (allocation.stocks * 100) + "%";
-        document.getElementById('bar-bonds').style.width = (allocation.bonds * 100) + "%";
-        
-        // Risk Buttons State
-        document.querySelectorAll('.risk-btn').forEach(btn => btn.classList.remove('active'));
-        if(allocation.stocks > 0.7) document.getElementById('btn-agg').classList.add('active');
-        else if(allocation.stocks < 0.5) document.getElementById('btn-con').classList.add('active');
-        else document.getElementById('btn-bal').classList.add('active');
-    }
-
-    function setRisk(type) {
-        if (type === 'aggressive') allocation = { stocks: 0.9, bonds: 0.1 };
-        if (type === 'balanced') allocation = { stocks: 0.6, bonds: 0.4 };
-        if (type === 'conservative') allocation = { stocks: 0.3, bonds: 0.7 };
-        updateLabels();
-        runSimulation();
-    }
-
-    function toggleCrash() {
-        isCrashed = !isCrashed;
-        const btn = document.getElementById('btn-crash');
-        btn.style.background = isCrashed ? 'var(--accent-red)' : 'rgba(255,255,255,0.05)';
-        btn.innerText = isCrashed ? "⚠️ Crash Sim Active" : "Simulate Crash";
-        runSimulation();
-    }
-
-    // Input Listeners
-    Object.values(inputs).forEach(el => {
-        el.addEventListener('input', () => {
-            updateLabels();
-            runSimulation();
-        });
-    });
-
-    // --- Life Events Logic ---
-    function addLifeEvent() {
-        const name = prompt("Event Name (e.g. 'College Tuition')");
-        if(!name) return;
-        const cost = prompt("Cost (e.g. 50000)");
-        if(!cost) return;
-        const age = prompt("At what age?");
-        if(!age) return;
-        
-        lifeEvents.push({ id: Date.now(), name, cost: parseInt(cost.replace(/,/g,'')), age: parseInt(age) });
-        renderLifeEvents();
-        runSimulation(); 
-    }
-
-    function renderLifeEvents() {
-        const container = document.getElementById('life-events-list');
-        container.innerHTML = "";
-        lifeEvents.forEach(ev => {
-            const div = document.createElement('div');
-            div.className = 'event-chip';
-            div.innerHTML = `
-                <span>${ev.name} ($${ev.cost.toLocaleString()} @ Age ${ev.age})</span>
-                <span style="cursor:pointer; margin-left:8px; opacity:0.6" onclick="removeEvent(${ev.id})">×</span>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function removeEvent(id) {
-        lifeEvents = lifeEvents.filter(e => e.id !== id);
-        renderLifeEvents();
-        runSimulation();
-    }
-
-    // --- Save/Load System ---
-    function saveToLocal() {
-        const data = {
-            inputs: {},
-            lifeEvents: lifeEvents,
-            risk: allocation.stocks > 0.8 ? 'aggressive' : (allocation.stocks < 0.4 ? 'conservative' : 'balanced')
-        };
-        Object.keys(inputs).forEach(k => {
-             const el = inputs[k];
-             if(el) {
-                 if(el.type === 'checkbox') data.inputs[k] = el.checked;
-                 else data.inputs[k] = el.value;
-             }
-        });
-        localStorage.setItem('fp_save_v1', JSON.stringify(data));
-    }
-    
-    function loadFromLocal() {
-        const saved = localStorage.getItem('fp_save_v1');
-        if(saved) {
-            try {
-                const data = JSON.parse(saved);
-                if(data.inputs) {
-                    Object.keys(data.inputs).forEach(k => {
-                        const el = inputs[k];
-                        if(el) {
-                            if(el.type === 'checkbox') el.checked = data.inputs[k];
-                            else el.value = data.inputs[k];
+                // 3. Flows
+                if (m < retMonth) {
+                    bTax += pVal('conTaxable'); bDef += pVal('conDeferred'); bRoth += pVal('conRoth');
+                    
+                    if(eventExpense > 0) {
+                        if(bTax >= eventExpense) bTax -= eventExpense;
+                        else {
+                            eventExpense -= bTax; bTax = 0;
+                            if(bRoth >= eventExpense) bRoth -= eventExpense;
+                            else { bRoth = 0; bTax -= eventExpense; }
                         }
-                    });
+                    }
+                } else {
+                    const total = bTax + bDef + bRoth;
+                    const yrsInRet = (m - retMonth) / 12;
+                    let need = pVal('spend') * Math.pow(1+infRate, yrsInRet + (retAge - curAge));
+
+                    if (m % 12 === 0 && flexRule !== 'none') {
+                        if (total < prevYearBal * 0.95) need *= (flexRule === 'flexible_20' ? 0.8 : 0.9);
+                    }
+                    if (m % 12 === 0) prevYearBal = total;
+
+                    if (m >= ssMonth) need -= pVal('ssAmt');
+                    need += eventExpense;
+
+                    let rmd = 0;
+                    if(simAge > 73 && bDef > 0) rmd = bDef / 25 / 12;
+
+                    let taken = 0;
+                    if(rmd > 0) { taken = Math.min(rmd, bDef); bDef -= taken; }
+                    need -= taken;
+
+                    if(need > 0) {
+                        if(bTax >= need) { bTax -= need; need = 0; } else { need -= bTax; bTax = 0; }
+                    }
+                    if(need > 0) {
+                        const gross = need / 0.78;
+                        if(bDef >= gross) { bDef -= gross; need = 0; } else { bDef = 0; need -= (bDef * 0.78); }
+                    }
+                    if(need > 0) {
+                        if(bRoth >= need) { bRoth -= need; need = 0; } else { bRoth = 0; }
+                    }
                 }
-                if(data.risk) setRisk(data.risk);
-                if(data.lifeEvents) {
-                    lifeEvents = data.lifeEvents;
-                    renderLifeEvents();
-                }
-            } catch(e) { console.log("Save load error", e); }
+
+                const nw = bTax + bDef + bRoth;
+                if(nw <= 0 && m >= retMonth) failed = true;
+                path.push(nw);
+            }
+            if(!failed) successCount++;
+            trajectories.push(path);
         }
-        updateLabels();
-        runSimulation();
+
+        draw(trajectories, months, retMonth);
+        updateResults(successCount, SIMS, trajectories);
     }
 
-    function exportData() {
-        saveToLocal(); // ensure fresh
-        const data = localStorage.getItem('fp_save_v1');
-        const code = btoa(data); 
-        navigator.clipboard.writeText(code).then(() => alert("Plan Code Copied to Clipboard! Send this text to your partner."));
+    // --- VISUALS ---
+    function updateResults(s, t, p) {
+        const rate = Math.round((s/t)*100);
+        const el = document.getElementById('res-success');
+        el.innerText = rate + "%";
+        el.style.color = rate > 85 ? '#4ade80' : (rate > 60 ? '#facc15' : '#f87171');
+        
+        const ends = p.map(path=>path[path.length-1]).sort((a,b)=>a-b);
+        const med = ends[Math.floor(t/2)];
+        document.getElementById('res-median').innerText = "$" + (med/1000000).toFixed(2) + "M";
+
+        let text = "";
+        if(rate >= 90) text = "<strong>You are on track.</strong> Your plan is extremely robust. Even in poor markets, you have a safety margin.";
+        else if(rate >= 75) text = "<strong>Looking good.</strong> You have a high chance of success. Inflation or a major crash are your only real risks.";
+        else if(rate >= 50) text = "<strong>Caution needed.</strong> You succeed in the 'average' case, but fail in difficult markets. Consider saving more or delaying retirement.";
+        else text = "<strong>Action required.</strong> Your current plan runs out of money prematurely. Please adjust your savings or retirement age.";
+        
+        document.getElementById('narrative-text').innerHTML = text;
     }
 
-    function importData() {
-        const code = document.getElementById('import-input').value;
-        if(!code) return;
-        try {
-            const json = atob(code);
-            localStorage.setItem('fp_save_v1', json);
-            loadFromLocal();
-            alert("Plan Loaded Successfully!");
-        } catch(e) {
-            alert("Invalid Code");
+    function draw(paths, totalM, retM) {
+        const cvs = document.getElementById('mainChart');
+        const ctx = cvs.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = cvs.parentElement.getBoundingClientRect();
+        cvs.width = rect.width * dpr; cvs.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        const w = rect.width; const h = rect.height;
+
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(0,0,w,h);
+
+        const p10=[], p50=[], p90=[];
+        for(let m=0; m<totalM; m+=6) {
+            const vals = paths.map(p=>p[m]).sort((a,b)=>a-b);
+            p10.push(vals[Math.floor(SIMS*0.1)]);
+            p50.push(vals[Math.floor(SIMS*0.5)]);
+            p90.push(vals[Math.floor(SIMS*0.9)]);
         }
+
+        let max = Math.max(...p90);
+        const start = pVal('simpleTotalSavings');
+        if(max > start * 40) max = start * 40; 
+        
+        const xS = w / (p10.length-1);
+        const yS = h / max;
+
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(0, h - p90[0]*yS);
+        p90.forEach((v,i) => ctx.lineTo(i*xS, h-v*yS));
+        for(let i=p10.length-1; i>=0; i--) ctx.lineTo(i*xS, h-p10[i]*yS);
+        ctx.fill();
+
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath();
+        p50.forEach((v,i)=> i===0?ctx.moveTo(0, h-v*yS):ctx.lineTo(i*xS, h-v*yS));
+        ctx.stroke();
+        
+        const retX = (retM / totalM) * w;
+        ctx.strokeStyle = '#facc15'; ctx.setLineDash([5,5]); ctx.beginPath();
+        ctx.moveTo(retX, 0); ctx.lineTo(retX, h); ctx.stroke();
     }
 
-    window.addEventListener('resize', runSimulation);
-    
-    // Expose for HTML
-    window.setRisk = setRisk;
-    window.toggleCrash = toggleCrash;
-    window.addLifeEvent = addLifeEvent;
-    window.removeEvent = removeEvent;
-    window.exportData = exportData;
-    window.importData = importData;
-
-    loadFromLocal();
+    window.exportConfig = () => {
+        const d = { inputs: {}, events: lifeEvents };
+        [...simpleIds, ...advIds, ...commonIds].forEach(id => d.inputs[id] = els[id].value);
+        navigator.clipboard.writeText(btoa(JSON.stringify(d))).then(()=>alert("Plan Copied!"));
+    }
 </script>
 </body>
 </html>
+
 
