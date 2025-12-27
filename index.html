@@ -209,6 +209,156 @@
             color: #333;
         }
 
+        /* Life Events Section */
+        .life-events-section {
+            margin: 30px 0;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .toggle-events-btn {
+            width: 100%;
+            background: #f9f9f9;
+            border: none;
+            padding: 15px 20px;
+            font-size: 1em;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.3s;
+        }
+
+        .toggle-events-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .toggle-events-btn .arrow {
+            transition: transform 0.3s;
+            font-size: 0.8em;
+        }
+
+        .toggle-events-btn.active .arrow {
+            transform: rotate(180deg);
+        }
+
+        .events-panel {
+            display: none;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .events-panel.show {
+            display: block;
+        }
+
+        .events-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .events-controls {
+            margin-bottom: 20px;
+        }
+
+        .add-event-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .add-event-btn:hover {
+            background: #5568d3;
+        }
+
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .event-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .event-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .event-field label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .event-field input,
+        .event-field select {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        .event-field input:focus,
+        .event-field select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .delete-event-btn {
+            background: #f87171;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background 0.3s;
+            height: 36px;
+        }
+
+        .delete-event-btn:hover {
+            background: #dc2626;
+        }
+
+        .events-empty {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .event-item {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .delete-event-btn {
+                grid-column: 1 / -1;
+            }
+        }
+
         @media (max-width: 768px) {
             header h1 {
                 font-size: 1.5em;
@@ -301,6 +451,27 @@
                 </div>
             </div>
 
+            <!-- Life Events Section -->
+            <div class="life-events-section">
+                <button class="toggle-events-btn" id="toggleEvents">
+                    <span>📅</span> Add Life Events (College, Kids, Home Purchase, etc.)
+                    <span class="arrow">▼</span>
+                </button>
+
+                <div class="events-panel" id="eventsPanel">
+                    <p class="events-description">
+                        Model major life expenses and income changes like having children, college costs,
+                        home purchases, inheritances, or part-time retirement income.
+                    </p>
+
+                    <div class="events-controls">
+                        <button class="add-event-btn" id="addEvent">+ Add Event</button>
+                    </div>
+
+                    <div id="eventsList" class="events-list"></div>
+                </div>
+            </div>
+
             <div class="button-container">
                 <button id="runSimulation">Run Simulation</button>
             </div>
@@ -351,10 +522,47 @@
     </div>
 
     <script>
+        // Life Events Manager
+        class LifeEventsManager {
+            constructor() {
+                this.events = [];
+                this.eventIdCounter = 0;
+            }
+
+            addEvent(event = {}) {
+                const newEvent = {
+                    id: this.eventIdCounter++,
+                    name: event.name || '',
+                    type: event.type || 'expense',
+                    amount: event.amount || 0,
+                    startAge: event.startAge || 35,
+                    duration: event.duration || 1
+                };
+                this.events.push(newEvent);
+                return newEvent;
+            }
+
+            removeEvent(id) {
+                this.events = this.events.filter(e => e.id !== id);
+            }
+
+            updateEvent(id, field, value) {
+                const event = this.events.find(e => e.id === id);
+                if (event) {
+                    event[field] = value;
+                }
+            }
+
+            getEvents() {
+                return this.events;
+            }
+        }
+
         // Monte Carlo Retirement Simulator
         class RetirementSimulator {
-            constructor(params) {
+            constructor(params, lifeEvents = []) {
                 this.params = params;
+                this.lifeEvents = lifeEvents;
                 this.allEndingBalances = [];
                 this.samplePaths = [];
             }
@@ -367,6 +575,27 @@
                 // Box-Muller transform
                 let z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
                 return mean + stdDev * z0;
+            }
+
+            // Get life event impact for a specific age
+            getLifeEventImpact(age) {
+                let expenseImpact = 0;
+                let incomeImpact = 0;
+
+                for (const event of this.lifeEvents) {
+                    const eventStartAge = event.startAge;
+                    const eventEndAge = eventStartAge + event.duration;
+
+                    if (age >= eventStartAge && age < eventEndAge) {
+                        if (event.type === 'expense') {
+                            expenseImpact += event.amount;
+                        } else {
+                            incomeImpact += event.amount;
+                        }
+                    }
+                }
+
+                return { expense: expenseImpact, income: incomeImpact };
             }
 
             // Run a single simulation
@@ -391,25 +620,47 @@
 
                 // Accumulation phase (working years)
                 for (let year = 0; year < yearsToRetirement; year++) {
+                    const currentAgeInLoop = currentAge + year;
                     const returnRate = this.generateNormalRandom(expectedReturn / 100, returnVolatility / 100);
-                    balance = balance * (1 + returnRate) + annualContribution;
+
+                    // Apply market returns
+                    balance = balance * (1 + returnRate);
+
+                    // Add contributions
+                    balance += annualContribution;
+
+                    // Apply life events
+                    const lifeEventImpact = this.getLifeEventImpact(currentAgeInLoop);
+                    balance += lifeEventImpact.income;
+                    balance -= lifeEventImpact.expense;
 
                     if (savePath) {
-                        path.push({ age: currentAge + year + 1, balance: balance });
+                        path.push({ age: currentAgeInLoop + 1, balance: balance });
                     }
                 }
 
                 // Distribution phase (retirement years)
                 let currentSpending = annualSpending;
                 for (let year = 0; year < yearsInRetirement; year++) {
+                    const currentAgeInLoop = retirementAge + year;
                     const returnRate = this.generateNormalRandom(expectedReturn / 100, returnVolatility / 100);
-                    balance = balance * (1 + returnRate) - currentSpending;
+
+                    // Apply market returns
+                    balance = balance * (1 + returnRate);
+
+                    // Subtract regular spending
+                    balance -= currentSpending;
+
+                    // Apply life events (e.g., part-time work income, medical expenses)
+                    const lifeEventImpact = this.getLifeEventImpact(currentAgeInLoop);
+                    balance += lifeEventImpact.income;
+                    balance -= lifeEventImpact.expense;
 
                     // Adjust spending for inflation
                     currentSpending *= (1 + inflationRate / 100);
 
                     if (savePath) {
-                        path.push({ age: retirementAge + year + 1, balance: balance });
+                        path.push({ age: currentAgeInLoop + 1, balance: balance });
                     }
 
                     // If balance goes negative, portfolio has failed
@@ -524,12 +775,130 @@
             constructor() {
                 this.histogramChart = null;
                 this.pathsChart = null;
+                this.eventsManager = new LifeEventsManager();
                 this.setupEventListeners();
+                this.initializeWithSampleEvents();
+            }
+
+            initializeWithSampleEvents() {
+                // Add a sample event to demonstrate the feature
+                this.addLifeEvent({
+                    name: 'College Expenses (4 years)',
+                    type: 'expense',
+                    amount: 35000,
+                    startAge: 53,
+                    duration: 4
+                });
+                this.renderLifeEvents();
             }
 
             setupEventListeners() {
                 document.getElementById('runSimulation').addEventListener('click', () => {
                     this.runSimulation();
+                });
+
+                // Life events toggle
+                document.getElementById('toggleEvents').addEventListener('click', () => {
+                    this.toggleEventsPanel();
+                });
+
+                // Add event button
+                document.getElementById('addEvent').addEventListener('click', () => {
+                    this.addLifeEvent();
+                });
+            }
+
+            toggleEventsPanel() {
+                const panel = document.getElementById('eventsPanel');
+                const button = document.getElementById('toggleEvents');
+                panel.classList.toggle('show');
+                button.classList.toggle('active');
+            }
+
+            addLifeEvent(eventData = {}) {
+                const currentAge = parseInt(document.getElementById('currentAge').value) || 35;
+                const event = this.eventsManager.addEvent({
+                    name: eventData.name || '',
+                    type: eventData.type || 'expense',
+                    amount: eventData.amount || 0,
+                    startAge: eventData.startAge || currentAge + 5,
+                    duration: eventData.duration || 1
+                });
+                this.renderLifeEvents();
+            }
+
+            removeLifeEvent(id) {
+                this.eventsManager.removeEvent(id);
+                this.renderLifeEvents();
+            }
+
+            updateLifeEvent(id, field, value) {
+                this.eventsManager.updateEvent(id, field, value);
+            }
+
+            renderLifeEvents() {
+                const container = document.getElementById('eventsList');
+                const events = this.eventsManager.getEvents();
+
+                if (events.length === 0) {
+                    container.innerHTML = '<div class="events-empty">No life events added yet. Click "+ Add Event" to get started.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                events.forEach(event => {
+                    const eventItem = document.createElement('div');
+                    eventItem.className = 'event-item';
+                    eventItem.innerHTML = `
+                        <div class="event-field">
+                            <label>Type</label>
+                            <select data-id="${event.id}" data-field="type">
+                                <option value="expense" ${event.type === 'expense' ? 'selected' : ''}>Expense</option>
+                                <option value="income" ${event.type === 'income' ? 'selected' : ''}>Income</option>
+                            </select>
+                        </div>
+                        <div class="event-field">
+                            <label>Name</label>
+                            <input type="text" placeholder="e.g., College costs" value="${event.name}" data-id="${event.id}" data-field="name">
+                        </div>
+                        <div class="event-field">
+                            <label>Annual Amount ($)</label>
+                            <input type="number" placeholder="0" value="${event.amount}" min="0" step="1000" data-id="${event.id}" data-field="amount">
+                        </div>
+                        <div class="event-field">
+                            <label>Start Age</label>
+                            <input type="number" placeholder="35" value="${event.startAge}" min="18" max="120" data-id="${event.id}" data-field="startAge">
+                        </div>
+                        <div class="event-field">
+                            <label>Duration (years)</label>
+                            <input type="number" placeholder="1" value="${event.duration}" min="1" max="50" data-id="${event.id}" data-field="duration">
+                        </div>
+                        <button class="delete-event-btn" data-id="${event.id}">×</button>
+                    `;
+
+                    // Add event listeners to inputs
+                    eventItem.querySelectorAll('input, select').forEach(input => {
+                        input.addEventListener('input', (e) => {
+                            const id = parseInt(e.target.dataset.id);
+                            const field = e.target.dataset.field;
+                            let value = e.target.value;
+
+                            if (field === 'amount' || field === 'startAge' || field === 'duration') {
+                                value = parseFloat(value) || 0;
+                            }
+
+                            this.updateLifeEvent(id, field, value);
+                        });
+                    });
+
+                    // Add delete button listener
+                    eventItem.querySelector('.delete-event-btn').addEventListener('click', (e) => {
+                        const id = parseInt(e.target.dataset.id);
+                        this.removeLifeEvent(id);
+                    });
+
+                    container.appendChild(eventItem);
                 });
             }
 
@@ -580,7 +949,8 @@
                 document.getElementById('results').classList.remove('show');
 
                 try {
-                    const simulator = new RetirementSimulator(params);
+                    const lifeEvents = this.eventsManager.getEvents();
+                    const simulator = new RetirementSimulator(params, lifeEvents);
 
                     await simulator.runSimulations((percent) => {
                         progress.textContent = `Running simulations: ${percent}%`;
