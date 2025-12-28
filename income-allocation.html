@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Allocation Calculator - I Will Teach You to Be Rich</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .income-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f5f7fa;
+            border-radius: 8px;
+        }
+
+        .income-input-group {
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+        }
+
+        .income-input-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 1em;
+        }
+
+        .income-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .income-input-wrapper select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .income-input-wrapper input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1.2em;
+            transition: border-color 0.3s;
+        }
+
+        .income-input-wrapper input:focus,
+        .income-input-wrapper select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .categories-section {
+            margin-bottom: 30px;
+        }
+
+        .categories-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .category-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .category-item.fixed-costs {
+            border-left-color: #ef4444;
+        }
+
+        .category-item.short-term {
+            border-left-color: #f59e0b;
+        }
+
+        .category-item.long-term {
+            border-left-color: #10b981;
+        }
+
+        .category-item.guilt-free {
+            border-left-color: #8b5cf6;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .category-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .category-percentage {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .category-description {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: #5568d3;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            transition: background 0.3s;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            background: #5568d3;
+        }
+
+        .allocation-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .allocation-box {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .allocation-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .allocation-amount {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .total-check {
+            padding: 15px 20px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .total-check.valid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .total-check.invalid {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .preset-btn {
+            padding: 12px 20px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        footer {
+            background: #f5f5f5;
+            padding: 20px 30px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            header p {
+                font-size: 1em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .allocation-display {
+                grid-template-columns: 1fr;
+            }
+
+            .preset-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Income Allocation Calculator</h1>
+            <p>Based on Ramit Sethi's "I Will Teach You to Be Rich"</p>
+        </header>
+
+        <div class="content">
+            <div class="income-section">
+                <div class="income-input-group">
+                    <label for="income">Your Income</label>
+                    <div class="income-input-wrapper">
+                        <select id="incomeFrequency">
+                            <option value="monthly">Monthly</option>
+                            <option value="annual">Annual</option>
+                        </select>
+                        <input type="number" id="income" value="5000" min="0" step="100" placeholder="Enter amount">
+                    </div>
+                </div>
+            </div>
+
+            <div class="total-check" id="totalCheck">
+                Total Allocation: <span id="totalPercentage">100</span>%
+            </div>
+
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="applyPreset('balanced')">Balanced (50/20/20/10)</button>
+                <button class="preset-btn" onclick="applyPreset('aggressive-saver')">Aggressive Saver (50/15/30/5)</button>
+                <button class="preset-btn" onclick="applyPreset('debt-crusher')">Debt Crusher (60/20/15/5)</button>
+            </div>
+
+            <div class="categories-section">
+                <h2>Adjust Your Allocations</h2>
+
+                <div class="category-item fixed-costs">
+                    <div class="category-header">
+                        <div class="category-title">Fixed Costs</div>
+                        <div class="category-percentage"><span id="fixedCostsPercent">50</span>%</div>
+                    </div>
+                    <div class="category-description">
+                        Essential expenses like rent/mortgage, utilities, insurance, car payments, minimum debt payments
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="100" value="50" class="slider" id="fixedCostsSlider">
+                    </div>
+                    <div class="allocation-display">
+                        <div class="allocation-box">
+                            <div class="allocation-label">Monthly</div>
+                            <div class="allocation-amount" id="fixedCostsMonthly">$2,500</div>
+                        </div>
+                        <div class="allocation-box">
+                            <div class="allocation-label">Annual</div>
+                            <div class="allocation-amount" id="fixedCostsAnnual">$30,000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-item short-term">
+                    <div class="category-header">
+                        <div class="category-title">Short-Term Savings</div>
+                        <div class="category-percentage"><span id="shortTermPercent">20</span>%</div>
+                    </div>
+                    <div class="category-description">
+                        Emergency fund, vacation fund, upcoming purchases, short-term goals
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="100" value="20" class="slider" id="shortTermSlider">
+                    </div>
+                    <div class="allocation-display">
+                        <div class="allocation-box">
+                            <div class="allocation-label">Monthly</div>
+                            <div class="allocation-amount" id="shortTermMonthly">$1,000</div>
+                        </div>
+                        <div class="allocation-box">
+                            <div class="allocation-label">Annual</div>
+                            <div class="allocation-amount" id="shortTermAnnual">$12,000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-item long-term">
+                    <div class="category-header">
+                        <div class="category-title">Long-Term Savings</div>
+                        <div class="category-percentage"><span id="longTermPercent">20</span>%</div>
+                    </div>
+                    <div class="category-description">
+                        Retirement accounts (401k, IRA), investments, long-term wealth building
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="100" value="20" class="slider" id="longTermSlider">
+                    </div>
+                    <div class="allocation-display">
+                        <div class="allocation-box">
+                            <div class="allocation-label">Monthly</div>
+                            <div class="allocation-amount" id="longTermMonthly">$1,000</div>
+                        </div>
+                        <div class="allocation-box">
+                            <div class="allocation-label">Annual</div>
+                            <div class="allocation-amount" id="longTermAnnual">$12,000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-item guilt-free">
+                    <div class="category-header">
+                        <div class="category-title">Guilt-Free Spending</div>
+                        <div class="category-percentage"><span id="guiltFreePercent">10</span>%</div>
+                    </div>
+                    <div class="category-description">
+                        Dining out, entertainment, hobbies, shopping - enjoy without guilt after covering essentials and savings
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="100" value="10" class="slider" id="guiltFreeSlider">
+                    </div>
+                    <div class="allocation-display">
+                        <div class="allocation-box">
+                            <div class="allocation-label">Monthly</div>
+                            <div class="allocation-amount" id="guiltFreeMonthly">$500</div>
+                        </div>
+                        <div class="allocation-box">
+                            <div class="allocation-label">Annual</div>
+                            <div class="allocation-amount" id="guiltFreeAnnual">$6,000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Inspired by <a href="https://www.iwillteachyoutoberich.com/" target="_blank">Ramit Sethi's "I Will Teach You to Be Rich"</a> |
+            <a href="index.html">Back to Retirement Simulator</a>
+        </footer>
+    </div>
+
+    <script>
+        class IncomeAllocator {
+            constructor() {
+                this.categories = {
+                    fixedCosts: { slider: null, percent: null, monthly: null, annual: null, value: 50 },
+                    shortTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
+                    longTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
+                    guiltFree: { slider: null, percent: null, monthly: null, annual: null, value: 10 }
+                };
+
+                this.incomeInput = null;
+                this.incomeFrequency = null;
+                this.totalCheck = null;
+                this.totalPercentage = null;
+
+                this.init();
+            }
+
+            init() {
+                // Get DOM elements
+                this.incomeInput = document.getElementById('income');
+                this.incomeFrequency = document.getElementById('incomeFrequency');
+                this.totalCheck = document.getElementById('totalCheck');
+                this.totalPercentage = document.getElementById('totalPercentage');
+
+                // Initialize category elements
+                for (const [key, data] of Object.entries(this.categories)) {
+                    const camelCase = key.charAt(0).toUpperCase() + key.slice(1);
+                    data.slider = document.getElementById(`${key}Slider`);
+                    data.percent = document.getElementById(`${key}Percent`);
+                    data.monthly = document.getElementById(`${key}Monthly`);
+                    data.annual = document.getElementById(`${key}Annual`);
+                }
+
+                // Add event listeners
+                this.incomeInput.addEventListener('input', () => this.calculate());
+                this.incomeFrequency.addEventListener('change', () => this.calculate());
+
+                for (const [key, data] of Object.entries(this.categories)) {
+                    data.slider.addEventListener('input', (e) => {
+                        data.value = parseInt(e.target.value);
+                        this.calculate();
+                    });
+                }
+
+                // Initial calculation
+                this.calculate();
+            }
+
+            getMonthlyIncome() {
+                const income = parseFloat(this.incomeInput.value) || 0;
+                const frequency = this.incomeFrequency.value;
+
+                if (frequency === 'monthly') {
+                    return income;
+                } else {
+                    return income / 12;
+                }
+            }
+
+            calculate() {
+                const monthlyIncome = this.getMonthlyIncome();
+                let total = 0;
+
+                // Calculate and display allocations for each category
+                for (const [key, data] of Object.entries(this.categories)) {
+                    const percentage = data.value;
+                    total += percentage;
+
+                    const monthlyAmount = (monthlyIncome * percentage) / 100;
+                    const annualAmount = monthlyAmount * 12;
+
+                    // Update percentage display
+                    data.percent.textContent = percentage;
+                    data.slider.value = percentage;
+
+                    // Update allocation displays
+                    data.monthly.textContent = this.formatCurrency(monthlyAmount);
+                    data.annual.textContent = this.formatCurrency(annualAmount);
+                }
+
+                // Update total check
+                this.totalPercentage.textContent = total;
+                if (total === 100) {
+                    this.totalCheck.className = 'total-check valid';
+                    this.totalCheck.innerHTML = `✓ Total Allocation: <span id="totalPercentage">${total}</span>% (Perfect!)`;
+                } else if (total < 100) {
+                    this.totalCheck.className = 'total-check invalid';
+                    this.totalCheck.innerHTML = `⚠ Total Allocation: <span id="totalPercentage">${total}</span>% (${100 - total}% unallocated)`;
+                } else {
+                    this.totalCheck.className = 'total-check invalid';
+                    this.totalCheck.innerHTML = `⚠ Total Allocation: <span id="totalPercentage">${total}</span>% (${total - 100}% over budget!)`;
+                }
+
+                // Update the totalPercentage span reference
+                this.totalPercentage = document.getElementById('totalPercentage');
+            }
+
+            formatCurrency(value) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(value);
+            }
+
+            setPreset(preset) {
+                const presets = {
+                    'balanced': {
+                        fixedCosts: 50,
+                        shortTerm: 20,
+                        longTerm: 20,
+                        guiltFree: 10
+                    },
+                    'aggressive-saver': {
+                        fixedCosts: 50,
+                        shortTerm: 15,
+                        longTerm: 30,
+                        guiltFree: 5
+                    },
+                    'debt-crusher': {
+                        fixedCosts: 60,
+                        shortTerm: 20,
+                        longTerm: 15,
+                        guiltFree: 5
+                    }
+                };
+
+                const presetValues = presets[preset];
+                if (presetValues) {
+                    for (const [key, value] of Object.entries(presetValues)) {
+                        this.categories[key].value = value;
+                        this.categories[key].slider.value = value;
+                    }
+                    this.calculate();
+                }
+            }
+        }
+
+        // Global function for preset buttons
+        let allocator;
+
+        function applyPreset(presetName) {
+            allocator.setPreset(presetName);
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            allocator = new IncomeAllocator();
+        });
+    </script>
+</body>
+</html>
