@@ -691,6 +691,95 @@
             font-style: italic;
         }
 
+        /* Bulk Categorization */
+        .bulk-group {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .bulk-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            cursor: pointer;
+            background: #f9fafb;
+            transition: background 0.2s;
+        }
+
+        .bulk-group-header:hover {
+            background: #f3f4f6;
+        }
+
+        .bulk-group-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bulk-group-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bulk-group-count {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .bulk-group-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .bulk-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .bulk-btn:hover {
+            opacity: 0.8;
+        }
+
+        .bulk-btn.fixed-costs { background: #fee2e2; color: #dc2626; }
+        .bulk-btn.short-term { background: #fef3c7; color: #d97706; }
+        .bulk-btn.long-term { background: #d1fae5; color: #059669; }
+        .bulk-btn.guilt-free { background: #ede9fe; color: #7c3aed; }
+        .bulk-btn.income { background: #dbeafe; color: #2563eb; }
+
+        .bulk-group-details {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            background: white;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .bulk-group.expanded .bulk-group-details {
+            display: block;
+        }
+
+        .bulk-transaction {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.9em;
+        }
+
+        .bulk-transaction:last-child {
+            border-bottom: none;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             header h1 {
@@ -940,6 +1029,13 @@
                 <!-- Category Cards -->
                 <div class="summary-cards" id="summaryCards"></div>
 
+                <!-- Bulk Categorization -->
+                <div class="section" id="bulkCategorizeSection" style="display: none;">
+                    <h2>Quick Categorize</h2>
+                    <p style="color: #666; margin-bottom: 15px;">Group similar transactions and categorize them all at once. Click a group to expand and categorize.</p>
+                    <div id="bulkGroups"></div>
+                </div>
+
                 <!-- Transactions Table -->
                 <div class="section">
                     <h2>Transaction Details</h2>
@@ -1012,26 +1108,30 @@
                 this.categoryPatterns = {
                     'fixed-costs': [
                         // Housing
-                        /rent|mortgage|hoa|property.*tax|home.*insurance/i,
+                        /rent|mortgage|hoa|property.*tax|home.*insurance|landlord|apartment|lease/i,
                         // Utilities
-                        /electric|gas.*company|water.*bill|sewage|trash|waste|pge|con.*ed|duke.*energy|xcel/i,
-                        /comcast|xfinity|spectrum|at&t|verizon|t-mobile|sprint|cricket|internet|cable/i,
+                        /electric|gas.*company|water.*bill|sewage|trash|waste|pge|con.*ed|duke.*energy|xcel|national.*grid|dominion/i,
+                        /comcast|xfinity|spectrum|at&t|verizon|t-mobile|sprint|cricket|internet|cable|fiber|broadband/i,
+                        // Phone
+                        /phone.*bill|wireless|cell.*phone|mobile.*plan/i,
                         // Insurance
-                        /geico|allstate|state.*farm|progressive|liberty.*mutual|insurance|health.*plan/i,
+                        /geico|allstate|state.*farm|progressive|liberty.*mutual|insurance|health.*plan|aetna|cigna|united.*health|blue.*cross|anthem|kaiser/i,
                         // Car
-                        /car.*payment|auto.*loan|toyota.*financial|honda.*financial|ford.*credit/i,
+                        /car.*payment|auto.*loan|toyota.*financial|honda.*financial|ford.*credit|gm.*financial|bmw.*financial|mercedes.*financial/i,
                         // Debt payments
-                        /student.*loan|nelnet|navient|fedloan|sofi|earnest|loan.*payment/i,
-                        /credit.*card.*payment|minimum.*payment/i,
+                        /student.*loan|nelnet|navient|fedloan|sofi|earnest|loan.*payment|great.*lakes|mohela/i,
+                        /credit.*card.*payment|minimum.*payment|debt.*payment/i,
                         // Groceries (essential)
-                        /grocery|safeway|kroger|publix|trader.*joe|whole.*foods|aldi|costco|walmart.*grocery|target.*grocery|wegmans|heb|albertsons/i,
+                        /grocery|safeway|kroger|publix|trader.*joe|whole.*foods|aldi|costco|walmart|target|wegmans|heb|albertsons|giant|stop.*shop|food.*lion|winco|sprouts|meijer|food.*city/i,
                         // Healthcare essentials
-                        /pharmacy|cvs|walgreens|rite.*aid|prescription|doctor|medical|copay|hospital/i,
+                        /pharmacy|cvs|walgreens|rite.*aid|prescription|doctor|medical|copay|hospital|clinic|urgent.*care|lab|quest.*diagnostics|labcorp/i,
                         // Childcare
-                        /daycare|childcare|preschool|tuition/i,
+                        /daycare|childcare|preschool|tuition|school|kindercare|bright.*horizons/i,
                         // Transportation essentials
-                        /gas.*station|shell|chevron|exxon|mobil|bp|arco|speedway|wawa|parking|toll/i,
-                        /uber(?!.*eats)|lyft|transit|metro|subway.*fare|bus.*pass/i
+                        /gas.*station|shell|chevron|exxon|mobil|bp|arco|speedway|wawa|parking|toll|ez.*pass|sunpass|fastrak/i,
+                        /uber(?!.*eats)|lyft|transit|metro|subway.*fare|bus.*pass|caltrain|bart|mta|wmata/i,
+                        // Bank fees (unfortunately essential)
+                        /bank.*fee|monthly.*fee|service.*charge|overdraft/i
                     ],
                     'short-term': [
                         // Savings transfers
@@ -1046,23 +1146,36 @@
                     'guilt-free': [
                         // Dining & Drinks
                         /restaurant|cafe|coffee|starbucks|dunkin|mcdonald|burger|pizza|chipotle|taco.*bell|wendy|chick-fil-a|panera|subway|panda.*express/i,
-                        /doordash|uber.*eats|grubhub|postmates|instacart|seamless/i,
-                        /bar|brewery|pub|tavern|wine|liquor/i,
-                        // Entertainment
-                        /netflix|hulu|disney|hbo|amazon.*prime.*video|spotify|apple.*music|youtube.*premium|paramount|peacock/i,
-                        /movie|cinema|amc|regal|concert|ticket|eventbrite|stubhub|ticketmaster/i,
-                        /gaming|playstation|xbox|nintendo|steam|twitch/i,
+                        /doordash|uber.*eats|grubhub|postmates|instacart|seamless|caviar|gopuff/i,
+                        /bar|brewery|pub|tavern|wine|liquor|total.*wine|bevmo/i,
+                        // Entertainment & Streaming
+                        /netflix|hulu|disney|hbo|max|amazon.*prime|spotify|apple.*music|youtube.*premium|paramount|peacock|crunchyroll|funimation/i,
+                        /movie|cinema|amc|regal|concert|ticket|eventbrite|stubhub|ticketmaster|livenation|fandango/i,
+                        /gaming|playstation|xbox|nintendo|steam|twitch|epic.*games|riot|blizzard/i,
+                        // Apple (subscriptions, App Store, iTunes)
+                        /apple\.com|apple\.com\/bill|itunes|app.*store|icloud/i,
+                        // Google (Play Store, YouTube, etc)
+                        /google.*play|google.*storage|google.*one|youtube/i,
+                        // Other Tech Subscriptions
+                        /microsoft|office.*365|adobe|creative.*cloud|dropbox|evernote|notion|slack|zoom|canva/i,
                         // Shopping
-                        /amazon(?!.*prime.*member)|ebay|etsy|target(?!.*grocery)|walmart(?!.*grocery)|best.*buy|home.*depot|lowes|ikea/i,
-                        /nordstrom|macy|kohls|tj.*maxx|marshalls|ross|old.*navy|gap|h&m|zara|uniqlo/i,
-                        /sephora|ulta|beauty|salon|spa|haircut|barber|nail/i,
+                        /amazon(?!.*prime.*member)|ebay|etsy|target(?!.*grocery)|walmart(?!.*grocery)|best.*buy|home.*depot|lowes|ikea|wayfair|overstock/i,
+                        /nordstrom|macy|kohls|tj.*maxx|marshalls|ross|old.*navy|gap|h&m|zara|uniqlo|shein|asos|fashion.*nova/i,
+                        /sephora|ulta|beauty|salon|spa|haircut|barber|nail|massage/i,
                         // Hobbies & Fitness
-                        /gym|fitness|peloton|planet.*fitness|orange.*theory|crossfit|yoga/i,
-                        /golf|ski|sports|hobby|craft|book|audible/i,
-                        // Subscriptions
-                        /subscription|membership|patreon|substack/i,
+                        /gym|fitness|peloton|planet.*fitness|orange.*theory|crossfit|yoga|equinox|lifetime/i,
+                        /golf|ski|sports|hobby|craft|book|audible|kindle|barnes.*noble/i,
+                        // Subscriptions & Memberships
+                        /subscription|membership|patreon|substack|medium|onlyfans|twitch.*sub/i,
+                        /amazon.*prime.*member|costco.*member|sam.*club.*member/i,
                         // Travel & Leisure
-                        /hotel|airbnb|vrbo|airline|flight|united|delta|american.*air|southwest|jetblue|expedia|booking|kayak/i
+                        /hotel|airbnb|vrbo|airline|flight|united|delta|american.*air|southwest|jetblue|spirit|frontier|expedia|booking|kayak|hotels\.com|tripadvisor/i,
+                        // Food delivery & meal kits
+                        /hellofresh|blue.*apron|factor|freshly|daily.*harvest/i,
+                        // Dating & Social
+                        /tinder|bumble|hinge|match\.com|dating/i,
+                        // Pet
+                        /petco|petsmart|chewy|pet.*supplies/i
                     ],
                     'income': [
                         /payroll|direct.*deposit|salary|wage|employer|paycheck/i,
@@ -1374,7 +1487,106 @@
                 this.updateStats();
                 this.updateSummaryCards();
                 this.updateComparisonChart();
+                this.updateBulkCategorization();
                 this.renderTransactions();
+            }
+
+            updateBulkCategorization() {
+                const uncategorized = this.transactions.filter(t => t.category === 'uncategorized');
+                const section = document.getElementById('bulkCategorizeSection');
+                const container = document.getElementById('bulkGroups');
+
+                if (uncategorized.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+
+                section.style.display = 'block';
+
+                // Group by similar description (first 20 chars, normalized)
+                const groups = {};
+                uncategorized.forEach(t => {
+                    const key = t.description
+                        .replace(/[0-9#*]+/g, '')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .substring(0, 25)
+                        .toLowerCase();
+
+                    if (!groups[key]) {
+                        groups[key] = {
+                            name: t.description.substring(0, 30),
+                            transactions: []
+                        };
+                    }
+                    groups[key].transactions.push(t);
+                });
+
+                // Sort by count (most frequent first) and take top 20
+                const sortedGroups = Object.values(groups)
+                    .sort((a, b) => b.transactions.length - a.transactions.length)
+                    .slice(0, 20);
+
+                container.innerHTML = '';
+
+                sortedGroups.forEach((group, idx) => {
+                    const total = group.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                    const groupEl = document.createElement('div');
+                    groupEl.className = 'bulk-group';
+                    groupEl.innerHTML = `
+                        <div class="bulk-group-header" onclick="analyzer.toggleBulkGroup(${idx})">
+                            <div class="bulk-group-info">
+                                <span class="bulk-group-name">${this.escapeHtml(group.name)}${group.name.length >= 30 ? '...' : ''}</span>
+                                <span class="bulk-group-count">${group.transactions.length} transactions • ${this.formatCurrency(total)} total</span>
+                            </div>
+                            <div class="bulk-group-actions">
+                                <button class="bulk-btn fixed-costs" onclick="event.stopPropagation(); analyzer.bulkCategorize(${idx}, 'fixed-costs')">Fixed</button>
+                                <button class="bulk-btn guilt-free" onclick="event.stopPropagation(); analyzer.bulkCategorize(${idx}, 'guilt-free')">Guilt-Free</button>
+                                <button class="bulk-btn long-term" onclick="event.stopPropagation(); analyzer.bulkCategorize(${idx}, 'long-term')">Long-Term</button>
+                                <button class="bulk-btn short-term" onclick="event.stopPropagation(); analyzer.bulkCategorize(${idx}, 'short-term')">Short-Term</button>
+                                <button class="bulk-btn income" onclick="event.stopPropagation(); analyzer.bulkCategorize(${idx}, 'income')">Income</button>
+                            </div>
+                        </div>
+                        <div class="bulk-group-details">
+                            ${group.transactions.slice(0, 10).map(t => `
+                                <div class="bulk-transaction">
+                                    <span>${new Date(t.date).toLocaleDateString()} - ${this.escapeHtml(t.description.substring(0, 40))}</span>
+                                    <span style="color: ${t.amount < 0 ? '#ef4444' : '#10b981'}">${this.formatCurrency(Math.abs(t.amount))}</span>
+                                </div>
+                            `).join('')}
+                            ${group.transactions.length > 10 ? `<div style="color: #666; font-size: 0.85em; padding-top: 8px;">...and ${group.transactions.length - 10} more</div>` : ''}
+                        </div>
+                    `;
+                    groupEl.dataset.groupIndex = idx;
+                    container.appendChild(groupEl);
+                });
+
+                // Store groups for later reference
+                this.bulkGroups = sortedGroups;
+            }
+
+            toggleBulkGroup(idx) {
+                const groups = document.querySelectorAll('.bulk-group');
+                groups.forEach((g, i) => {
+                    if (i === idx) {
+                        g.classList.toggle('expanded');
+                    }
+                });
+            }
+
+            bulkCategorize(groupIdx, category) {
+                if (!this.bulkGroups || !this.bulkGroups[groupIdx]) return;
+
+                const group = this.bulkGroups[groupIdx];
+                group.transactions.forEach(t => {
+                    const transaction = this.transactions.find(tr => tr.id === t.id);
+                    if (transaction) {
+                        transaction.category = category;
+                        this.saveRule(transaction.description, category);
+                    }
+                });
+
+                this.updateDisplay();
             }
 
             updateStats() {
@@ -1749,49 +1961,63 @@ Respond with ONLY a JSON array in this exact format, no other text:
                 let lastError = '';
 
                 try {
-                    // Process in small batches of 15 for reliability
-                    const batchSize = 15;
+                    // Process in larger batches for speed (modern models handle 40+ easily)
+                    const batchSize = 40;
+                    const failedTransactions = [];
+
                     for (let i = 0; i < uncategorized.length; i += batchSize) {
                         const batch = uncategorized.slice(i, i + batchSize);
                         const batchEnd = Math.min(i + batchSize, uncategorized.length);
-                        this.showAiStatus(`Processing ${i + 1}-${batchEnd} of ${uncategorized.length}... (${successCount} done, ${errorCount} failed)`, 'processing');
+                        this.showAiStatus(`Processing ${i + 1}-${batchEnd} of ${uncategorized.length}...`, 'processing');
 
-                        // Try up to 3 times per batch
-                        let batchSuccess = false;
-                        for (let attempt = 1; attempt <= 3 && !batchSuccess; attempt++) {
-                            try {
-                                if (attempt > 1) {
-                                    this.showAiStatus(`Retry ${attempt}/3 for batch ${i + 1}-${batchEnd}...`, 'processing');
-                                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                        try {
+                            const categorizations = await this.callAI(provider, apiKey, batch);
+
+                            // Apply categorizations
+                            categorizations.forEach(result => {
+                                const transaction = this.transactions.find(t => t.id === result.id);
+                                if (transaction && result.category && this.isValidCategory(result.category)) {
+                                    transaction.category = result.category;
+                                    this.saveRule(transaction.description, result.category);
+                                    successCount++;
                                 }
+                            });
 
-                                const categorizations = await this.callAI(provider, apiKey, batch);
-
-                                // Apply categorizations
-                                categorizations.forEach(result => {
-                                    const transaction = this.transactions.find(t => t.id === result.id);
-                                    if (transaction && result.category && this.isValidCategory(result.category)) {
-                                        transaction.category = result.category;
-                                        this.saveRule(transaction.description, result.category);
-                                        successCount++;
-                                    }
-                                });
-
-                                batchSuccess = true;
-                                this.updateDisplay();
-                            } catch (batchError) {
-                                lastError = batchError.message;
-                                console.error(`Batch error (attempt ${attempt}):`, batchError);
-                                if (attempt === 3) {
-                                    errorCount += batch.length;
-                                }
-                            }
+                            this.updateDisplay();
+                        } catch (batchError) {
+                            lastError = batchError.message;
+                            console.error(`Batch error:`, batchError);
+                            failedTransactions.push(...batch);
                         }
 
-                        // Small delay between batches to avoid rate limits
+                        // Brief delay between batches to avoid rate limits
                         if (i + batchSize < uncategorized.length) {
-                            await new Promise(resolve => setTimeout(resolve, 800));
+                            await new Promise(resolve => setTimeout(resolve, 200));
                         }
+                    }
+
+                    // One retry pass for any failures (smaller batches)
+                    if (failedTransactions.length > 0 && failedTransactions.length < uncategorized.length) {
+                        this.showAiStatus(`Retrying ${failedTransactions.length} failed transactions...`, 'processing');
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+
+                        try {
+                            const categorizations = await this.callAI(provider, apiKey, failedTransactions);
+                            categorizations.forEach(result => {
+                                const transaction = this.transactions.find(t => t.id === result.id);
+                                if (transaction && result.category && this.isValidCategory(result.category)) {
+                                    transaction.category = result.category;
+                                    this.saveRule(transaction.description, result.category);
+                                    successCount++;
+                                }
+                            });
+                            this.updateDisplay();
+                        } catch (retryError) {
+                            errorCount = failedTransactions.length;
+                            lastError = retryError.message;
+                        }
+                    } else if (failedTransactions.length === uncategorized.length) {
+                        errorCount = failedTransactions.length;
                     }
 
                     if (successCount > 0) {
@@ -1875,42 +2101,80 @@ Respond with ONLY a JSON array in this exact format, no other text:
             }
 
             async callGemini(apiKey, prompt) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            generationConfig: {
-                                temperature: 0,
-                                maxOutputTokens: 4096
+                // Try models from newest to oldest - cache working model for speed
+                const models = [
+                    'gemini-2.5-flash',      // Stable 2.5 (fast)
+                    'gemini-2.5-pro',        // Stable 2.5 (powerful)
+                    'gemini-2.0-flash',      // Fallback
+                    'gemini-1.5-flash',      // Legacy fallback
+                ];
+
+                // Use cached model if we found one that works
+                const cachedModel = this.workingGeminiModel;
+                const modelsToTry = cachedModel ? [cachedModel, ...models.filter(m => m !== cachedModel)] : models;
+
+                let lastError = null;
+
+                for (const model of modelsToTry) {
+                    try {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: {
+                                    temperature: 0,
+                                    maxOutputTokens: 8192
+                                }
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            const errorMsg = errorData.error?.message || `Gemini API error: ${response.status}`;
+
+                            // If model not found, try next model
+                            if (errorMsg.includes('not found') || errorMsg.includes('not supported')) {
+                                console.log(`Model ${model} not available, trying next...`);
+                                lastError = new Error(errorMsg);
+                                continue;
                             }
-                        })
-                    });
 
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        const errorMsg = errorData.error?.message || `Gemini API error: ${response.status}`;
-                        if (response.status === 400 && errorMsg.includes('API key')) {
-                            throw new Error('Invalid Gemini API key. Get one at aistudio.google.com/apikey');
+                            if (response.status === 400 && errorMsg.includes('API key')) {
+                                throw new Error('Invalid Gemini API key. Get one at aistudio.google.com/apikey');
+                            }
+                            throw new Error(errorMsg);
                         }
-                        throw new Error(errorMsg);
-                    }
 
-                    const data = await response.json();
-                    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-                        throw new Error('Unexpected response format from Gemini');
+                        const data = await response.json();
+                        if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+                            console.log(`Model ${model} returned unexpected format, trying next...`);
+                            lastError = new Error('Unexpected response format from Gemini');
+                            continue;
+                        }
+
+                        // Cache the working model for future calls
+                        this.workingGeminiModel = model;
+                        console.log(`Successfully used Gemini model: ${model}`);
+                        const content = data.candidates[0].content.parts[0].text;
+                        return this.parseAIResponse(content);
+                    } catch (error) {
+                        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                            throw new Error('Network error connecting to Gemini. Check your internet connection.');
+                        }
+                        // If it's an API key error, don't try other models
+                        if (error.message.includes('API key')) {
+                            throw error;
+                        }
+                        lastError = error;
+                        console.log(`Model ${model} failed: ${error.message}`);
                     }
-                    const content = data.candidates[0].content.parts[0].text;
-                    return this.parseAIResponse(content);
-                } catch (error) {
-                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                        throw new Error('Network error connecting to Gemini. Check your internet connection.');
-                    }
-                    throw error;
                 }
+
+                // All models failed
+                throw lastError || new Error('All Gemini models failed. Try a different provider.');
             }
 
             async callAnthropic(apiKey, prompt) {
