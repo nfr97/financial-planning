@@ -193,42 +193,34 @@
         /* Navigation Tabs */
         .nav-tabs {
             max-width: 1200px;
-            margin: 0 auto 20px;
+            margin: 0 auto;
             display: flex;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px 12px 0 0;
-            overflow: hidden;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            background: transparent;
+            gap: 8px;
+            padding: 0 20px;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 16px 20px;
+            padding: 14px 16px;
             text-align: center;
             text-decoration: none;
-            color: #666;
-            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
             font-size: 0.95em;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
             background: transparent;
         }
 
         .nav-tab:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            color: rgba(255, 255, 255, 0.95);
         }
 
         .nav-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .nav-tab-icon {
-            display: block;
-            font-size: 1.4em;
-            margin-bottom: 4px;
+            color: white;
+            border-bottom-color: white;
+            font-weight: 600;
         }
 
         /* 508 Compliance - Focus indicators */
@@ -464,16 +456,13 @@
 
         @media (max-width: 768px) {
             .nav-tabs {
-                border-radius: 8px 8px 0 0;
+                padding: 0 10px;
+                gap: 4px;
             }
 
             .nav-tab {
                 padding: 12px 8px;
-                font-size: 0.8em;
-            }
-
-            .nav-tab-icon {
-                font-size: 1.2em;
+                font-size: 0.85em;
             }
 
             header h1 {
@@ -531,24 +520,15 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
-        <a href="income-allocation.html" class="nav-tab">
-            <span class="nav-tab-icon" aria-hidden="true">&#128176;</span>
-            Budget Planner
-        </a>
-        <a href="transaction-analyzer.html" class="nav-tab">
-            <span class="nav-tab-icon" aria-hidden="true">&#128202;</span>
-            Spending Tracker
-        </a>
-        <a href="index.html" class="nav-tab active" aria-current="page">
-            <span class="nav-tab-icon" aria-hidden="true">&#127793;</span>
-            Retirement Planner
-        </a>
+        <a href="income-allocation.html" class="nav-tab">Budget Planner</a>
+        <a href="transaction-analyzer.html" class="nav-tab">Spending Tracker</a>
+        <a href="index.html" class="nav-tab active" aria-current="page">Retirement Forecast</a>
     </nav>
 
     <div class="container" role="document">
         <header role="banner">
-            <h1>Retirement Planner</h1>
-            <p>Monte Carlo simulation with 10,000+ scenarios to project your retirement success</p>
+            <h1>Retirement Forecast</h1>
+            <p>See how your savings might grow with 10,000+ simulated scenarios</p>
         </header>
 
         <main id="main-content" role="main" class="content">
@@ -574,20 +554,21 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="expectedReturn">Expected Average Annual Return (%)</label>
+                    <label for="expectedReturn">Expected Annual Growth (%)</label>
                     <input type="number" id="expectedReturn" value="7" min="-20" max="30" step="0.1">
-                    <small>Historical stock market average: 7-10%</small>
+                    <small>Stock market historically averages 7-10% per year</small>
                 </div>
 
                 <div class="input-group">
-                    <label for="returnVolatility">Annual Return Volatility / Std Dev (%)</label>
+                    <label for="returnVolatility">Market Ups and Downs (%)</label>
                     <input type="number" id="returnVolatility" value="12" min="0" max="50" step="0.1">
-                    <small>Typical range: 10-20%</small>
+                    <small>How much returns swing year-to-year (12% is typical for stocks)</small>
                 </div>
 
                 <div class="input-group">
-                    <label for="inflationRate">Annual Inflation Rate (%)</label>
+                    <label for="inflationRate">Inflation Rate (%)</label>
                     <input type="number" id="inflationRate" value="3" min="0" max="20" step="0.1">
+                    <small>How fast prices rise each year (3% is historically normal)</small>
                 </div>
 
                 <div class="input-group">
@@ -612,14 +593,13 @@
             <!-- Life Events Section -->
             <div class="life-events-section">
                 <button class="toggle-events-btn" id="toggleEvents" aria-expanded="false" aria-controls="eventsPanel">
-                    <span aria-hidden="true">📅</span> Add Life Events (College, Kids, Home Purchase, etc.)
+                    <span aria-hidden="true">📅</span> Add Life Events (optional but makes your forecast more realistic)
                     <span class="arrow" aria-hidden="true">▼</span>
                 </button>
 
                 <div class="events-panel" id="eventsPanel" aria-labelledby="toggleEvents">
                     <p class="events-description">
-                        Model major life expenses and income changes like having children, college costs,
-                        home purchases, inheritances, or part-time retirement income.
+                        Planning to help pay for kids' college? Expecting an inheritance? Want to work part-time in early retirement? Add those here to see how they affect your forecast.
                     </p>
 
                     <div class="events-controls">
@@ -641,22 +621,22 @@
                     <div class="stat-card success">
                         <h3>Success Rate</h3>
                         <div class="value" id="successRate">-</div>
-                        <div class="description">Probability your money lasts through retirement without running out</div>
+                        <div class="description">Chance your savings last your entire retirement. Above 80% is generally considered good!</div>
                     </div>
                     <div class="stat-card">
-                        <h3>Median Ending Balance</h3>
+                        <h3>Typical Ending Balance</h3>
                         <div class="value" id="medianBalance">-</div>
-                        <div class="description">Typical portfolio value at age 95 across all scenarios</div>
+                        <div class="description">What you'd likely have left at age <span id="endAge">95</span> (half of scenarios end higher, half lower)</div>
                     </div>
                     <div class="stat-card">
-                        <h3>10th Percentile Balance</h3>
+                        <h3>If Markets Struggle</h3>
                         <div class="value" id="percentile10">-</div>
-                        <div class="description">Worst-case scenario: only 10% of outcomes are worse than this</div>
+                        <div class="description">In a rough economy, you might end with this much (only 10% of scenarios are worse)</div>
                     </div>
                     <div class="stat-card">
-                        <h3>90th Percentile Balance</h3>
+                        <h3>If Markets Thrive</h3>
                         <div class="value" id="percentile90">-</div>
-                        <div class="description">Best-case scenario: only 10% of outcomes are better than this</div>
+                        <div class="description">In a great economy, you could end with this much (only 10% of scenarios are better)</div>
                     </div>
                 </div>
 
@@ -682,7 +662,8 @@
             Please consult with a qualified financial advisor for personalized retirement planning.
             <br><br>
             <a href="income-allocation.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Budget Planner</a> |
-            <a href="transaction-analyzer.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Spending Tracker</a>
+            <a href="transaction-analyzer.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Spending Tracker</a> |
+            <a href="index.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Retirement Forecast</a>
         </footer>
     </div>
 
@@ -1129,7 +1110,7 @@
                     progress.textContent = 'Calculating results...';
 
                     const stats = simulator.getStatistics();
-                    this.displayStatistics(stats);
+                    this.displayStatistics(stats, params);
 
                     const histogramData = simulator.getHistogramData();
                     this.updateHistogram(histogramData);
@@ -1152,11 +1133,13 @@
                 }
             }
 
-            displayStatistics(stats) {
+            displayStatistics(stats, params) {
+                const endAge = params.retirementAge + params.yearsInRetirement;
                 document.getElementById('successRate').textContent = stats.successRate.toFixed(1) + '%';
                 document.getElementById('medianBalance').textContent = this.formatCurrency(stats.median);
                 document.getElementById('percentile10').textContent = this.formatCurrency(stats.percentile10);
                 document.getElementById('percentile90').textContent = this.formatCurrency(stats.percentile90);
+                document.getElementById('endAge').textContent = endAge;
             }
 
             formatCurrency(value) {

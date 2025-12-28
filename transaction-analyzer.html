@@ -511,42 +511,34 @@
         /* Navigation Tabs */
         .nav-tabs {
             max-width: 1200px;
-            margin: 0 auto 20px;
+            margin: 0 auto;
             display: flex;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px 12px 0 0;
-            overflow: hidden;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            background: transparent;
+            gap: 8px;
+            padding: 0 20px;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 16px 20px;
+            padding: 14px 16px;
             text-align: center;
             text-decoration: none;
-            color: #666;
-            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
             font-size: 0.95em;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
             background: transparent;
         }
 
         .nav-tab:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            color: rgba(255, 255, 255, 0.95);
         }
 
         .nav-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .nav-tab-icon {
-            display: block;
-            font-size: 1.4em;
-            margin-bottom: 4px;
+            color: white;
+            border-bottom-color: white;
+            font-weight: 600;
         }
 
         /* Accessibility: Skip link */
@@ -753,16 +745,13 @@
         /* Responsive */
         @media (max-width: 768px) {
             .nav-tabs {
-                border-radius: 8px 8px 0 0;
+                padding: 0 10px;
+                gap: 4px;
             }
 
             .nav-tab {
                 padding: 12px 8px;
-                font-size: 0.8em;
-            }
-
-            .nav-tab-icon {
-                font-size: 1.2em;
+                font-size: 0.85em;
             }
 
             header h1 {
@@ -843,18 +832,9 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
-        <a href="income-allocation.html" class="nav-tab">
-            <span class="nav-tab-icon" aria-hidden="true">&#128176;</span>
-            Budget Planner
-        </a>
-        <a href="transaction-analyzer.html" class="nav-tab active" aria-current="page">
-            <span class="nav-tab-icon" aria-hidden="true">&#128202;</span>
-            Spending Tracker
-        </a>
-        <a href="index.html" class="nav-tab">
-            <span class="nav-tab-icon" aria-hidden="true">&#127793;</span>
-            Retirement Planner
-        </a>
+        <a href="income-allocation.html" class="nav-tab">Budget Planner</a>
+        <a href="transaction-analyzer.html" class="nav-tab active" aria-current="page">Spending Tracker</a>
+        <a href="index.html" class="nav-tab">Retirement Forecast</a>
     </nav>
 
     <div class="container" role="document">
@@ -873,7 +853,7 @@
             <!-- Step 1: Set Targets -->
             <div class="section">
                 <h2>Step 1: Set Your Target Allocations</h2>
-                <p style="color: #666; margin-bottom: 15px;">Enter your monthly income and target percentages (from your Income Allocation plan)</p>
+                <p style="color: #666; margin-bottom: 15px;">Enter your monthly take-home pay and how you want to divide it. <a href="income-allocation.html" style="color: #667eea;">Need help deciding? Use the Budget Planner first.</a></p>
 
                 <div class="targets-grid">
                     <div class="target-input">
@@ -881,19 +861,19 @@
                         <input type="text" id="monthlyIncome" value="$5,000.00" inputmode="decimal" autocomplete="transaction-amount">
                     </div>
                     <div class="target-input">
-                        <label for="targetFixed">Fixed Costs %</label>
+                        <label for="targetFixed">Bills & Essentials %</label>
                         <input type="number" id="targetFixed" value="50" min="0" max="100">
                     </div>
                     <div class="target-input">
-                        <label for="targetShortTerm">Short-Term Savings %</label>
+                        <label for="targetShortTerm">Savings Goals %</label>
                         <input type="number" id="targetShortTerm" value="20" min="0" max="100">
                     </div>
                     <div class="target-input">
-                        <label for="targetLongTerm">Long-Term Savings %</label>
+                        <label for="targetLongTerm">Retirement %</label>
                         <input type="number" id="targetLongTerm" value="20" min="0" max="100">
                     </div>
                     <div class="target-input">
-                        <label for="targetGuiltFree">Guilt-Free Spending %</label>
+                        <label for="targetGuiltFree">Fun Money %</label>
                         <input type="number" id="targetGuiltFree" value="10" min="0" max="100">
                     </div>
                 </div>
@@ -1080,7 +1060,7 @@
 
         <footer role="contentinfo">
             <a href="income-allocation.html">Budget Planner</a> |
-            <a href="index.html">Retirement Planner</a>
+            <a href="index.html">Retirement Forecast</a>
         </footer>
     </div>
 

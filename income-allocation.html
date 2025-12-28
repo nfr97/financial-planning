@@ -436,60 +436,47 @@
         /* Navigation Tabs */
         .nav-tabs {
             max-width: 1000px;
-            margin: 0 auto 20px;
+            margin: 0 auto;
             display: flex;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px 12px 0 0;
-            overflow: hidden;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            background: transparent;
+            gap: 8px;
+            padding: 0 20px;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 16px 20px;
+            padding: 14px 16px;
             text-align: center;
             text-decoration: none;
-            color: #666;
-            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
             font-size: 0.95em;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
             background: transparent;
         }
 
         .nav-tab:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
+            color: rgba(255, 255, 255, 0.95);
         }
 
         .nav-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .nav-tab-icon {
-            display: block;
-            font-size: 1.4em;
-            margin-bottom: 4px;
+            color: white;
+            border-bottom-color: white;
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
             .nav-tabs {
-                border-radius: 8px 8px 0 0;
+                padding: 0 10px;
+                gap: 4px;
             }
 
             .nav-tab {
                 padding: 12px 8px;
-                font-size: 0.8em;
+                font-size: 0.85em;
             }
 
-            .nav-tab-icon {
-                font-size: 1.2em;
-            }
-        }
-
-        @media (max-width: 768px) {
             header h1 {
                 font-size: 1.5em;
             }
@@ -516,18 +503,9 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
-        <a href="income-allocation.html" class="nav-tab active" aria-current="page">
-            <span class="nav-tab-icon" aria-hidden="true">&#128176;</span>
-            Budget Planner
-        </a>
-        <a href="transaction-analyzer.html" class="nav-tab">
-            <span class="nav-tab-icon" aria-hidden="true">&#128202;</span>
-            Spending Tracker
-        </a>
-        <a href="index.html" class="nav-tab">
-            <span class="nav-tab-icon" aria-hidden="true">&#127793;</span>
-            Retirement Planner
-        </a>
+        <a href="income-allocation.html" class="nav-tab active" aria-current="page">Budget Planner</a>
+        <a href="transaction-analyzer.html" class="nav-tab">Spending Tracker</a>
+        <a href="index.html" class="nav-tab">Retirement Forecast</a>
     </nav>
 
     <div class="container" role="document">
@@ -538,7 +516,7 @@
 
         <main id="main-content" class="content" role="main">
             <section class="philosophy-section" aria-label="Philosophy">
-                <p>By consciously allocating your income across fixed costs, short-term saving/investing, long-term saving/investing, and guilt-free spending, you create a balanced financial life that sets you up for long-term success. This approach gives you the freedom to spend guilt-free on what you love today, while automatically building the future you want—no restrictive budgeting required.</p>
+                <p><strong>The idea is simple:</strong> divide your income into four buckets so you always know exactly where your money goes. Cover your essentials first, automate your savings, then spend the rest guilt-free on whatever makes you happy.</p>
             </section>
 
             <section class="income-section" aria-labelledby="income-section-heading">
@@ -578,11 +556,12 @@
 
             <section class="preset-buttons" role="group" aria-label="Allocation presets">
                 <h2 class="sr-only">Quick Preset Options</h2>
-                <button type="button" class="preset-btn" onclick="applyPreset('balanced')" aria-describedby="balanced-desc">Balanced (50/20/20/10)</button>
+                <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 0.95em;">Not sure where to start? Try one of these common approaches:</p>
+                <button type="button" class="preset-btn" onclick="applyPreset('balanced')" aria-describedby="balanced-desc" title="Good for most people">Balanced</button>
                 <span id="balanced-desc" class="sr-only">Fixed costs 50%, Short-term savings 20%, Long-term savings 20%, Guilt-free spending 10%</span>
-                <button type="button" class="preset-btn" onclick="applyPreset('aggressive-saver')" aria-describedby="aggressive-desc">Aggressive Saver (50/15/30/5)</button>
+                <button type="button" class="preset-btn" onclick="applyPreset('aggressive-saver')" aria-describedby="aggressive-desc" title="Maximize retirement savings">Aggressive Saver</button>
                 <span id="aggressive-desc" class="sr-only">Fixed costs 50%, Short-term savings 15%, Long-term savings 30%, Guilt-free spending 5%</span>
-                <button type="button" class="preset-btn" onclick="applyPreset('debt-crusher')" aria-describedby="debt-desc">Debt Crusher (60/20/15/5)</button>
+                <button type="button" class="preset-btn" onclick="applyPreset('debt-crusher')" aria-describedby="debt-desc" title="Pay off debt faster">Debt Crusher</button>
                 <span id="debt-desc" class="sr-only">Fixed costs 60%, Short-term savings 20%, Long-term savings 15%, Guilt-free spending 5%</span>
             </section>
 
@@ -595,7 +574,7 @@
                         <div class="category-percentage" aria-live="polite"><span id="fixedCostsPercent">50</span>%</div>
                     </div>
                     <p class="category-description" id="fixedCosts-desc">
-                        Essential expenses like rent/mortgage, utilities, insurance, car payments, minimum debt payments
+                        Must-pay bills: rent/mortgage, utilities, insurance, car payment, minimum debt payments. <em>Tip: If this exceeds 60%, look for ways to reduce housing or transportation costs.</em>
                     </p>
                     <div class="slider-container">
                         <label for="fixedCostsSlider" class="sr-only">Fixed costs allocation percentage</label>
@@ -619,7 +598,7 @@
                         <div class="category-percentage" aria-live="polite"><span id="shortTermPercent">20</span>%</div>
                     </div>
                     <p class="category-description" id="shortTerm-desc">
-                        Emergency fund, vacation fund, upcoming purchases, short-term goals
+                        Your safety net: emergency fund (aim for 3-6 months of expenses), plus savings for vacations, big purchases, or goals within the next 1-5 years.
                     </p>
                     <div class="slider-container">
                         <label for="shortTermSlider" class="sr-only">Short-term savings allocation percentage</label>
@@ -643,7 +622,7 @@
                         <div class="category-percentage" aria-live="polite"><span id="longTermPercent">20</span>%</div>
                     </div>
                     <p class="category-description" id="longTerm-desc">
-                        Retirement accounts (401k, IRA), investments, long-term wealth building
+                        Future you will thank you: 401(k), IRA, and investments. <em>Tip: At minimum, contribute enough to get your employer's full 401(k) match—it's free money!</em>
                     </p>
                     <div class="slider-container">
                         <label for="longTermSlider" class="sr-only">Long-term savings allocation percentage</label>
@@ -667,7 +646,7 @@
                         <div class="category-percentage" aria-live="polite"><span id="guiltFreePercent">10</span>%</div>
                     </div>
                     <p class="category-description" id="guiltFree-desc">
-                        Dining out, entertainment, hobbies, shopping - enjoy without guilt after covering essentials and savings
+                        This is YOUR money to enjoy—dining out, hobbies, shopping, whatever makes you happy. No guilt because your essentials and savings are already covered!
                     </p>
                     <div class="slider-container">
                         <label for="guiltFreeSlider" class="sr-only">Guilt-free spending allocation percentage</label>
@@ -691,7 +670,7 @@
             <nav aria-label="Related resources and site navigation">
                 Inspired by <a href="https://www.iwillteachyoutoberich.com/" target="_blank" rel="noopener noreferrer">Ramit Sethi's "I Will Teach You to Be Rich" <span class="sr-only">(opens in new tab)</span></a> |
                 <a href="transaction-analyzer.html">Spending Tracker</a> |
-                <a href="index.html">Retirement Planner</a>
+                <a href="index.html">Retirement Forecast</a>
             </nav>
         </footer>
     </div>
