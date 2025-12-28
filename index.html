@@ -870,19 +870,7 @@
                 this.pathsChart = null;
                 this.eventsManager = new LifeEventsManager();
                 this.setupEventListeners();
-                this.initializeWithSampleEvents();
-            }
-
-            initializeWithSampleEvents() {
-                // Add a sample event to demonstrate the feature
-                this.addLifeEvent({
-                    name: 'College Expenses (4 years)',
-                    type: 'expense',
-                    amount: 35000,
-                    startAge: 53,
-                    duration: 4
-                });
-                this.renderLifeEvents();
+                // Removed sample events - start with empty state
             }
 
             setupEventListeners() {
@@ -1172,8 +1160,8 @@
                 }
 
                 // Calculate percentile bands at each age point
-                const pathLength = paths[0].length;
-                const ages = paths[0].map(p => p.age);
+                // Find the maximum path length
+                const maxPathLength = Math.max(...paths.map(p => p.length));
 
                 const percentile10 = [];
                 const percentile25 = [];
@@ -1181,15 +1169,26 @@
                 const percentile75 = [];
                 const percentile90 = [];
 
-                for (let i = 0; i < pathLength; i++) {
-                    const balancesAtAge = paths.map(path => path[i].balance).sort((a, b) => a - b);
+                for (let i = 0; i < maxPathLength; i++) {
+                    // Collect balances from all paths that have data at this index
+                    const balancesAtAge = paths
+                        .filter(path => i < path.length)
+                        .map(path => path[i].balance)
+                        .sort((a, b) => a - b);
+
                     const n = balancesAtAge.length;
 
-                    percentile10.push({ x: ages[i], y: balancesAtAge[Math.floor(n * 0.10)] });
-                    percentile25.push({ x: ages[i], y: balancesAtAge[Math.floor(n * 0.25)] });
-                    percentile50.push({ x: ages[i], y: balancesAtAge[Math.floor(n * 0.50)] });
-                    percentile75.push({ x: ages[i], y: balancesAtAge[Math.floor(n * 0.75)] });
-                    percentile90.push({ x: ages[i], y: balancesAtAge[Math.floor(n * 0.90)] });
+                    // Skip if we don't have enough data points
+                    if (n === 0) continue;
+
+                    const age = paths[0][i]?.age;
+                    if (!age) continue;
+
+                    percentile10.push({ x: age, y: balancesAtAge[Math.floor(n * 0.10)] });
+                    percentile25.push({ x: age, y: balancesAtAge[Math.floor(n * 0.25)] });
+                    percentile50.push({ x: age, y: balancesAtAge[Math.floor(n * 0.50)] });
+                    percentile75.push({ x: age, y: balancesAtAge[Math.floor(n * 0.75)] });
+                    percentile90.push({ x: age, y: balancesAtAge[Math.floor(n * 0.90)] });
                 }
 
                 // Create datasets for confidence bands
