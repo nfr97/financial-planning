@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Analyzer - See Your Spending Reality</title>
+    <script src="shared.js"></script>
     <style>
         * {
             margin: 0;
@@ -1337,40 +1338,7 @@
             }
 
             parseDate(dateStr, format) {
-                if (!dateStr) return null;
-
-                dateStr = dateStr.replace(/"/g, '').trim();
-
-                // Try various formats
-                const formats = [
-                    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,  // MM/DD/YYYY
-                    /^(\d{4})-(\d{2})-(\d{2})$/,        // YYYY-MM-DD
-                    /^(\d{1,2})-(\d{1,2})-(\d{4})$/,    // MM-DD-YYYY
-                ];
-
-                for (const regex of formats) {
-                    const match = dateStr.match(regex);
-                    if (match) {
-                        if (regex === formats[1]) {
-                            // YYYY-MM-DD
-                            return `${match[1]}-${match[2]}-${match[3]}`;
-                        } else {
-                            // MM/DD/YYYY or MM-DD-YYYY
-                            const month = match[1].padStart(2, '0');
-                            const day = match[2].padStart(2, '0');
-                            const year = match[3];
-                            return `${year}-${month}-${day}`;
-                        }
-                    }
-                }
-
-                // Fallback: try native Date parsing
-                const date = new Date(dateStr);
-                if (!isNaN(date.getTime())) {
-                    return date.toISOString().split('T')[0];
-                }
-
-                return null;
+                return DateUtils.parseDate(dateStr);
             }
 
             categorizeTransaction(transaction) {
@@ -1665,13 +1633,13 @@
                 if (merchantPattern.length < 3) return;
 
                 // Save to localStorage
-                const rules = JSON.parse(localStorage.getItem('transactionRules') || '{}');
+                const rules = StorageUtils.get('transactionRules', {});
                 rules[merchantPattern] = category;
-                localStorage.setItem('transactionRules', JSON.stringify(rules));
+                StorageUtils.set('transactionRules', rules);
             }
 
             loadSavedRules() {
-                const rules = JSON.parse(localStorage.getItem('transactionRules') || '{}');
+                const rules = StorageUtils.get('transactionRules', {});
 
                 // Add saved rules to category patterns
                 for (const [pattern, category] of Object.entries(rules)) {
@@ -1683,14 +1651,8 @@
             }
 
             saveRules() {
-                const rules = JSON.parse(localStorage.getItem('transactionRules') || '{}');
-                const blob = new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'transaction-rules.json';
-                a.click();
-                URL.revokeObjectURL(url);
+                const rules = StorageUtils.get('transactionRules', {});
+                DOMUtils.downloadFile(JSON.stringify(rules, null, 2), 'transaction-rules.json', 'application/json');
             }
 
             exportSummary() {
@@ -1723,28 +1685,15 @@
                     summary += `${name}: ${this.formatCurrency(monthly)}/month (${data.count} transactions)\n`;
                 }
 
-                const blob = new Blob([summary], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'spending-summary.txt';
-                a.click();
-                URL.revokeObjectURL(url);
+                DOMUtils.downloadFile(summary, 'spending-summary.txt');
             }
 
             formatCurrency(value) {
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }).format(value);
+                return FinanceUtils.formatCurrency(value);
             }
 
             escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
+                return DOMUtils.escapeHtml(text);
             }
 
             // AI Categorization Methods
@@ -2020,7 +1969,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
 
         // Initialize
         let analyzer;
-        document.addEventListener('DOMContentLoaded', () => {
+        DOMUtils.ready(() => {
             analyzer = new TransactionAnalyzer();
 
             const apiKeyInput = document.getElementById('apiKey');
@@ -2033,10 +1982,10 @@ Respond with ONLY a JSON array in this exact format, no other text:
             });
 
             // Load saved provider and API key from localStorage
-            const savedProvider = localStorage.getItem('aiProvider') || 'gemini';
+            const savedProvider = StorageUtils.get('aiProvider', 'gemini');
             providerSelect.value = savedProvider;
 
-            const savedKey = localStorage.getItem(`apiKey_${savedProvider}`);
+            const savedKey = StorageUtils.get(`apiKey_${savedProvider}`);
             if (savedKey) {
                 apiKeyInput.value = savedKey;
                 aiCategorizeBtn.disabled = false;
@@ -2045,7 +1994,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
             // Update placeholder and load key when provider changes
             providerSelect.addEventListener('change', (e) => {
                 const provider = e.target.value;
-                localStorage.setItem('aiProvider', provider);
+                StorageUtils.set('aiProvider', provider);
 
                 // Update placeholder
                 const placeholders = {
@@ -2056,7 +2005,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
                 apiKeyInput.placeholder = placeholders[provider] || 'Enter API key...';
 
                 // Load saved key for this provider
-                const savedProviderKey = localStorage.getItem(`apiKey_${provider}`);
+                const savedProviderKey = StorageUtils.get(`apiKey_${provider}`);
                 apiKeyInput.value = savedProviderKey || '';
                 aiCategorizeBtn.disabled = !savedProviderKey;
             });
@@ -2068,7 +2017,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
             apiKeyInput.addEventListener('change', (e) => {
                 if (e.target.value.trim()) {
                     const provider = providerSelect.value;
-                    localStorage.setItem(`apiKey_${provider}`, e.target.value.trim());
+                    StorageUtils.set(`apiKey_${provider}`, e.target.value.trim());
                 }
             });
         });

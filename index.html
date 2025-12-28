@@ -6,6 +6,7 @@
     <meta name="description" content="Monte Carlo retirement planning simulator with life events modeling. Calculate your retirement success rate using probabilistic simulations.">
     <title>Monte Carlo Retirement Projection Simulator</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="shared.js"></script>
     <style>
         * {
             margin: 0;
@@ -850,17 +851,7 @@
             }
 
             formatCurrency(value) {
-                if (value >= 1000000) {
-                    return '$' + (value / 1000000).toFixed(1) + 'M';
-                } else if (value >= 1000) {
-                    return '$' + (value / 1000).toFixed(0) + 'K';
-                } else if (value <= -1000000) {
-                    return '-$' + (Math.abs(value) / 1000000).toFixed(1) + 'M';
-                } else if (value <= -1000) {
-                    return '-$' + (Math.abs(value) / 1000).toFixed(0) + 'K';
-                } else {
-                    return '$' + value.toFixed(0);
-                }
+                return FinanceUtils.formatCurrencyCompact(value);
             }
         }
 
@@ -1074,17 +1065,7 @@
             }
 
             formatCurrency(value) {
-                if (value >= 1000000) {
-                    return '$' + (value / 1000000).toFixed(2) + 'M';
-                } else if (value >= 1000) {
-                    return '$' + (value / 1000).toFixed(0) + 'K';
-                } else if (value < 0 && value <= -1000000) {
-                    return '-$' + (Math.abs(value) / 1000000).toFixed(2) + 'M';
-                } else if (value < 0 && value <= -1000) {
-                    return '-$' + (Math.abs(value) / 1000).toFixed(0) + 'K';
-                } else {
-                    return '$' + value.toFixed(0);
-                }
+                return FinanceUtils.formatCurrencyCompact(value);
             }
 
             updateHistogram(histogramData) {

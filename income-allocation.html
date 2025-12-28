@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Income Allocation Calculator - I Will Teach You to Be Rich</title>
+    <script src="shared.js"></script>
     <style>
         * {
             margin: 0;
@@ -769,12 +770,7 @@
             }
 
             formatCurrency(value) {
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }).format(value);
+                return FinanceUtils.formatCurrency(value);
             }
 
             setPreset(preset) {
@@ -818,7 +814,7 @@
         }
 
         // Initialize the application
-        document.addEventListener('DOMContentLoaded', () => {
+        DOMUtils.ready(() => {
             allocator = new IncomeAllocator();
         });
     </script>
