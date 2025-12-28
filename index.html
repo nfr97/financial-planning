@@ -1163,6 +1163,12 @@
                     this.pathsChart.destroy();
                 }
 
+                // Safety check
+                if (!paths || paths.length === 0 || !paths[0] || paths[0].length === 0) {
+                    console.error('No path data available for chart');
+                    return;
+                }
+
                 // Calculate percentile bands at each age point
                 const pathLength = paths[0].length;
                 const ages = paths[0].map(p => p.age);
