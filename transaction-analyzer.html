@@ -968,36 +968,6 @@
                 </div>
             </div>
 
-            <!-- AI Categorization (Optional) -->
-            <div class="section" id="aiSection">
-                <h2>AI-Powered Categorization (Optional)</h2>
-                <p style="color: #666; margin-bottom: 15px;">Select your AI provider and enter your API key to automatically categorize transactions. Your key is stored locally in your browser.</p>
-
-                <div class="cors-notice">
-                    <strong>Recommended: Google Gemini</strong> - Works best from browsers. OpenAI and Anthropic may have connection issues due to browser security restrictions.
-                </div>
-
-                <div class="api-key-wrapper">
-                    <select id="aiProvider" class="provider-select">
-                        <option value="gemini">Google Gemini (Recommended)</option>
-                        <option value="openai">OpenAI (GPT-4o-mini)</option>
-                        <option value="anthropic">Anthropic Claude</option>
-                    </select>
-                    <input type="password" id="apiKey" placeholder="Enter API key..." class="api-key-input">
-                    <button class="btn btn-secondary" onclick="analyzer.toggleApiKeyVisibility()">Show</button>
-                </div>
-                <div style="margin-top: 10px;">
-                    <button class="btn btn-primary" id="aiCategorizeBtn" onclick="analyzer.aiCategorize()" disabled>AI Categorize Uncategorized</button>
-                </div>
-                <div id="aiStatus" class="ai-status"></div>
-                <div class="api-help">
-                    <strong>Get a free API key:</strong>
-                    <a href="https://aistudio.google.com/apikey" target="_blank">Google Gemini (free tier)</a> |
-                    <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI</a> |
-                    <a href="https://console.anthropic.com/" target="_blank">Anthropic</a>
-                </div>
-            </div>
-
             <!-- Step 2: Select Format -->
             <div class="section">
                 <h2>Step 2: Select Your Bank Format</h2>
@@ -1057,6 +1027,32 @@
                     <div class="upload-icon">&#128196;</div>
                     <div class="upload-text">Drop CSV files here or click to upload</div>
                     <div class="upload-hint">You can upload multiple files from different accounts</div>
+                </div>
+            </div>
+
+            <!-- AI Categorization (Optional) -->
+            <div class="section" id="aiSection">
+                <h2>AI-Powered Categorization (Optional)</h2>
+                <p style="color: #666; margin-bottom: 15px;">Select your AI provider and enter your API key to automatically categorize transactions. Your key is stored locally in your browser.</p>
+
+                <div class="api-key-wrapper">
+                    <select id="aiProvider" class="provider-select">
+                        <option value="gemini">Google Gemini</option>
+                        <option value="openai">OpenAI (GPT-4o-mini)</option>
+                        <option value="anthropic">Anthropic Claude</option>
+                    </select>
+                    <input type="password" id="apiKey" placeholder="Enter API key..." class="api-key-input">
+                    <button class="btn btn-secondary" onclick="analyzer.toggleApiKeyVisibility()">Show</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="btn btn-primary" id="aiCategorizeBtn" onclick="analyzer.aiCategorize()" disabled>AI Categorize Uncategorized</button>
+                </div>
+                <div id="aiStatus" class="ai-status"></div>
+                <div class="api-help">
+                    <strong>Get a free API key:</strong>
+                    <a href="https://aistudio.google.com/apikey" target="_blank">Google Gemini (free tier)</a> |
+                    <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI</a> |
+                    <a href="https://console.anthropic.com/" target="_blank">Anthropic</a>
                 </div>
             </div>
 
