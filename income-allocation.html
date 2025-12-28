@@ -287,6 +287,19 @@
             border-radius: 6px;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .allocation-box:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .allocation-box.editing {
+            border-color: #667eea;
+            background: #f0f4ff;
         }
 
         .allocation-label {
@@ -301,6 +314,18 @@
             font-size: 1.5em;
             font-weight: 700;
             color: #333;
+        }
+
+        .allocation-input {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+            border: none;
+            background: transparent;
+            text-align: center;
+            width: 100%;
+            outline: none;
+            padding: 0;
         }
 
 
@@ -379,7 +404,7 @@
 
         <div class="content">
             <div class="philosophy-section">
-                <p>By consciously allocating your income across these four essential categories, you create a balanced financial life that sets you up for long-term success. This approach gives you the freedom to spend guilt-free on what you love today, while automatically building the future you want—no restrictive budgeting required.</p>
+                <p>By consciously allocating your income across fixed costs, short-term saving/investing, long-term saving/investing, and guilt-free spending, you create a balanced financial life that sets you up for long-term success. This approach gives you the freedom to spend guilt-free on what you love today, while automatically building the future you want—no restrictive budgeting required.</p>
             </div>
 
             <div class="income-section">
@@ -525,6 +550,9 @@
     <script>
         class IncomeAllocator {
             constructor() {
+                // Define category order (top to bottom on page)
+                this.categoryOrder = ['fixedCosts', 'shortTerm', 'longTerm', 'guiltFree'];
+
                 this.categories = {
                     fixedCosts: { slider: null, percent: null, monthly: null, annual: null, value: 50 },
                     shortTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
@@ -538,6 +566,7 @@
                 this.taxFields = null;
                 this.taxEstimate = null;
                 this.taxType = 'post-tax';
+                this.editingElement = null;
 
                 this.init();
             }
@@ -574,11 +603,106 @@
                         const newValue = parseInt(e.target.value);
                         this.adjustCategories(key, newValue);
                     });
+
+                    // Add click handlers for editable allocation amounts
+                    data.monthly.parentElement.addEventListener('click', () => {
+                        this.makeEditable(key, 'monthly');
+                    });
+                    data.annual.parentElement.addEventListener('click', () => {
+                        this.makeEditable(key, 'annual');
+                    });
                 }
 
                 // Format initial value and calculate
                 this.handleIncomeBlur();
                 this.calculate();
+            }
+
+            makeEditable(category, period) {
+                const data = this.categories[category];
+                const element = period === 'monthly' ? data.monthly : data.annual;
+                const box = element.parentElement;
+
+                // If already editing this element, return
+                if (this.editingElement === element) {
+                    return;
+                }
+
+                // If editing another element, finalize that first
+                if (this.editingElement) {
+                    this.finalizeEdit();
+                }
+
+                // Get current value (strip formatting)
+                const currentValue = this.parseIncomeValue(element.textContent);
+
+                // Replace text with input
+                box.classList.add('editing');
+                element.innerHTML = `<input type="text" class="allocation-input" value="${currentValue.toFixed(2)}" />`;
+
+                const input = element.querySelector('input');
+                input.focus();
+                input.select();
+
+                // Store reference to editing element
+                this.editingElement = element;
+                this.editingCategory = category;
+                this.editingPeriod = period;
+
+                // Handle blur (clicking away)
+                input.addEventListener('blur', () => {
+                    this.finalizeEdit();
+                });
+
+                // Handle Enter key
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.finalizeEdit();
+                    }
+                });
+
+                // Handle input to only allow numbers and decimal
+                input.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/[^0-9.]/g, '');
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    e.target.value = value;
+                });
+            }
+
+            finalizeEdit() {
+                if (!this.editingElement) return;
+
+                const input = this.editingElement.querySelector('input');
+                const newAmount = parseFloat(input.value) || 0;
+                const category = this.editingCategory;
+                const period = this.editingPeriod;
+                const box = this.editingElement.parentElement;
+
+                // Calculate what percentage this represents
+                const monthlyIncome = this.getMonthlyIncome();
+                const annualIncome = monthlyIncome * 12;
+
+                let newPercentage;
+                if (period === 'monthly') {
+                    newPercentage = (newAmount / monthlyIncome) * 100;
+                } else {
+                    newPercentage = (newAmount / annualIncome) * 100;
+                }
+
+                // Clamp percentage between 0 and 100
+                newPercentage = Math.max(0, Math.min(100, Math.round(newPercentage)));
+
+                // Update the category percentage (this will trigger auto-balancing)
+                this.adjustCategories(category, newPercentage);
+
+                // Remove editing state
+                box.classList.remove('editing');
+                this.editingElement = null;
+                this.editingCategory = null;
+                this.editingPeriod = null;
             }
 
             handleIncomeFocus() {
@@ -641,47 +765,66 @@
 
                 if (difference === 0) return;
 
-                // Get other categories (not the one being changed)
-                const otherCategories = Object.keys(this.categories).filter(k => k !== changedKey);
+                // Update the changed category
+                this.categories[changedKey].value = newValue;
 
-                // Calculate total of other categories
-                let otherTotal = 0;
-                for (const key of otherCategories) {
-                    otherTotal += this.categories[key].value;
+                // Get the index of the changed category
+                const changedIndex = this.categoryOrder.indexOf(changedKey);
+
+                // Get categories below the changed one
+                const categoriesBelow = this.categoryOrder.slice(changedIndex + 1);
+
+                // If there are no categories below, we can't auto-balance
+                if (categoriesBelow.length === 0) {
+                    this.calculate();
+                    return;
                 }
 
-                // Distribute the difference proportionally among other categories
-                if (otherTotal > 0) {
-                    let remainingDifference = difference;
+                // Calculate total of categories below
+                let totalBelow = 0;
+                for (const key of categoriesBelow) {
+                    totalBelow += this.categories[key].value;
+                }
 
-                    for (let i = 0; i < otherCategories.length; i++) {
-                        const key = otherCategories[i];
-                        const isLast = i === otherCategories.length - 1;
+                // Calculate what the total should be for categories below
+                // Total should be 100 - all categories above (including the changed one)
+                let totalAboveAndCurrent = 0;
+                for (let i = 0; i <= changedIndex; i++) {
+                    totalAboveAndCurrent += this.categories[this.categoryOrder[i]].value;
+                }
+
+                const targetTotalBelow = 100 - totalAboveAndCurrent;
+
+                // Adjust categories below proportionally to hit the target
+                if (totalBelow > 0) {
+                    // Distribute proportionally
+                    let remainingToDistribute = targetTotalBelow;
+
+                    for (let i = 0; i < categoriesBelow.length; i++) {
+                        const key = categoriesBelow[i];
+                        const isLast = i === categoriesBelow.length - 1;
 
                         if (isLast) {
-                            // For the last category, use the remaining difference to avoid rounding errors
-                            this.categories[key].value = Math.max(0, Math.min(100, this.categories[key].value - remainingDifference));
+                            // Give the remainder to the last category
+                            this.categories[key].value = Math.max(0, Math.min(100, remainingToDistribute));
                         } else {
-                            // Proportional adjustment
-                            const proportion = this.categories[key].value / otherTotal;
-                            const adjustment = Math.round(difference * proportion);
-                            this.categories[key].value = Math.max(0, Math.min(100, this.categories[key].value - adjustment));
-                            remainingDifference -= adjustment;
+                            // Proportional distribution
+                            const proportion = this.categories[key].value / totalBelow;
+                            const newCategoryValue = Math.round(targetTotalBelow * proportion);
+                            this.categories[key].value = Math.max(0, Math.min(100, newCategoryValue));
+                            remainingToDistribute -= this.categories[key].value;
                         }
                     }
                 } else {
-                    // If all other categories are 0, distribute evenly
-                    const splitAmount = Math.floor((100 - newValue) / otherCategories.length);
-                    let remainder = (100 - newValue) % otherCategories.length;
+                    // If all categories below are 0, distribute evenly
+                    const splitAmount = Math.floor(targetTotalBelow / categoriesBelow.length);
+                    let remainder = targetTotalBelow % categoriesBelow.length;
 
-                    for (const key of otherCategories) {
+                    for (const key of categoriesBelow) {
                         this.categories[key].value = splitAmount + (remainder > 0 ? 1 : 0);
                         if (remainder > 0) remainder--;
                     }
                 }
-
-                // Update the changed category
-                this.categories[changedKey].value = newValue;
 
                 // Recalculate and update display
                 this.calculate();
@@ -825,9 +968,13 @@
                     data.percent.textContent = percentage;
                     data.slider.value = percentage;
 
-                    // Update allocation displays
-                    data.monthly.textContent = this.formatCurrency(monthlyAmount);
-                    data.annual.textContent = this.formatCurrency(annualAmount);
+                    // Update allocation displays (only if not currently editing)
+                    if (this.editingElement !== data.monthly) {
+                        data.monthly.textContent = this.formatCurrency(monthlyAmount);
+                    }
+                    if (this.editingElement !== data.annual) {
+                        data.annual.textContent = this.formatCurrency(annualAmount);
+                    }
                 }
             }
 
