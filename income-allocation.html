@@ -59,7 +59,7 @@
         .income-input-group {
             display: flex;
             flex-direction: column;
-            max-width: 400px;
+            margin-bottom: 15px;
         }
 
         .income-input-group label {
@@ -70,9 +70,10 @@
         }
 
         .income-input-wrapper {
-            display: flex;
-            align-items: center;
+            display: grid;
+            grid-template-columns: auto 1fr;
             gap: 10px;
+            align-items: center;
         }
 
         .income-input-wrapper select {
@@ -83,21 +84,77 @@
             background: white;
             cursor: pointer;
             transition: border-color 0.3s;
+            min-width: 100px;
         }
 
         .income-input-wrapper input {
-            flex: 1;
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 6px;
-            font-size: 1.2em;
+            font-size: 1em;
             transition: border-color 0.3s;
+            width: 100%;
+            min-width: 0;
         }
 
         .income-input-wrapper input:focus,
         .income-input-wrapper select:focus {
             outline: none;
             border-color: #667eea;
+        }
+
+        .tax-toggle-wrapper {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .tax-toggle-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tax-toggle-option.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .tax-toggle-option:hover {
+            border-color: #667eea;
+        }
+
+        .tax-fields {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .tax-fields.show {
+            display: block;
+        }
+
+        .tax-estimate {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #92400e;
+        }
+
+        .tax-estimate strong {
+            color: #78350f;
         }
 
         .categories-section {
@@ -230,24 +287,6 @@
             color: #333;
         }
 
-        .total-check {
-            padding: 15px 20px;
-            background: #f5f7fa;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-
-        .total-check.valid {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .total-check.invalid {
-            background: #fee2e2;
-            color: #991b1b;
-        }
 
         .preset-buttons {
             display: grid;
@@ -324,6 +363,15 @@
 
         <div class="content">
             <div class="income-section">
+                <div class="tax-toggle-wrapper">
+                    <div class="tax-toggle-option active" id="postTaxOption" onclick="allocator.setTaxType('post-tax')">
+                        Post-Tax Income
+                    </div>
+                    <div class="tax-toggle-option" id="preTaxOption" onclick="allocator.setTaxType('pre-tax')">
+                        Pre-Tax Income
+                    </div>
+                </div>
+
                 <div class="income-input-group">
                     <label for="income">Your Income</label>
                     <div class="income-input-wrapper">
@@ -334,10 +382,14 @@
                         <input type="number" id="income" value="5000" min="0" step="100" placeholder="Enter amount">
                     </div>
                 </div>
-            </div>
 
-            <div class="total-check" id="totalCheck">
-                Total Allocation: <span id="totalPercentage">100</span>%
+                <div class="tax-fields" id="taxFields">
+                    <div class="income-input-group">
+                        <label for="zipCode">ZIP Code (for tax estimation)</label>
+                        <input type="text" id="zipCode" placeholder="e.g., 94102" maxlength="5" pattern="[0-9]{5}">
+                    </div>
+                    <div class="tax-estimate" id="taxEstimate"></div>
+                </div>
             </div>
 
             <div class="preset-buttons">
@@ -461,8 +513,10 @@
 
                 this.incomeInput = null;
                 this.incomeFrequency = null;
-                this.totalCheck = null;
-                this.totalPercentage = null;
+                this.zipCodeInput = null;
+                this.taxFields = null;
+                this.taxEstimate = null;
+                this.taxType = 'post-tax';
 
                 this.init();
             }
@@ -471,8 +525,9 @@
                 // Get DOM elements
                 this.incomeInput = document.getElementById('income');
                 this.incomeFrequency = document.getElementById('incomeFrequency');
-                this.totalCheck = document.getElementById('totalCheck');
-                this.totalPercentage = document.getElementById('totalPercentage');
+                this.zipCodeInput = document.getElementById('zipCode');
+                this.taxFields = document.getElementById('taxFields');
+                this.taxEstimate = document.getElementById('taxEstimate');
 
                 // Initialize category elements
                 for (const [key, data] of Object.entries(this.categories)) {
@@ -486,6 +541,7 @@
                 // Add event listeners
                 this.incomeInput.addEventListener('input', () => this.calculate());
                 this.incomeFrequency.addEventListener('change', () => this.calculate());
+                this.zipCodeInput.addEventListener('input', () => this.calculate());
 
                 for (const [key, data] of Object.entries(this.categories)) {
                     data.slider.addEventListener('input', (e) => {
@@ -495,6 +551,23 @@
                 }
 
                 // Initial calculation
+                this.calculate();
+            }
+
+            setTaxType(type) {
+                this.taxType = type;
+
+                // Update UI
+                document.getElementById('postTaxOption').classList.toggle('active', type === 'post-tax');
+                document.getElementById('preTaxOption').classList.toggle('active', type === 'pre-tax');
+
+                // Show/hide tax fields
+                if (type === 'pre-tax') {
+                    this.taxFields.classList.add('show');
+                } else {
+                    this.taxFields.classList.remove('show');
+                }
+
                 this.calculate();
             }
 
@@ -554,21 +627,132 @@
                 const income = parseFloat(this.incomeInput.value) || 0;
                 const frequency = this.incomeFrequency.value;
 
-                if (frequency === 'monthly') {
-                    return income;
-                } else {
-                    return income / 12;
+                let monthlyGross = frequency === 'monthly' ? income : income / 12;
+                let annualGross = monthlyGross * 12;
+
+                // If pre-tax, calculate taxes and return net income
+                if (this.taxType === 'pre-tax') {
+                    const zipCode = this.zipCodeInput.value;
+                    const taxes = this.estimateTaxes(annualGross, zipCode);
+
+                    // Update tax estimate display
+                    if (zipCode && zipCode.length === 5) {
+                        const effectiveRate = (taxes.total / annualGross * 100).toFixed(1);
+                        this.taxEstimate.innerHTML = `
+                            <strong>Estimated Annual Taxes: ${this.formatCurrency(taxes.total)}</strong><br>
+                            Federal: ${this.formatCurrency(taxes.federal)} |
+                            State: ${this.formatCurrency(taxes.state)} |
+                            FICA: ${this.formatCurrency(taxes.fica)}<br>
+                            Effective Rate: ${effectiveRate}% |
+                            After-Tax Income: ${this.formatCurrency(annualGross - taxes.total)}/year
+                        `;
+                    } else {
+                        this.taxEstimate.innerHTML = '<em>Enter a valid 5-digit ZIP code for tax estimation</em>';
+                    }
+
+                    const monthlyNet = (annualGross - taxes.total) / 12;
+                    return monthlyNet;
                 }
+
+                return monthlyGross;
+            }
+
+            estimateTaxes(annualIncome, zipCode) {
+                // Default to no taxes if invalid input
+                if (!annualIncome || annualIncome <= 0) {
+                    return { federal: 0, state: 0, fica: 0, total: 0 };
+                }
+
+                // Calculate federal income tax (2024 single filer brackets - simplified)
+                let federalTax = 0;
+                const standardDeduction = 14600;
+                const taxableIncome = Math.max(0, annualIncome - standardDeduction);
+
+                if (taxableIncome <= 11600) {
+                    federalTax = taxableIncome * 0.10;
+                } else if (taxableIncome <= 47150) {
+                    federalTax = 1160 + (taxableIncome - 11600) * 0.12;
+                } else if (taxableIncome <= 100525) {
+                    federalTax = 5426 + (taxableIncome - 47150) * 0.22;
+                } else if (taxableIncome <= 191950) {
+                    federalTax = 17168.5 + (taxableIncome - 100525) * 0.24;
+                } else if (taxableIncome <= 243725) {
+                    federalTax = 39110.5 + (taxableIncome - 191950) * 0.32;
+                } else if (taxableIncome <= 609350) {
+                    federalTax = 55678.5 + (taxableIncome - 243725) * 0.35;
+                } else {
+                    federalTax = 183647.25 + (taxableIncome - 609350) * 0.37;
+                }
+
+                // Calculate FICA (Social Security + Medicare)
+                const socialSecurityWageBase = 160200;
+                const socialSecurityTax = Math.min(annualIncome, socialSecurityWageBase) * 0.062;
+                const medicareTax = annualIncome * 0.0145;
+                const additionalMedicareTax = annualIncome > 200000 ? (annualIncome - 200000) * 0.009 : 0;
+                const ficaTax = socialSecurityTax + medicareTax + additionalMedicareTax;
+
+                // Get state tax based on ZIP code
+                const stateTaxRate = this.getStateTaxRate(zipCode);
+                const stateTax = annualIncome * stateTaxRate;
+
+                return {
+                    federal: federalTax,
+                    state: stateTax,
+                    fica: ficaTax,
+                    total: federalTax + stateTax + ficaTax
+                };
+            }
+
+            getStateTaxRate(zipCode) {
+                if (!zipCode || zipCode.length !== 5) {
+                    return 0.05; // Default 5% if no ZIP provided
+                }
+
+                const zip = parseInt(zipCode);
+
+                // State tax rates by ZIP code ranges (approximate)
+                // Using effective rates for middle-income earners
+                if (zip >= 99500 && zip <= 99950) return 0;        // Alaska - no state income tax
+                if (zip >= 85000 && zip <= 86600) return 0.025;    // Arizona
+                if (zip >= 90000 && zip <= 96200) return 0.093;    // California - high
+                if (zip >= 80000 && zip <= 81700) return 0.0455;   // Colorado
+                if (zip >= 6000 && zip <= 6900) return 0.05;       // Connecticut
+                if (zip >= 19700 && zip <= 19980) return 0;        // Delaware - low
+                if (zip >= 32000 && zip <= 34990) return 0;        // Florida - no state income tax
+                if (zip >= 30000 && zip <= 31999) return 0.0575;   // Georgia
+                if (zip >= 96700 && zip <= 96900) return 0.08;     // Hawaii
+                if (zip >= 60000 && zip <= 62999) return 0.0495;   // Illinois
+                if (zip >= 46000 && zip <= 47997) return 0.0323;   // Indiana
+                if (zip >= 66000 && zip <= 67999) return 0.057;    // Kansas
+                if (zip >= 70000 && zip <= 71497) return 0.0425;   // Louisiana
+                if (zip >= 1000 && zip <= 2799) return 0.05;       // Massachusetts
+                if (zip >= 48000 && zip <= 49971) return 0.0425;   // Michigan
+                if (zip >= 55000 && zip <= 56800) return 0.0798;   // Minnesota
+                if (zip >= 63000 && zip <= 65899) return 0.054;    // Missouri
+                if (zip >= 89000 && zip <= 89883) return 0;        // Nevada - no state income tax
+                if (zip >= 87000 && zip <= 88441) return 0.049;    // New Mexico
+                if (zip >= 10000 && zip <= 14999) return 0.065;    // New York
+                if (zip >= 27000 && zip <= 28909) return 0.0525;   // North Carolina
+                if (zip >= 43000 && zip <= 45999) return 0.03;     // Ohio
+                if (zip >= 73000 && zip <= 74966) return 0.05;     // Oklahoma
+                if (zip >= 97000 && zip <= 97920) return 0.099;    // Oregon - high
+                if (zip >= 15000 && zip <= 19699) return 0.0307;   // Pennsylvania
+                if (zip >= 98000 && zip <= 99499) return 0;        // Washington - no state income tax
+                if (zip >= 53000 && zip <= 54990) return 0.0627;   // Wisconsin
+                if (zip >= 75000 && zip <= 79999) return 0;        // Texas - no state income tax
+                if (zip >= 84000 && zip <= 84791) return 0.0495;   // Utah
+                if (zip >= 20000 && zip <= 20599) return 0;        // DC (treated separately)
+
+                // Default for states not listed or unknown ZIPs
+                return 0.05; // 5% default
             }
 
             calculate() {
                 const monthlyIncome = this.getMonthlyIncome();
-                let total = 0;
 
                 // Calculate and display allocations for each category
                 for (const [key, data] of Object.entries(this.categories)) {
                     const percentage = data.value;
-                    total += percentage;
 
                     const monthlyAmount = (monthlyIncome * percentage) / 100;
                     const annualAmount = monthlyAmount * 12;
@@ -581,14 +765,6 @@
                     data.monthly.textContent = this.formatCurrency(monthlyAmount);
                     data.annual.textContent = this.formatCurrency(annualAmount);
                 }
-
-                // Update total check - should always be 100% with auto-adjustment
-                this.totalPercentage.textContent = total;
-                this.totalCheck.className = 'total-check valid';
-                this.totalCheck.innerHTML = `✓ Total Allocation: <span id="totalPercentage">${total}</span>%`;
-
-                // Update the totalPercentage span reference
-                this.totalPercentage = document.getElementById('totalPercentage');
             }
 
             formatCurrency(value) {
