@@ -623,8 +623,9 @@
                 const element = period === 'monthly' ? data.monthly : data.annual;
                 const box = element.parentElement;
 
-                // If already editing this element, return
+                // If already editing this element, finalize and exit edit mode
                 if (this.editingElement === element) {
+                    this.finalizeEdit();
                     return;
                 }
 
@@ -638,7 +639,7 @@
 
                 // Replace text with input
                 box.classList.add('editing');
-                element.innerHTML = `<input type="text" class="allocation-input" value="${currentValue.toFixed(2)}" />`;
+                element.innerHTML = `<input type="text" class="allocation-input" value="${this.formatCurrencyInput(currentValue)}" />`;
 
                 const input = element.querySelector('input');
                 input.focus();
@@ -651,7 +652,12 @@
 
                 // Handle blur (clicking away)
                 input.addEventListener('blur', () => {
-                    this.finalizeEdit();
+                    // Small delay to allow click events to register first
+                    setTimeout(() => {
+                        if (this.editingElement === element) {
+                            this.finalizeEdit();
+                        }
+                    }, 100);
                 });
 
                 // Handle Enter key
@@ -661,14 +667,11 @@
                     }
                 });
 
-                // Handle input to only allow numbers and decimal
-                input.addEventListener('input', (e) => {
-                    let value = e.target.value.replace(/[^0-9.]/g, '');
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts[0] + '.' + parts.slice(1).join('');
+                // Handle Escape key to cancel
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.cancelEdit();
                     }
-                    e.target.value = value;
                 });
             }
 
@@ -676,7 +679,7 @@
                 if (!this.editingElement) return;
 
                 const input = this.editingElement.querySelector('input');
-                const newAmount = parseFloat(input.value) || 0;
+                const newAmount = this.parseIncomeValue(input.value);
                 const category = this.editingCategory;
                 const period = this.editingPeriod;
                 const box = this.editingElement.parentElement;
@@ -695,14 +698,30 @@
                 // Clamp percentage between 0 and 100
                 newPercentage = Math.max(0, Math.min(100, Math.round(newPercentage)));
 
-                // Update the category percentage (this will trigger auto-balancing)
+                // Clear editing state
+                const elementToUpdate = this.editingElement;
+                box.classList.remove('editing');
+                this.editingElement = null;
+                this.editingCategory = null;
+                this.editingPeriod = null;
+
+                // Update the category percentage (this will trigger auto-balancing and recalculate)
                 this.adjustCategories(category, newPercentage);
+            }
+
+            cancelEdit() {
+                if (!this.editingElement) return;
+
+                const box = this.editingElement.parentElement;
 
                 // Remove editing state
                 box.classList.remove('editing');
                 this.editingElement = null;
                 this.editingCategory = null;
                 this.editingPeriod = null;
+
+                // Recalculate to restore the original formatted display
+                this.calculate();
             }
 
             handleIncomeFocus() {
