@@ -489,12 +489,64 @@
 
                 for (const [key, data] of Object.entries(this.categories)) {
                     data.slider.addEventListener('input', (e) => {
-                        data.value = parseInt(e.target.value);
-                        this.calculate();
+                        const newValue = parseInt(e.target.value);
+                        this.adjustCategories(key, newValue);
                     });
                 }
 
                 // Initial calculation
+                this.calculate();
+            }
+
+            adjustCategories(changedKey, newValue) {
+                const oldValue = this.categories[changedKey].value;
+                const difference = newValue - oldValue;
+
+                if (difference === 0) return;
+
+                // Get other categories (not the one being changed)
+                const otherCategories = Object.keys(this.categories).filter(k => k !== changedKey);
+
+                // Calculate total of other categories
+                let otherTotal = 0;
+                for (const key of otherCategories) {
+                    otherTotal += this.categories[key].value;
+                }
+
+                // Distribute the difference proportionally among other categories
+                if (otherTotal > 0) {
+                    let remainingDifference = difference;
+
+                    for (let i = 0; i < otherCategories.length; i++) {
+                        const key = otherCategories[i];
+                        const isLast = i === otherCategories.length - 1;
+
+                        if (isLast) {
+                            // For the last category, use the remaining difference to avoid rounding errors
+                            this.categories[key].value = Math.max(0, Math.min(100, this.categories[key].value - remainingDifference));
+                        } else {
+                            // Proportional adjustment
+                            const proportion = this.categories[key].value / otherTotal;
+                            const adjustment = Math.round(difference * proportion);
+                            this.categories[key].value = Math.max(0, Math.min(100, this.categories[key].value - adjustment));
+                            remainingDifference -= adjustment;
+                        }
+                    }
+                } else {
+                    // If all other categories are 0, distribute evenly
+                    const splitAmount = Math.floor((100 - newValue) / otherCategories.length);
+                    let remainder = (100 - newValue) % otherCategories.length;
+
+                    for (const key of otherCategories) {
+                        this.categories[key].value = splitAmount + (remainder > 0 ? 1 : 0);
+                        if (remainder > 0) remainder--;
+                    }
+                }
+
+                // Update the changed category
+                this.categories[changedKey].value = newValue;
+
+                // Recalculate and update display
                 this.calculate();
             }
 
@@ -530,18 +582,10 @@
                     data.annual.textContent = this.formatCurrency(annualAmount);
                 }
 
-                // Update total check
+                // Update total check - should always be 100% with auto-adjustment
                 this.totalPercentage.textContent = total;
-                if (total === 100) {
-                    this.totalCheck.className = 'total-check valid';
-                    this.totalCheck.innerHTML = `✓ Total Allocation: <span id="totalPercentage">${total}</span>% (Perfect!)`;
-                } else if (total < 100) {
-                    this.totalCheck.className = 'total-check invalid';
-                    this.totalCheck.innerHTML = `⚠ Total Allocation: <span id="totalPercentage">${total}</span>% (${100 - total}% unallocated)`;
-                } else {
-                    this.totalCheck.className = 'total-check invalid';
-                    this.totalCheck.innerHTML = `⚠ Total Allocation: <span id="totalPercentage">${total}</span>% (${total - 100}% over budget!)`;
-                }
+                this.totalCheck.className = 'total-check valid';
+                this.totalCheck.innerHTML = `✓ Total Allocation: <span id="totalPercentage">${total}</span>%`;
 
                 // Update the totalPercentage span reference
                 this.totalPercentage = document.getElementById('totalPercentage');
