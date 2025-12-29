@@ -642,6 +642,10 @@
 
                 <div class="chart-container">
                     <h3>Distribution of Ending Balances (Inflation-Adjusted)</h3>
+                    <p style="color: #666; font-size: 0.95em; margin-bottom: 15px;">
+                        This histogram shows how many of the 10,000 simulations ended with each balance range.
+                        A large bar at $0 indicates scenarios where you ran out of money before age 95.
+                    </p>
                     <div class="chart-wrapper">
                         <canvas id="histogramChart" role="img" aria-label="Histogram showing distribution of ending portfolio balances across all simulations"></canvas>
                     </div>
@@ -651,6 +655,18 @@
                     <h3>Portfolio Projection with Confidence Bands</h3>
                     <div class="chart-wrapper">
                         <canvas id="pathsChart" role="img" aria-label="Line chart showing median portfolio trajectory with confidence intervals from 10th to 90th percentile"></canvas>
+                    </div>
+                    <div style="background: #f0f4f8; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #667eea;">
+                        <h4 style="color: #333; font-size: 1.1em; margin-bottom: 12px;">📊 How to Read This Chart</h4>
+                        <ul style="color: #555; font-size: 0.95em; line-height: 1.8; margin-left: 20px;">
+                            <li><strong>Bold blue line (Median):</strong> The most likely path - half of simulations end above this, half below</li>
+                            <li><strong>Dark blue band (25th-75th):</strong> The middle 50% of outcomes fall within this range</li>
+                            <li><strong>Light blue band (10th-90th):</strong> 80% of all possible outcomes fall within this wider range</li>
+                            <li><strong>Width of bands = uncertainty:</strong> Wider bands mean more variability in potential outcomes</li>
+                        </ul>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 12px; font-style: italic;">
+                            💡 If the bands stay above $0 through retirement, you have a strong plan. If they dip to $0, consider saving more or reducing planned spending.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -1334,15 +1350,23 @@
                                 display: true,
                                 position: 'top',
                                 labels: {
-                                    usePointStyle: true,
+                                    usePointStyle: false,
+                                    boxWidth: 40,
                                     padding: 15,
                                     font: {
-                                        size: 12
+                                        size: 13,
+                                        weight: '500'
                                     },
                                     filter: function(legendItem, chartData) {
-                                        // Only show the main items in legend, hide the "fill-to" datasets
-                                        return !legendItem.text.includes('10th Percentile') ||
+                                        // Show median and the two range items
+                                        return legendItem.text.includes('Median') ||
                                                legendItem.text.includes('Range');
+                                    },
+                                    generateLabels: function(chart) {
+                                        const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                        return original.filter(item => {
+                                            return item.text.includes('Median') || item.text.includes('Range');
+                                        });
                                     }
                                 }
                             },
