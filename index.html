@@ -2482,9 +2482,48 @@
                         lifeEvents: lifeEvents
                     };
                 },
-                // Handle import - reload page to reflect changes
-                () => {
-                    window.location.reload();
+                // Handle import - update UI directly to reflect changes
+                (result) => {
+                    // Reload saved retirement forecast data and update UI
+                    const savedForecast = StorageUtils.get('retirementForecastData');
+                    if (savedForecast) {
+                        // Restore all input fields
+                        if (savedForecast.currentAge) document.getElementById('currentAge').value = savedForecast.currentAge;
+                        if (savedForecast.retirementAge) document.getElementById('retirementAge').value = savedForecast.retirementAge;
+                        if (savedForecast.currentSavings) document.getElementById('currentSavings').value = ui.formatCurrencyInput(savedForecast.currentSavings);
+                        if (savedForecast.annualContribution) document.getElementById('annualContribution').value = ui.formatCurrencyInput(savedForecast.annualContribution);
+                        if (savedForecast.expectedReturn) document.getElementById('expectedReturn').value = savedForecast.expectedReturn;
+                        if (savedForecast.returnVolatility) document.getElementById('returnVolatility').value = savedForecast.returnVolatility;
+                        if (savedForecast.inflationRate) document.getElementById('inflationRate').value = savedForecast.inflationRate;
+                        if (savedForecast.annualSpending) document.getElementById('annualSpending').value = ui.formatCurrencyInput(savedForecast.annualSpending);
+                        if (savedForecast.yearsInRetirement) document.getElementById('yearsInRetirement').value = savedForecast.yearsInRetirement;
+                        if (savedForecast.numSimulations) document.getElementById('numSimulations').value = savedForecast.numSimulations;
+                    }
+
+                    // Load saved life events
+                    const savedLifeEvents = StorageUtils.get('lifeEventsData', []);
+                    if (savedLifeEvents.length > 0) {
+                        // Clear existing life events first
+                        ui.eventsManager.events = [];
+                        document.getElementById('eventsList').innerHTML = '';
+
+                        // Expand the life events panel
+                        document.getElementById('eventsPanel').classList.add('show');
+                        document.getElementById('toggleEvents').classList.add('active');
+                        document.getElementById('toggleEvents').setAttribute('aria-expanded', 'true');
+
+                        // Add each saved life event
+                        savedLifeEvents.forEach(event => {
+                            ui.addLifeEvent(event);
+                        });
+                    }
+
+                    if (savedForecast || savedLifeEvents.length > 0) {
+                        SessionManager.showToast('Retirement forecast restored!', 'success');
+                    } else {
+                        // Fallback to reload if no data found
+                        window.location.reload();
+                    }
                 }
             );
         });
