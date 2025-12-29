@@ -515,6 +515,7 @@
         <header role="banner">
             <h1>Budget Planner</h1>
             <p>Allocate your income using Ramit Sethi's "I Will Teach You to Be Rich" method</p>
+            <p style="font-size: 0.75em; color: #888; margin-top: 4px;">Code version: 2025-12-29 11:30 UTC</p>
         </header>
 
         <main id="main-content" class="content" role="main">
@@ -1292,11 +1293,20 @@
                             incomeInput.dispatchEvent(new Event('input', { bubbles: true }));
                         }
 
-                        // Restore allocations
-                        if (savedData.fixedCosts !== undefined) allocator.categories.fixedCosts.value = savedData.fixedCosts;
-                        if (savedData.shortTerm !== undefined) allocator.categories.shortTerm.value = savedData.shortTerm;
-                        if (savedData.longTerm !== undefined) allocator.categories.longTerm.value = savedData.longTerm;
-                        if (savedData.guiltFree !== undefined) allocator.categories.guiltFree.value = savedData.guiltFree;
+                        // Restore allocations - update both internal value AND slider UI
+                        const restoreCategory = (key, value) => {
+                            if (value !== undefined) {
+                                allocator.categories[key].value = value;
+                                // Also update the slider element
+                                if (allocator.categories[key].slider) {
+                                    allocator.categories[key].slider.value = Math.round(value);
+                                }
+                            }
+                        };
+                        restoreCategory('fixedCosts', savedData.fixedCosts);
+                        restoreCategory('shortTerm', savedData.shortTerm);
+                        restoreCategory('longTerm', savedData.longTerm);
+                        restoreCategory('guiltFree', savedData.guiltFree);
 
                         // Restore tax settings if present
                         if (savedData.taxType) {
