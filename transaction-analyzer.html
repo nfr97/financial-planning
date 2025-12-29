@@ -2840,7 +2840,8 @@ Respond with ONLY a JSON array in this exact format, no other text:
             const savedTransactions = StorageUtils.get('transactionData', []);
             if (savedTransactions.length > 0) {
                 analyzer.transactions = savedTransactions;
-                analyzer.analyze();
+                analyzer.updateDisplay();
+                document.getElementById('resultsSection').classList.remove('results-hidden');
             }
 
             // Initialize session toolbar
@@ -2864,7 +2865,8 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     const session = StorageUtils.get('transactionData', []);
                     if (session.length > 0) {
                         analyzer.transactions = session;
-                        analyzer.analyze();
+                        analyzer.updateDisplay();
+                        document.getElementById('resultsSection').classList.remove('results-hidden');
                         SessionManager.showToast('Transactions restored!', 'success');
                     } else {
                         window.location.reload();
