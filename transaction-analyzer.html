@@ -1196,24 +1196,9 @@
                 </div>
             </div>
 
-            <!-- Step 2: Select Format -->
+            <!-- Step 2: Upload -->
             <div class="section">
-                <h2>Step 2: Select Your Bank Format</h2>
-                <select id="bankFormat" class="target-input">
-                    <option value="chase">Chase</option>
-                    <option value="bofa">Bank of America</option>
-                    <option value="wells">Wells Fargo</option>
-                    <option value="citi">Citi</option>
-                    <option value="amex">American Express</option>
-                    <option value="capital-one">Capital One</option>
-                    <option value="discover">Discover</option>
-                    <option value="generic">Generic CSV</option>
-                </select>
-            </div>
-
-            <!-- Step 3: Upload -->
-            <div class="section">
-                <h2>Step 3: Upload Your Transactions</h2>
+                <h2>Step 2: Upload Your Transactions</h2>
 
                 <div class="upload-guidance">
                     <strong>For an accurate spending picture, upload transactions from:</strong>
@@ -1406,7 +1391,7 @@
         class TransactionAnalyzer {
             constructor() {
                 this.transactions = [];
-                this.selectedFormat = 'chase';
+                this.selectedFormat = 'generic';
                 this.targets = {
                     income: 5000,
                     fixedCosts: 50,
@@ -1565,12 +1550,6 @@
             }
 
             init() {
-                // Format selection
-                const bankFormatSelect = document.getElementById('bankFormat');
-                bankFormatSelect.addEventListener('change', (e) => {
-                    this.selectedFormat = e.target.value;
-                });
-
                 // File upload
                 const uploadArea = document.getElementById('uploadArea');
                 const fileInput = document.getElementById('fileInput');
@@ -2822,11 +2801,6 @@ Respond with ONLY a JSON array in this exact format, no other text:
                 analyzer.analyze();
             }
 
-            // Load saved bank format
-            const savedFormat = StorageUtils.get('bankFormat', 'chase');
-            document.getElementById('bankFormat').value = savedFormat;
-            analyzer.selectedFormat = savedFormat;
-
             // Initialize session toolbar
             SessionManager.initToolbar(
                 // Get current page data for export
@@ -2835,9 +2809,6 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     if (analyzer.transactions.length > 0) {
                         StorageUtils.set('transactionData', analyzer.transactions);
                     }
-
-                    // Save bank format preference
-                    StorageUtils.set('bankFormat', analyzer.selectedFormat);
 
                     return {
                         transactions: analyzer.transactions,
