@@ -356,6 +356,12 @@
             color: white;
         }
 
+        .preset-btn.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
         footer {
             background: #f5f5f5;
             padding: 20px 30px;
@@ -940,6 +946,9 @@
 
                 if (difference === 0) return;
 
+                // Clear any active preset since user is manually adjusting
+                document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
                 // Update the changed category
                 this.categories[changedKey].value = newValue;
 
@@ -1094,38 +1103,63 @@
 
                 // State tax rates by ZIP code ranges (approximate)
                 // Using effective rates for middle-income earners
-                if (zip >= 99500 && zip <= 99950) return 0;        // Alaska - no state income tax
-                if (zip >= 85000 && zip <= 86600) return 0.025;    // Arizona
-                if (zip >= 90000 && zip <= 96200) return 0.093;    // California - high
-                if (zip >= 80000 && zip <= 81700) return 0.0455;   // Colorado
-                if (zip >= 6000 && zip <= 6900) return 0.05;       // Connecticut
-                if (zip >= 19700 && zip <= 19980) return 0;        // Delaware - low
-                if (zip >= 32000 && zip <= 34990) return 0;        // Florida - no state income tax
-                if (zip >= 30000 && zip <= 31999) return 0.0575;   // Georgia
-                if (zip >= 96700 && zip <= 96900) return 0.08;     // Hawaii
-                if (zip >= 60000 && zip <= 62999) return 0.0495;   // Illinois
-                if (zip >= 46000 && zip <= 47997) return 0.0323;   // Indiana
-                if (zip >= 66000 && zip <= 67999) return 0.057;    // Kansas
-                if (zip >= 70000 && zip <= 71497) return 0.0425;   // Louisiana
-                if (zip >= 1000 && zip <= 2799) return 0.05;       // Massachusetts
-                if (zip >= 48000 && zip <= 49971) return 0.0425;   // Michigan
-                if (zip >= 55000 && zip <= 56800) return 0.0798;   // Minnesota
-                if (zip >= 63000 && zip <= 65899) return 0.054;    // Missouri
-                if (zip >= 89000 && zip <= 89883) return 0;        // Nevada - no state income tax
-                if (zip >= 87000 && zip <= 88441) return 0.049;    // New Mexico
-                if (zip >= 10000 && zip <= 14999) return 0.065;    // New York
-                if (zip >= 27000 && zip <= 28909) return 0.0525;   // North Carolina
-                if (zip >= 43000 && zip <= 45999) return 0.03;     // Ohio
-                if (zip >= 73000 && zip <= 74966) return 0.05;     // Oklahoma
-                if (zip >= 97000 && zip <= 97920) return 0.099;    // Oregon - high
-                if (zip >= 15000 && zip <= 19699) return 0.0307;   // Pennsylvania
-                if (zip >= 98000 && zip <= 99499) return 0;        // Washington - no state income tax
-                if (zip >= 53000 && zip <= 54990) return 0.0627;   // Wisconsin
-                if (zip >= 75000 && zip <= 79999) return 0;        // Texas - no state income tax
-                if (zip >= 84000 && zip <= 84791) return 0.0495;   // Utah
-                if (zip >= 20000 && zip <= 20599) return 0;        // DC (treated separately)
+                // No state income tax states
+                if (zip >= 99500 && zip <= 99950) return 0;        // Alaska
+                if (zip >= 32000 && zip <= 34999) return 0;        // Florida
+                if (zip >= 89000 && zip <= 89899) return 0;        // Nevada
+                if (zip >= 3000 && zip <= 3899) return 0;          // New Hampshire
+                if (zip >= 57000 && zip <= 57799) return 0;        // South Dakota
+                if (zip >= 37000 && zip <= 38599) return 0;        // Tennessee
+                if (zip >= 75000 && zip <= 79999) return 0;        // Texas
+                if (zip >= 88500 && zip <= 88599) return 0;        // Texas (El Paso area)
+                if (zip >= 98000 && zip <= 99499) return 0;        // Washington
+                if (zip >= 82000 && zip <= 83199) return 0;        // Wyoming
 
-                // Default for states not listed or unknown ZIPs
+                // States with income tax (alphabetical by state)
+                if (zip >= 35000 && zip <= 36999) return 0.05;     // Alabama
+                if (zip >= 85000 && zip <= 86599) return 0.025;    // Arizona
+                if (zip >= 71600 && zip <= 72999) return 0.055;    // Arkansas
+                if (zip >= 90000 && zip <= 96199) return 0.093;    // California
+                if (zip >= 80000 && zip <= 81699) return 0.044;    // Colorado
+                if (zip >= 6000 && zip <= 6999) return 0.05;       // Connecticut
+                if (zip >= 19700 && zip <= 19999) return 0.066;    // Delaware
+                if (zip >= 20000 && zip <= 20599) return 0.0895;   // DC - high rate
+                if (zip >= 30000 && zip <= 31999) return 0.055;    // Georgia
+                if (zip >= 96700 && zip <= 96899) return 0.11;     // Hawaii - high
+                if (zip >= 83200 && zip <= 83899) return 0.058;    // Idaho
+                if (zip >= 60000 && zip <= 62999) return 0.0495;   // Illinois
+                if (zip >= 46000 && zip <= 47999) return 0.0315;   // Indiana
+                if (zip >= 50000 && zip <= 52899) return 0.06;     // Iowa
+                if (zip >= 66000 && zip <= 67999) return 0.057;    // Kansas
+                if (zip >= 40000 && zip <= 42799) return 0.045;    // Kentucky
+                if (zip >= 70000 && zip <= 71499) return 0.0425;   // Louisiana
+                if (zip >= 3900 && zip <= 4999) return 0.0715;     // Maine
+                if (zip >= 20600 && zip <= 21999) return 0.0575;   // Maryland
+                if (zip >= 1000 && zip <= 2799) return 0.05;       // Massachusetts
+                if (zip >= 48000 && zip <= 49999) return 0.0425;   // Michigan
+                if (zip >= 55000 && zip <= 56799) return 0.0985;   // Minnesota - high
+                if (zip >= 38600 && zip <= 39799) return 0.05;     // Mississippi
+                if (zip >= 63000 && zip <= 65899) return 0.049;    // Missouri
+                if (zip >= 59000 && zip <= 59999) return 0.0675;   // Montana
+                if (zip >= 68000 && zip <= 69399) return 0.0684;   // Nebraska
+                if (zip >= 87000 && zip <= 88499) return 0.059;    // New Mexico
+                if (zip >= 10000 && zip <= 14999) return 0.0685;   // New York state
+                if (zip >= 100 && zip <= 119) return 0.1065;       // NYC (add local tax)
+                if (zip >= 27000 && zip <= 28999) return 0.0525;   // North Carolina
+                if (zip >= 58000 && zip <= 58899) return 0.029;    // North Dakota
+                if (zip >= 43000 && zip <= 45999) return 0.04;     // Ohio
+                if (zip >= 73000 && zip <= 74999) return 0.0475;   // Oklahoma
+                if (zip >= 97000 && zip <= 97999) return 0.099;    // Oregon - high
+                if (zip >= 15000 && zip <= 19699) return 0.0307;   // Pennsylvania
+                if (zip >= 2800 && zip <= 2999) return 0.0599;     // Rhode Island
+                if (zip >= 29000 && zip <= 29999) return 0.065;    // South Carolina
+                if (zip >= 84000 && zip <= 84799) return 0.0465;   // Utah
+                if (zip >= 5000 && zip <= 5999) return 0.086;      // Vermont
+                if (zip >= 22000 && zip <= 24699) return 0.0575;   // Virginia
+                if (zip >= 24700 && zip <= 26899) return 0.065;    // West Virginia
+                if (zip >= 53000 && zip <= 54999) return 0.0765;   // Wisconsin
+
+                // Default for unknown ZIPs
                 return 0.05; // 5% default
             }
 
@@ -1208,6 +1242,14 @@
 
                 const presetValues = presets[preset];
                 if (presetValues) {
+                    // Highlight active preset button
+                    document.querySelectorAll('.preset-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.getAttribute('onclick')?.includes(preset)) {
+                            btn.classList.add('active');
+                        }
+                    });
+
                     for (const [key, value] of Object.entries(presetValues)) {
                         this.categories[key].value = value;
                         this.categories[key].slider.value = value;
@@ -1283,12 +1325,22 @@
                     // Reload saved budget planner data and update UI
                     const savedData = StorageUtils.get('budgetPlannerData');
                     if (savedData) {
-                        // Restore income - always use monthly frequency since monthlyIncome is pre-calculated
+                        // Restore income with the saved frequency
                         if (savedData.monthlyIncome) {
                             const incomeInput = document.getElementById('income');
                             const freqInput = document.getElementById('incomeFrequency');
-                            incomeInput.value = allocator.formatCurrencyInput(savedData.monthlyIncome);
-                            freqInput.value = 'monthly';
+                            const frequency = savedData.frequency || 'monthly';
+                            freqInput.value = frequency;
+
+                            // Convert monthly income back to the display frequency
+                            let displayIncome = savedData.monthlyIncome;
+                            if (frequency === 'annual') {
+                                displayIncome = savedData.monthlyIncome * 12;
+                            } else if (frequency === 'biweekly') {
+                                displayIncome = (savedData.monthlyIncome * 12) / 26;
+                            }
+                            incomeInput.value = allocator.formatCurrencyInput(displayIncome);
+
                             // Trigger input event to ensure allocator picks up the change
                             incomeInput.dispatchEvent(new Event('input', { bubbles: true }));
                         }

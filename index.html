@@ -129,6 +129,28 @@
             box-shadow: none;
         }
 
+        #runSimulation.running {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: wait;
+        }
+
+        #runSimulation.running::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .progress {
             text-align: center;
             margin: 20px 0;
@@ -1142,6 +1164,11 @@
                     <div class="chart-wrapper">
                         <canvas id="histogramChart" role="img" aria-label="Histogram showing distribution of ending portfolio balances across all simulations"></canvas>
                     </div>
+                    <!-- Accessible data table for screen readers -->
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; color: #667eea; font-size: 0.9em;">View chart data as table (for accessibility)</summary>
+                        <div id="histogramDataTable" style="margin-top: 10px; font-size: 0.85em; max-height: 200px; overflow-y: auto;"></div>
+                    </details>
                 </div>
 
                 <div class="chart-container">
@@ -1149,6 +1176,11 @@
                     <div class="chart-wrapper">
                         <canvas id="pathsChart" role="img" aria-label="Line chart showing median portfolio trajectory with confidence intervals from 10th to 90th percentile"></canvas>
                     </div>
+                    <!-- Accessible data table for screen readers -->
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; color: #667eea; font-size: 0.9em;">View chart data as table (for accessibility)</summary>
+                        <div id="pathsDataTable" style="margin-top: 10px; font-size: 0.85em; max-height: 200px; overflow-y: auto;"></div>
+                    </details>
                     <div style="background: #f0f4f8; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #667eea;">
                         <h4 style="color: #333; font-size: 1.1em; margin-bottom: 12px;">📊 How to Read This Chart</h4>
                         <ul style="color: #555; font-size: 0.95em; line-height: 1.8; margin-left: 20px;">
@@ -1268,12 +1300,21 @@
         class LifeEventsManager {
             constructor() {
                 this.events = [];
-                this.eventIdCounter = 0;
+                // Restore counter from localStorage to prevent duplicate IDs
+                this.eventIdCounter = parseInt(StorageUtils.get('lifeEventIdCounter', 0)) || 0;
             }
 
             addEvent(event = {}) {
+                // If event already has an ID (from session restore), use it and update counter if needed
+                const eventId = (event.id !== undefined) ? event.id : this.eventIdCounter++;
+                if (eventId >= this.eventIdCounter) {
+                    this.eventIdCounter = eventId + 1;
+                }
+                // Persist counter
+                StorageUtils.set('lifeEventIdCounter', this.eventIdCounter);
+
                 const newEvent = {
-                    id: this.eventIdCounter++,
+                    id: eventId,
                     name: event.name || '',
                     type: event.type || 'expense',
                     amount: event.amount || 0,
@@ -1800,6 +1841,7 @@
                 const pia = this.parseCurrencyValue(document.getElementById('ssMonthlyBenefit').value);
                 const startAge = parseInt(document.getElementById('ssStartAge').value) || 67;
                 const currentAge = parseInt(document.getElementById('currentAge').value) || 35;
+                // Approximate birth year (assumes user has had birthday this year; variance is minimal for SS calculations)
                 const birthYear = new Date().getFullYear() - currentAge;
 
                 const fra = this.ssCalculator.getFullRetirementAge(birthYear);
@@ -2080,10 +2122,11 @@
                     return;
                 }
 
-                // Disable button and show progress
+                // Disable button and show progress with spinner
                 const button = document.getElementById('runSimulation');
                 const progress = document.getElementById('progress');
                 button.disabled = true;
+                button.classList.add('running');
                 button.textContent = 'Running...';
                 progress.textContent = 'Initializing simulations...';
                 document.getElementById('results').classList.remove('show');
@@ -2118,6 +2161,7 @@
                     progress.textContent = 'Error running simulation. Please check your inputs.';
                 } finally {
                     button.disabled = false;
+                    button.classList.remove('running');
                     button.textContent = 'Run Simulation';
                 }
             }
@@ -2198,6 +2242,15 @@
                         }
                     }
                 });
+
+                // Populate accessible data table
+                const tableDiv = document.getElementById('histogramDataTable');
+                let tableHtml = '<table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="text-align: left; padding: 4px; border-bottom: 1px solid #ddd;">Balance Range</th><th style="text-align: right; padding: 4px; border-bottom: 1px solid #ddd;">Simulations</th></tr></thead><tbody>';
+                histogramData.labels.forEach((label, i) => {
+                    tableHtml += `<tr><td style="padding: 4px;">${label}</td><td style="text-align: right; padding: 4px;">${histogramData.data[i]}</td></tr>`;
+                });
+                tableHtml += '</tbody></table>';
+                tableDiv.innerHTML = tableHtml;
             }
 
             updatePathsChart(paths, params) {
@@ -2399,6 +2452,21 @@
                         }
                     }
                 });
+
+                // Populate accessible data table for paths chart
+                const pathsTableDiv = document.getElementById('pathsDataTable');
+                const medianDataset = datasets.find(d => d.label === 'Median Path');
+                if (medianDataset && medianDataset.data) {
+                    let tableHtml = '<table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="text-align: left; padding: 4px; border-bottom: 1px solid #ddd;">Age</th><th style="text-align: right; padding: 4px; border-bottom: 1px solid #ddd;">Median Balance</th></tr></thead><tbody>';
+                    // Show every 5 years to keep table readable
+                    medianDataset.data.forEach((point, i) => {
+                        if (i % 5 === 0 || i === medianDataset.data.length - 1) {
+                            tableHtml += `<tr><td style="padding: 4px;">${Math.round(point.x)}</td><td style="text-align: right; padding: 4px;">${this.formatCurrency(point.y)}</td></tr>`;
+                        }
+                    });
+                    tableHtml += '</tbody></table>';
+                    pathsTableDiv.innerHTML = tableHtml;
+                }
             }
         }
 
@@ -2473,13 +2541,25 @@
                     const params = ui.getInputValues();
                     const lifeEvents = ui.eventsManager.getEvents();
 
+                    // Capture Social Security settings
+                    const ssSettings = {
+                        mode: ui.ssMode,
+                        knownBenefit: ui.parseCurrencyValue(document.getElementById('ssMonthlyBenefit')?.value || '0'),
+                        knownStartAge: parseInt(document.getElementById('ssStartAge')?.value) || 67,
+                        estIncome: ui.parseCurrencyValue(document.getElementById('ssCurrentIncome')?.value || '0'),
+                        estWorkYears: parseInt(document.getElementById('ssWorkYears')?.value) || 15,
+                        estStartAge: parseInt(document.getElementById('ssEstStartAge')?.value) || 67
+                    };
+
                     // Save current state to localStorage for other pages
                     StorageUtils.set('retirementForecastData', params);
                     StorageUtils.set('lifeEventsData', lifeEvents);
+                    StorageUtils.set('ssSettingsData', ssSettings);
 
                     return {
                         retirementForecast: params,
-                        lifeEvents: lifeEvents
+                        lifeEvents: lifeEvents,
+                        ssSettings: ssSettings
                     };
                 },
                 // Handle import - update UI directly to reflect changes
@@ -2531,7 +2611,46 @@
                         });
                     }
 
-                    if (forecastUpdated || savedLifeEvents.length > 0) {
+                    // Restore Social Security settings
+                    const savedSS = StorageUtils.get('ssSettingsData');
+                    let ssRestored = false;
+                    if (savedSS) {
+                        // Restore SS mode
+                        const ssNoneBtn = document.getElementById('ssNone');
+                        const ssKnownBtn = document.getElementById('ssKnown');
+                        const ssEstimateBtn = document.getElementById('ssEstimate');
+                        const ssKnownInputs = document.getElementById('ssKnownInputs');
+                        const ssEstimateInputs = document.getElementById('ssEstimateInputs');
+
+                        // Clear active states
+                        [ssNoneBtn, ssKnownBtn, ssEstimateBtn].forEach(btn => btn?.classList.remove('active'));
+                        ssKnownInputs?.classList.remove('show');
+                        ssEstimateInputs?.classList.remove('show');
+
+                        // Set the saved mode
+                        ui.ssMode = savedSS.mode || 'none';
+
+                        if (savedSS.mode === 'known') {
+                            ssKnownBtn?.classList.add('active');
+                            ssKnownInputs?.classList.add('show');
+                            setInputValue('ssMonthlyBenefit', savedSS.knownBenefit, ui.formatCurrencyInput.bind(ui));
+                            setInputValue('ssStartAge', savedSS.knownStartAge);
+                            ui.updateKnownSSBenefit();
+                            ssRestored = true;
+                        } else if (savedSS.mode === 'estimate') {
+                            ssEstimateBtn?.classList.add('active');
+                            ssEstimateInputs?.classList.add('show');
+                            setInputValue('ssCurrentIncome', savedSS.estIncome, ui.formatCurrencyInput.bind(ui));
+                            setInputValue('ssWorkYears', savedSS.estWorkYears);
+                            setInputValue('ssEstStartAge', savedSS.estStartAge);
+                            ui.updateEstimatedSSBenefit();
+                            ssRestored = true;
+                        } else {
+                            ssNoneBtn?.classList.add('active');
+                        }
+                    }
+
+                    if (forecastUpdated || savedLifeEvents.length > 0 || ssRestored) {
                         SessionManager.showToast('Retirement forecast restored!', 'success');
                     } else {
                         // Fallback to reload if no data found

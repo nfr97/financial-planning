@@ -1261,7 +1261,12 @@
             <!-- AI Categorization (Optional) -->
             <div class="section" id="aiSection">
                 <h2>AI-Powered Categorization (Optional)</h2>
-                <p style="color: #666; margin-bottom: 15px;">Select your AI provider and enter your API key to automatically categorize transactions. Your key is stored locally in your browser.</p>
+                <p style="color: #666; margin-bottom: 15px;">Select your AI provider and enter your API key to automatically categorize transactions.</p>
+
+                <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 0.9em;">
+                    <strong style="color: #92400e;">Privacy Note:</strong>
+                    <span style="color: #78350f;">Your API key is stored in your browser's local storage (unencrypted). Only use this on a personal device you trust. Clear browser data to remove stored keys.</span>
+                </div>
 
                 <div class="api-key-wrapper">
                     <select id="aiProvider" class="provider-select">
@@ -1393,7 +1398,7 @@
         class TransactionAnalyzer {
             constructor() {
                 this.transactions = [];
-                this.selectedFormat = 'generic';
+                this.lastBulkAction = null; // For undo functionality
                 this.targets = {
                     income: 5000,
                     fixedCosts: 50,
@@ -1484,66 +1489,11 @@
                     ]
                 };
 
-                // Bank format configurations
-                this.bankFormats = {
-                    'chase': {
-                        dateCol: 'Transaction Date',
-                        descCol: 'Description',
-                        amountCol: 'Amount',
-                        dateFormat: 'MM/DD/YYYY',
-                        negativeIsExpense: true
-                    },
-                    'bofa': {
-                        dateCol: 'Date',
-                        descCol: 'Description',
-                        amountCol: 'Amount',
-                        dateFormat: 'MM/DD/YYYY',
-                        negativeIsExpense: true
-                    },
-                    'wells': {
-                        dateCol: 'Date',
-                        descCol: 'Description',
-                        amountCol: 'Amount',
-                        dateFormat: 'MM/DD/YYYY',
-                        negativeIsExpense: true
-                    },
-                    'citi': {
-                        dateCol: 'Date',
-                        descCol: 'Description',
-                        amountCol: 'Debit',
-                        creditCol: 'Credit',
-                        dateFormat: 'MM/DD/YYYY',
-                        separateDebitCredit: true
-                    },
-                    'amex': {
-                        dateCol: 'Date',
-                        descCol: 'Description',
-                        amountCol: 'Amount',
-                        dateFormat: 'MM/DD/YYYY',
-                        positiveIsExpense: true
-                    },
-                    'capital-one': {
-                        dateCol: 'Transaction Date',
-                        descCol: 'Description',
-                        amountCol: 'Debit',
-                        creditCol: 'Credit',
-                        dateFormat: 'YYYY-MM-DD',
-                        separateDebitCredit: true
-                    },
-                    'discover': {
-                        dateCol: 'Trans. Date',
-                        descCol: 'Description',
-                        amountCol: 'Amount',
-                        dateFormat: 'MM/DD/YYYY',
-                        positiveIsExpense: true
-                    },
-                    'generic': {
-                        dateCol: ['Date', 'Transaction Date', 'Trans Date', 'Posted Date'],
-                        descCol: ['Description', 'Memo', 'Name', 'Merchant'],
-                        amountCol: ['Amount', 'Transaction Amount', 'Debit', 'Credit'],
-                        dateFormat: 'auto',
-                        autoDetect: true
-                    }
+                // Column detection configuration (auto-detects common bank formats)
+                this.columnConfig = {
+                    dateCol: ['Date', 'Transaction Date', 'Trans Date', 'Trans. Date', 'Posted Date', 'Posting Date'],
+                    descCol: ['Description', 'Memo', 'Name', 'Merchant', 'Payee', 'Transaction Description'],
+                    amountCol: ['Amount', 'Transaction Amount', 'Debit', 'Credit', 'Value']
                 };
 
                 // Load saved rules from localStorage
@@ -1767,42 +1717,22 @@
 
                 // Parse header
                 const header = this.parseCSVLine(lines[0]);
-                const format = this.bankFormats[this.selectedFormat];
 
-                // Find column indices
-                let dateIdx, descIdx, amountIdx, creditIdx;
-
-                if (format.autoDetect) {
-                    // Auto-detect columns for generic format
-                    dateIdx = this.findColumnIndex(header, format.dateCol);
-                    descIdx = this.findColumnIndex(header, format.descCol);
-                    amountIdx = this.findColumnIndex(header, format.amountCol);
-                } else {
-                    dateIdx = header.findIndex(h => h.toLowerCase().trim() === format.dateCol.toLowerCase());
-                    descIdx = header.findIndex(h => h.toLowerCase().trim() === format.descCol.toLowerCase());
-                    amountIdx = header.findIndex(h => h.toLowerCase().trim() === format.amountCol.toLowerCase());
-
-                    if (format.separateDebitCredit) {
-                        creditIdx = header.findIndex(h => h.toLowerCase().trim() === format.creditCol.toLowerCase());
-                    }
-                }
+                // Auto-detect columns
+                const dateIdx = this.findColumnIndex(header, this.columnConfig.dateCol);
+                const descIdx = this.findColumnIndex(header, this.columnConfig.descCol);
+                const amountIdx = this.findColumnIndex(header, this.columnConfig.amountCol);
 
                 // Validate that required columns were found
                 const missingColumns = [];
                 if (dateIdx === -1) {
-                    const expectedCols = Array.isArray(format.dateCol) ? format.dateCol.join('" or "') : format.dateCol;
-                    missingColumns.push(`Date column (expected: "${expectedCols}")`);
+                    missingColumns.push(`Date column (expected: "${this.columnConfig.dateCol.join('" or "')}")`);
                 }
                 if (descIdx === -1) {
-                    const expectedCols = Array.isArray(format.descCol) ? format.descCol.join('" or "') : format.descCol;
-                    missingColumns.push(`Description column (expected: "${expectedCols}")`);
+                    missingColumns.push(`Description column (expected: "${this.columnConfig.descCol.join('" or "')}")`);
                 }
                 if (amountIdx === -1) {
-                    const expectedCols = Array.isArray(format.amountCol) ? format.amountCol.join('" or "') : format.amountCol;
-                    missingColumns.push(`Amount column (expected: "${expectedCols}")`);
-                }
-                if (format.separateDebitCredit && creditIdx === -1) {
-                    missingColumns.push(`Credit column (expected: "${format.creditCol}")`);
+                    missingColumns.push(`Amount column (expected: "${this.columnConfig.amountCol.join('" or "')}")`);
                 }
 
                 if (missingColumns.length > 0) {
@@ -1811,42 +1741,28 @@
                         `Could not find required columns in CSV file.\n\n` +
                         `Missing: ${missingColumns.join(', ')}\n\n` +
                         `Found columns: ${foundColumns}\n\n` +
-                        `Please ensure your CSV has the correct column headers, or try selecting a different bank format.`
+                        `Please ensure your CSV has the correct column headers.`
                     );
                 }
 
                 // Parse transactions
                 const transactions = [];
+                const requiredIdx = Math.max(dateIdx, descIdx, amountIdx);
+
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
 
                     const values = this.parseCSVLine(line);
 
-                    // Skip rows that don't have enough columns (use valid indices now)
-                    const requiredIdx = format.separateDebitCredit
-                        ? Math.max(dateIdx, descIdx, amountIdx, creditIdx)
-                        : Math.max(dateIdx, descIdx, amountIdx);
-
+                    // Skip rows that don't have enough columns
                     if (values.length <= requiredIdx) continue;
 
                     const dateStr = values[dateIdx];
                     const description = values[descIdx];
-                    let amount;
+                    const amount = parseFloat(values[amountIdx]?.replace(/[,$]/g, '')) || 0;
 
-                    if (format.separateDebitCredit) {
-                        const debit = parseFloat(values[amountIdx]?.replace(/[,$]/g, '')) || 0;
-                        const credit = parseFloat(values[creditIdx]?.replace(/[,$]/g, '')) || 0;
-                        amount = credit - debit;
-                    } else {
-                        amount = parseFloat(values[amountIdx]?.replace(/[,$]/g, '')) || 0;
-
-                        if (format.positiveIsExpense) {
-                            amount = -amount;
-                        }
-                    }
-
-                    const date = this.parseDate(dateStr, format.dateFormat);
+                    const date = this.parseDate(dateStr);
                     if (!date || isNaN(amount)) continue;
 
                     transactions.push({
@@ -1935,7 +1851,7 @@
                 return -1;
             }
 
-            parseDate(dateStr, format) {
+            parseDate(dateStr) {
                 return DateUtils.parseDate(dateStr);
             }
 
@@ -1971,25 +1887,46 @@
             deduplicateTransfers() {
                 // Mark inter-account transfers as duplicates
                 // A transfer is detected when:
-                // 1. Two transactions have similar amounts (one positive, one negative)
-                // 2. Dates are within 5 days of each other
-                // 3. Amounts match within $0.50 tolerance
+                // 1. Two transactions have opposite amounts (one positive, one negative)
+                // 2. Amounts match exactly or within small tolerance
+                // 3. Dates are within a few days
+                // 4. At least one description contains strong transfer indicators
 
-                const DAYS_TOLERANCE = 5;
-                const AMOUNT_TOLERANCE = 0.50;
+                const DAYS_TOLERANCE = 3; // Reduced from 5 for fewer false positives
+                const AMOUNT_TOLERANCE = 0.01; // Exact match for most transfers
 
-                // Reset all isTransfer flags
-                this.transactions.forEach(t => t.isTransfer = false);
+                // Reset all isTransfer flags (but preserve manual overrides)
+                this.transactions.forEach(t => {
+                    if (!t.manuallyUnmarkedTransfer) {
+                        t.isTransfer = false;
+                    }
+                });
+
+                // Strong transfer indicators (require at least one)
+                const strongTransferKeywords = [
+                    'transfer to', 'transfer from', 'online transfer',
+                    'credit card payment', 'payment to card', 'card payment',
+                    'ach payment', 'electronic payment',
+                    'payment thank you', 'autopay'
+                ];
+
+                // Account reference patterns (common in inter-account transfers)
+                const accountPatterns = [
+                    /\*{4}\d{4}/, // ****1234
+                    /x{4}\d{4}/i, // xxxx1234
+                    /ending in \d{4}/i,
+                    /account.*\d{4}/i
+                ];
 
                 for (let i = 0; i < this.transactions.length; i++) {
                     const t1 = this.transactions[i];
-                    if (t1.isTransfer) continue; // Already marked as transfer
+                    if (t1.isTransfer || t1.manuallyUnmarkedTransfer) continue;
 
                     for (let j = i + 1; j < this.transactions.length; j++) {
                         const t2 = this.transactions[j];
-                        if (t2.isTransfer) continue; // Already marked as transfer
+                        if (t2.isTransfer || t2.manuallyUnmarkedTransfer) continue;
 
-                        // Check if amounts are opposite (one positive, one negative) and similar magnitude
+                        // Check if amounts are opposite and match
                         const amountMatch = Math.abs(Math.abs(t1.amount) - Math.abs(t2.amount)) <= AMOUNT_TOLERANCE;
                         const oppositeSign = (t1.amount > 0) !== (t2.amount > 0);
 
@@ -2002,31 +1939,25 @@
 
                         if (daysDiff > DAYS_TOLERANCE) continue;
 
-                        // Check if descriptions suggest a transfer
+                        // Check for strong transfer indicators
                         const desc1 = t1.description.toLowerCase();
                         const desc2 = t2.description.toLowerCase();
 
-                        // Common transfer keywords
-                        const transferKeywords = [
-                            'transfer', 'payment', 'autopay', 'online payment',
-                            'debit card purchase', 'credit card payment', 'electronic payment',
-                            'ach', 'zelle', 'venmo', 'paypal', 'check'
-                        ];
-
-                        const hasTransferKeyword = transferKeywords.some(kw =>
+                        const hasStrongKeyword = strongTransferKeywords.some(kw =>
                             desc1.includes(kw) || desc2.includes(kw)
                         );
 
-                        // If all conditions match, or if transfer keywords are present, mark both as transfers
-                        if (amountMatch && oppositeSign && daysDiff <= DAYS_TOLERANCE) {
-                            // Higher confidence match - mark as transfers
-                            if (hasTransferKeyword || daysDiff <= 2) {
-                                t1.isTransfer = true;
-                                t2.isTransfer = true;
-                                t1.transferMatch = t2.id;
-                                t2.transferMatch = t1.id;
-                                break; // Move to next transaction
-                            }
+                        const hasAccountRef = accountPatterns.some(pattern =>
+                            pattern.test(t1.description) || pattern.test(t2.description)
+                        );
+
+                        // Require strong evidence: keyword OR (same day + account reference)
+                        if (hasStrongKeyword || (daysDiff === 0 && hasAccountRef)) {
+                            t1.isTransfer = true;
+                            t2.isTransfer = true;
+                            t1.transferMatch = t2.id;
+                            t2.transferMatch = t1.id;
+                            break;
                         }
                     }
                 }
@@ -2162,9 +2093,19 @@
                 if (!this.bulkGroups || !this.bulkGroups[groupIdx]) return;
 
                 const group = this.bulkGroups[groupIdx];
+
+                // Save state for undo
+                this.lastBulkAction = {
+                    groupName: group.name,
+                    transactionIds: group.transactions.map(t => t.id),
+                    previousCategories: {}
+                };
+
                 group.transactions.forEach(t => {
                     const transaction = this.transactions.find(tr => tr.id === t.id);
                     if (transaction) {
+                        // Store previous category for undo
+                        this.lastBulkAction.previousCategories[t.id] = transaction.category;
                         transaction.category = category;
                         this.saveRule(transaction.description, category);
                     }
@@ -2174,6 +2115,83 @@
                 StorageUtils.set('transactionData', this.transactions);
 
                 this.updateDisplay();
+                this.showUndoNotification(group.name, category, group.transactions.length);
+            }
+
+            showUndoNotification(groupName, category, count) {
+                // Remove any existing undo notification
+                const existing = document.querySelector('.undo-notification');
+                if (existing) existing.remove();
+
+                const notification = document.createElement('div');
+                notification.className = 'undo-notification';
+                notification.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #1e293b;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    z-index: 1000;
+                    font-size: 0.95em;
+                `;
+                notification.innerHTML = `
+                    <span>Categorized ${count} "${this.escapeHtml(groupName.substring(0, 20))}..." transactions as ${category}</span>
+                    <button onclick="analyzer.undoLastBulkAction()" style="
+                        background: #667eea;
+                        color: white;
+                        border: none;
+                        padding: 6px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: 600;
+                    ">Undo</button>
+                    <button onclick="this.parentElement.remove()" style="
+                        background: transparent;
+                        color: #94a3b8;
+                        border: none;
+                        padding: 4px;
+                        cursor: pointer;
+                        font-size: 1.2em;
+                    ">×</button>
+                `;
+                document.body.appendChild(notification);
+
+                // Auto-dismiss after 10 seconds
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 10000);
+            }
+
+            undoLastBulkAction() {
+                if (!this.lastBulkAction) return;
+
+                // Restore previous categories
+                for (const [id, prevCategory] of Object.entries(this.lastBulkAction.previousCategories)) {
+                    const transaction = this.transactions.find(t => t.id === id);
+                    if (transaction) {
+                        transaction.category = prevCategory;
+                    }
+                }
+
+                // Save and update
+                StorageUtils.set('transactionData', this.transactions);
+                this.updateDisplay();
+
+                // Remove notification
+                const notification = document.querySelector('.undo-notification');
+                if (notification) notification.remove();
+
+                // Clear undo state
+                this.lastBulkAction = null;
             }
 
             updateStats() {
@@ -2400,11 +2418,20 @@
                 const tbody = document.getElementById('transactionsBody');
                 tbody.innerHTML = '';
 
-                // Render mobile cards
+                // Render mobile cards with pagination
                 const cardsContainer = document.getElementById('transactionCards');
                 cardsContainer.innerHTML = '';
 
-                filtered.forEach(t => {
+                // Mobile pagination settings
+                const ITEMS_PER_PAGE = 20;
+                this.currentMobilePage = this.currentMobilePage || 1;
+                const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+                const startIdx = (this.currentMobilePage - 1) * ITEMS_PER_PAGE;
+                const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, filtered.length);
+                const paginatedMobile = filtered.slice(startIdx, endIdx);
+
+                filtered.forEach((t, index) => {
+                    const showOnMobile = index >= startIdx && index < endIdx;
                     const isExpense = t.amount < 0;
                     const transferBadge = t.isTransfer ? '<span style="background: #6b7280; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; margin-left: 8px;">TRANSFER</span>' : '';
                     const categoryOptions = `
@@ -2416,6 +2443,17 @@
                         <option value="uncategorized" ${t.category === 'uncategorized' ? 'selected' : ''}>Uncategorized</option>
                     `;
 
+                    // Transfer override button
+                    const transferOverride = t.isTransfer ? `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #6b7280; font-style: italic;">Transfer</span>
+                            <button onclick="analyzer.unmarkTransfer('${t.id}')"
+                                style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; border-radius: 4px; padding: 2px 8px; font-size: 0.8em; cursor: pointer;"
+                                title="This was incorrectly detected as a transfer. Click to categorize it.">
+                                Not a transfer
+                            </button>
+                        </div>` : '';
+
                     // Desktop table row
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -2425,7 +2463,7 @@
                             ${isExpense ? '-' : '+'}${this.formatCurrency(Math.abs(t.amount))}
                         </td>
                         <td>
-                            ${t.isTransfer ? '<span style="color: #6b7280; font-style: italic;">Inter-account transfer</span>' : `
+                            ${t.isTransfer ? transferOverride : `
                             <select class="category-select" data-id="${t.id}" onchange="analyzer.updateCategory(this)">
                                 ${categoryOptions}
                             </select>
@@ -2434,29 +2472,62 @@
                     `;
                     tbody.appendChild(row);
 
-                    // Mobile card
-                    const card = document.createElement('div');
-                    card.className = 'transaction-card';
-                    card.innerHTML = `
-                        <div class="transaction-card-header">
-                            <span class="transaction-card-desc">${this.escapeHtml(t.description)}${transferBadge}</span>
-                            <span class="transaction-card-amount ${isExpense ? 'expense' : 'income'}">
-                                ${isExpense ? '-' : '+'}${this.formatCurrency(Math.abs(t.amount))}
-                            </span>
-                        </div>
-                        <div class="transaction-card-footer">
-                            <span class="transaction-card-date">${new Date(t.date).toLocaleDateString()}</span>
-                            <div class="transaction-card-category">
-                                ${t.isTransfer ? '<span style="color: #6b7280; font-style: italic;">Inter-account transfer</span>' : `
-                                <select data-id="${t.id}" onchange="analyzer.updateCategory(this)">
-                                    ${categoryOptions}
-                                </select>
-                                `}
+                    // Mobile card (only for current page)
+                    if (showOnMobile) {
+                        const card = document.createElement('div');
+                        card.className = 'transaction-card';
+                        card.innerHTML = `
+                            <div class="transaction-card-header">
+                                <span class="transaction-card-desc">${this.escapeHtml(t.description)}${transferBadge}</span>
+                                <span class="transaction-card-amount ${isExpense ? 'expense' : 'income'}">
+                                    ${isExpense ? '-' : '+'}${this.formatCurrency(Math.abs(t.amount))}
+                                </span>
                             </div>
-                        </div>
-                    `;
-                    cardsContainer.appendChild(card);
+                            <div class="transaction-card-footer">
+                                <span class="transaction-card-date">${new Date(t.date).toLocaleDateString()}</span>
+                                <div class="transaction-card-category">
+                                    ${t.isTransfer ? transferOverride : `
+                                    <select data-id="${t.id}" onchange="analyzer.updateCategory(this)">
+                                        ${categoryOptions}
+                                    </select>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                        cardsContainer.appendChild(card);
+                    }
                 });
+
+                // Add mobile pagination controls
+                if (filtered.length > ITEMS_PER_PAGE) {
+                    const paginationDiv = document.createElement('div');
+                    paginationDiv.className = 'mobile-pagination';
+                    paginationDiv.style.cssText = `
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 10px;
+                        padding: 15px;
+                        margin-top: 10px;
+                    `;
+                    paginationDiv.innerHTML = `
+                        <button onclick="analyzer.changeMobilePage(-1)" ${this.currentMobilePage <= 1 ? 'disabled' : ''}
+                            style="padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background: ${this.currentMobilePage <= 1 ? '#f5f5f5' : 'white'}; cursor: ${this.currentMobilePage <= 1 ? 'not-allowed' : 'pointer'};">
+                            ← Prev
+                        </button>
+                        <span style="color: #666;">Page ${this.currentMobilePage} of ${totalPages}</span>
+                        <button onclick="analyzer.changeMobilePage(1)" ${this.currentMobilePage >= totalPages ? 'disabled' : ''}
+                            style="padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background: ${this.currentMobilePage >= totalPages ? '#f5f5f5' : 'white'}; cursor: ${this.currentMobilePage >= totalPages ? 'not-allowed' : 'pointer'};">
+                            Next →
+                        </button>
+                    `;
+                    cardsContainer.appendChild(paginationDiv);
+                }
+            }
+
+            changeMobilePage(delta) {
+                this.currentMobilePage = Math.max(1, this.currentMobilePage + delta);
+                this.renderTransactions();
             }
 
             updateCategory(select) {
@@ -2477,6 +2548,32 @@
                     this.updateStats();
                     this.updateSummaryCards();
                     this.updateComparisonChart();
+                }
+            }
+
+            unmarkTransfer(id) {
+                const transaction = this.transactions.find(t => t.id === id);
+                if (transaction) {
+                    // Unmark this transaction and its matched pair
+                    transaction.isTransfer = false;
+                    transaction.manuallyUnmarkedTransfer = true; // Prevent re-detection
+                    transaction.category = this.categorizeTransaction(transaction);
+
+                    // Also unmark the matched transfer if it exists
+                    if (transaction.transferMatch) {
+                        const matchedTx = this.transactions.find(t => t.id === transaction.transferMatch);
+                        if (matchedTx) {
+                            matchedTx.isTransfer = false;
+                            matchedTx.manuallyUnmarkedTransfer = true;
+                            matchedTx.category = this.categorizeTransaction(matchedTx);
+                            delete matchedTx.transferMatch;
+                        }
+                        delete transaction.transferMatch;
+                    }
+
+                    // Save and update display
+                    StorageUtils.set('transactionData', this.transactions);
+                    this.updateDisplay();
                 }
             }
 
