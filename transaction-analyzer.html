@@ -1265,7 +1265,11 @@
 
                 <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 0.9em;">
                     <strong style="color: #92400e;">Privacy Note:</strong>
-                    <span style="color: #78350f;">Your API key is stored in your browser's local storage (unencrypted). Only use this on a personal device you trust. Clear browser data to remove stored keys.</span>
+                    <span style="color: #78350f;">Your API key is stored in your browser's local storage (unencrypted). Only use this on a personal device you trust.</span>
+                    <details style="margin-top: 8px;">
+                        <summary style="cursor: pointer; color: #92400e; font-weight: 600;">What data is sent to AI?</summary>
+                        <p style="margin: 8px 0 0 0; color: #78350f;">Only these fields are sent for each uncategorized transaction: <strong>date</strong>, <strong>description</strong>, and <strong>amount</strong>. No account numbers, balances, or personal identifiers are included. Data is sent directly to the AI provider you select (Google, OpenAI, or Anthropic) — it never passes through our servers.</p>
+                    </details>
                 </div>
 
                 <div class="api-key-wrapper">
@@ -1326,6 +1330,31 @@
 
                 <!-- Category Cards -->
                 <div class="summary-cards" id="summaryCards"></div>
+
+                <!-- Excluded Transfers Section -->
+                <div class="section" id="transfersSection" style="display: none;">
+                    <button type="button" id="toggleTransfers" style="width: 100%; background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px 20px; font-size: 1em; font-weight: 600; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-radius: 6px; transition: background 0.2s;">
+                        <span><span style="margin-right: 8px;">&#8644;</span> Transfers Detected &amp; Excluded (<span id="transferCount">0</span>)</span>
+                        <span class="arrow" style="transition: transform 0.3s;">&#9660;</span>
+                    </button>
+                    <div id="transfersPanel" style="display: none; margin-top: 10px;">
+                        <p style="color: #666; font-size: 0.9em; margin-bottom: 10px;">These transactions were detected as inter-account transfers (matching amounts on same day) and excluded from income/spending totals to prevent double-counting.</p>
+                        <div style="overflow-x: auto;">
+                            <table class="transactions-table" style="font-size: 0.9em;">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Matched With</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transfersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Bulk Categorization -->
                 <div class="section" id="bulkCategorizeSection" style="display: none;">
@@ -1974,7 +2003,43 @@
                 this.updateSummaryCards();
                 this.updateComparisonChart();
                 this.updateBulkCategorization();
+                this.updateTransfersTable();
                 this.renderTransactions();
+            }
+
+            updateTransfersTable() {
+                const transfers = this.transactions.filter(t => t.isTransfer);
+                const section = document.getElementById('transfersSection');
+                const countEl = document.getElementById('transferCount');
+                const tbody = document.getElementById('transfersTableBody');
+
+                if (transfers.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+
+                section.style.display = 'block';
+                countEl.textContent = transfers.length;
+
+                tbody.innerHTML = transfers.map(t => {
+                    const matchedTx = t.transferMatch ? this.transactions.find(tx => tx.id === t.transferMatch) : null;
+                    const matchDesc = matchedTx ? this.escapeHtml(matchedTx.description.substring(0, 30)) : 'No match found';
+                    return `
+                        <tr>
+                            <td>${new Date(t.date).toLocaleDateString()}</td>
+                            <td>${this.escapeHtml(t.description.substring(0, 40))}${t.description.length > 40 ? '...' : ''}</td>
+                            <td class="amount-cell ${t.amount < 0 ? 'expense' : 'income'}">${this.formatCurrency(Math.abs(t.amount))}</td>
+                            <td style="font-size: 0.85em; color: #666;">${matchDesc}</td>
+                            <td>
+                                <button onclick="analyzer.unmarkTransfer('${t.id}')"
+                                    style="padding: 4px 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
+                                    title="Include this in spending/income totals">
+                                    Not a transfer
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
 
             updateBulkCategorization() {
@@ -3076,6 +3141,16 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     const provider = providerSelect.value;
                     StorageUtils.set(`apiKey_${provider}`, e.target.value.trim());
                 }
+            });
+
+            // Transfers section toggle
+            document.getElementById('toggleTransfers').addEventListener('click', () => {
+                const panel = document.getElementById('transfersPanel');
+                const btn = document.getElementById('toggleTransfers');
+                const arrow = btn.querySelector('.arrow');
+                const isOpen = panel.style.display !== 'none';
+                panel.style.display = isOpen ? 'none' : 'block';
+                arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
             });
 
             // Load saved transactions if available
