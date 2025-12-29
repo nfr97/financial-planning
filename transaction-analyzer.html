@@ -1272,7 +1272,7 @@
                     <button class="btn btn-secondary" onclick="analyzer.toggleApiKeyVisibility()">Show</button>
                 </div>
                 <div style="margin-top: 10px;">
-                    <button class="btn btn-primary" id="aiCategorizeBtn" onclick="analyzer.aiCategorize()" disabled>AI Categorize Uncategorized</button>
+                    <button class="btn btn-primary" id="aiCategorizeBtn" onclick="analyzer.aiCategorize()" disabled>Categorize Remaining Transactions with AI</button>
                 </div>
                 <div id="aiStatus" class="ai-status"></div>
                 <div class="api-help">
@@ -1326,6 +1326,7 @@
                     <h2>Quick Categorize</h2>
                     <p style="color: #666; margin-bottom: 15px;">Group similar transactions and categorize them all at once. Click a group to expand and categorize.</p>
                     <div id="bulkGroups"></div>
+                    <div id="zeroTotalGroups" style="margin-top: 20px;"></div>
                 </div>
 
                 <!-- Transactions Table -->
@@ -1656,6 +1657,10 @@
                     message += `<span style="color: #10b981; font-size: 0.9em; margin-top: 5px; display: block;">&#10004; ${transferCount} inter-account transfers detected and excluded from totals</span>`;
                 }
                 message += `<span style="margin-top: 5px; display: block;">Files: ${fileNames.map(n => this.escapeHtml(n)).join(', ')}</span>`;
+                message += `<div style="background: #f0f9ff; border-left: 3px solid #3b82f6; padding: 10px; margin-top: 10px; font-size: 0.9em;">
+                    <strong style="color: #1e40af;">Smart Categorization:</strong>
+                    <span style="color: #475569;">Your transactions are first automatically categorized using pattern matching (for example, transactions containing "WALMART" or "GROCERY" are categorized as Fixed Costs). This reduces the need for AI and speeds up the process. Use AI categorization below for any remaining uncategorized transactions.</span>
+                </div>`;
                 successInfo.innerHTML = message;
                 uploadArea.parentNode.insertBefore(successInfo, uploadArea.nextSibling);
 
@@ -1942,15 +1947,25 @@
                     groups[key].transactions.push(t);
                 });
 
+                // Calculate totals for each group and separate $0 groups
+                const groupsWithTotals = Object.values(groups).map(group => ({
+                    ...group,
+                    total: group.transactions.reduce((sum, t) => sum + t.amount, 0)
+                }));
+
+                // Separate zero-total groups (refunded/net-zero transactions)
+                const zeroGroups = groupsWithTotals.filter(g => Math.abs(g.total) < 0.01);
+                const nonZeroGroups = groupsWithTotals.filter(g => Math.abs(g.total) >= 0.01);
+
                 // Sort by count (most frequent first) and take top 20
-                const sortedGroups = Object.values(groups)
+                const sortedGroups = nonZeroGroups
                     .sort((a, b) => b.transactions.length - a.transactions.length)
                     .slice(0, 20);
 
                 container.innerHTML = '';
 
                 sortedGroups.forEach((group, idx) => {
-                    const total = group.transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                    const total = Math.abs(group.total);
                     const groupEl = document.createElement('div');
                     groupEl.className = 'bulk-group';
                     groupEl.innerHTML = `
@@ -1983,6 +1998,25 @@
 
                 // Store groups for later reference
                 this.bulkGroups = sortedGroups;
+
+                // Display zero-total groups separately
+                const zeroContainer = document.getElementById('zeroTotalGroups');
+                if (zeroGroups.length > 0) {
+                    zeroContainer.innerHTML = `
+                        <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 15px; margin-top: 15px;">
+                            <h3 style="color: #0369a1; margin: 0 0 10px 0; font-size: 1em;">Net-Zero Transactions (Not requiring categorization)</h3>
+                            <p style="color: #0c4a6e; font-size: 0.9em; margin: 0 0 10px 0;">These transaction groups total $0 and don't impact your budget, so they don't need to be categorized (e.g., refunded purchases, reimbursed expenses).</p>
+                            ${zeroGroups.map(group => `
+                                <div style="background: white; border-radius: 4px; padding: 10px; margin-bottom: 8px;">
+                                    <div style="font-weight: 500; color: #1e293b;">${this.escapeHtml(group.name)}${group.name.length >= 30 ? '...' : ''}</div>
+                                    <div style="color: #64748b; font-size: 0.85em;">${group.transactions.length} transaction${group.transactions.length > 1 ? 's' : ''} • $0 net total</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    zeroContainer.innerHTML = '';
+                }
             }
 
             toggleBulkGroup(idx) {
@@ -2033,8 +2067,12 @@
                 const transferCount = this.transactions.filter(t => t.isTransfer).length;
                 const displayCount = nonTransferTransactions.length;
 
-                document.getElementById('totalTransactions').textContent =
-                    transferCount > 0 ? `${displayCount} (${transferCount} transfers excluded)` : displayCount;
+                const totalTransactionsEl = document.getElementById('totalTransactions');
+                if (transferCount > 0) {
+                    totalTransactionsEl.innerHTML = `${displayCount}<br><span style="font-size: 0.7em; color: #64748b; font-weight: normal;">(${transferCount} transfer${transferCount > 1 ? 's' : ''} excluded)</span>`;
+                } else {
+                    totalTransactionsEl.textContent = displayCount;
+                }
                 document.getElementById('totalIncome').textContent = this.formatCurrency(totalIncome);
                 document.getElementById('totalSpending').textContent = this.formatCurrency(totalSpending);
 
@@ -2434,7 +2472,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     return;
                 }
 
-                this.showAiStatus(`Processing ${uncategorized.length} transactions with ${provider}...`, 'processing');
+                this.showAiStatus(`Processing ${uncategorized.length} uncategorized transactions with AI (${provider})...`, 'processing');
                 document.getElementById('aiCategorizeBtn').disabled = true;
 
                 let successCount = 0;
@@ -2449,7 +2487,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     for (let i = 0; i < uncategorized.length; i += batchSize) {
                         const batch = uncategorized.slice(i, i + batchSize);
                         const batchEnd = Math.min(i + batchSize, uncategorized.length);
-                        this.showAiStatus(`Processing ${i + 1}-${batchEnd} of ${uncategorized.length}...`, 'processing');
+                        this.showAiStatus(`Processing uncategorized transactions ${i + 1}-${batchEnd} of ${uncategorized.length} with AI...`, 'processing');
 
                         try {
                             const categorizations = await this.callAI(provider, apiKey, batch);
@@ -2479,7 +2517,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
 
                     // One retry pass for any failures (smaller batches)
                     if (failedTransactions.length > 0 && failedTransactions.length < uncategorized.length) {
-                        this.showAiStatus(`Retrying ${failedTransactions.length} failed transactions...`, 'processing');
+                        this.showAiStatus(`Retrying ${failedTransactions.length} failed uncategorized transactions with AI...`, 'processing');
                         await new Promise(resolve => setTimeout(resolve, 1000));
 
                         try {
