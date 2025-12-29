@@ -1164,6 +1164,7 @@
         <header role="banner">
             <h1>Spending Tracker</h1>
             <p>Upload your bank transactions to see your actual spending vs. your goals</p>
+            <p style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-top: 4px;">Code version: 2025-12-29 1:55 PM ET</p>
         </header>
 
         <main id="main-content" class="content" role="main">
@@ -1639,7 +1640,7 @@
                     this.saveSpendingDataForRetirement();
                 }).catch(error => {
                     console.error('Error parsing files:', error);
-                    alert('Error parsing CSV file. Please check the format and try again.');
+                    this.showError(error.message || 'Error parsing CSV file. Please check the format and try again.');
                 });
             }
 
@@ -1669,6 +1670,51 @@
 
                 // Update upload area text
                 uploadArea.querySelector('.upload-text').textContent = 'Drop more CSV files to add transactions';
+            }
+
+            showError(errorMessage) {
+                // Remove any existing error messages
+                const existingError = document.querySelector('.upload-error-info');
+                if (existingError) existingError.remove();
+
+                // Create error message element
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'upload-error-info';
+                errorDiv.style.cssText = `
+                    background: #fef2f2;
+                    border: 2px solid #ef4444;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px auto;
+                    max-width: 800px;
+                    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+                `;
+
+                // Format the error message (preserve newlines and structure)
+                const formattedMessage = errorMessage
+                    .replace(/\n\n/g, '<br><br>')
+                    .replace(/\n•/g, '<br>•');
+
+                errorDiv.innerHTML = `
+                    <div style="display: flex; align-items: start; gap: 15px;">
+                        <div style="font-size: 2em; color: #ef4444;">⚠️</div>
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 10px 0; color: #991b1b; font-size: 1.2em;">CSV Upload Error</h3>
+                            <div style="color: #7f1d1d; white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${formattedMessage}</div>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()"
+                                    style="margin-top: 15px; padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Insert after upload area
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.parentNode.insertBefore(errorDiv, uploadArea.nextSibling);
+
+                // Scroll to error message
+                errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
             saveSpendingDataForRetirement() {
@@ -1715,7 +1761,9 @@
 
             parseCSVText(text) {
                 const lines = text.trim().split('\n');
-                if (lines.length < 2) return [];
+                if (lines.length < 2) {
+                    throw new Error('CSV file is empty or has no data rows. Please upload a valid CSV file with at least a header row and one data row.');
+                }
 
                 // Parse header
                 const header = this.parseCSVLine(lines[0]);
@@ -1739,6 +1787,34 @@
                     }
                 }
 
+                // Validate that required columns were found
+                const missingColumns = [];
+                if (dateIdx === -1) {
+                    const expectedCols = Array.isArray(format.dateCol) ? format.dateCol.join('" or "') : format.dateCol;
+                    missingColumns.push(`Date column (expected: "${expectedCols}")`);
+                }
+                if (descIdx === -1) {
+                    const expectedCols = Array.isArray(format.descCol) ? format.descCol.join('" or "') : format.descCol;
+                    missingColumns.push(`Description column (expected: "${expectedCols}")`);
+                }
+                if (amountIdx === -1) {
+                    const expectedCols = Array.isArray(format.amountCol) ? format.amountCol.join('" or "') : format.amountCol;
+                    missingColumns.push(`Amount column (expected: "${expectedCols}")`);
+                }
+                if (format.separateDebitCredit && creditIdx === -1) {
+                    missingColumns.push(`Credit column (expected: "${format.creditCol}")`);
+                }
+
+                if (missingColumns.length > 0) {
+                    const foundColumns = header.map(h => `"${h}"`).join(', ');
+                    throw new Error(
+                        `Could not find required columns in CSV file.\n\n` +
+                        `Missing: ${missingColumns.join(', ')}\n\n` +
+                        `Found columns: ${foundColumns}\n\n` +
+                        `Please ensure your CSV has the correct column headers, or try selecting a different bank format.`
+                    );
+                }
+
                 // Parse transactions
                 const transactions = [];
                 for (let i = 1; i < lines.length; i++) {
@@ -1746,7 +1822,13 @@
                     if (!line) continue;
 
                     const values = this.parseCSVLine(line);
-                    if (values.length < Math.max(dateIdx, descIdx, amountIdx) + 1) continue;
+
+                    // Skip rows that don't have enough columns (use valid indices now)
+                    const requiredIdx = format.separateDebitCredit
+                        ? Math.max(dateIdx, descIdx, amountIdx, creditIdx)
+                        : Math.max(dateIdx, descIdx, amountIdx);
+
+                    if (values.length <= requiredIdx) continue;
 
                     const dateStr = values[dateIdx];
                     const description = values[descIdx];
@@ -1776,6 +1858,18 @@
                     });
                 }
 
+                // If no transactions were parsed, throw a helpful error
+                if (transactions.length === 0) {
+                    throw new Error(
+                        'No valid transactions found in CSV file.\n\n' +
+                        'This could mean:\n' +
+                        '• The date format is not recognized\n' +
+                        '• The amount values cannot be parsed\n' +
+                        '• All data rows are empty\n\n' +
+                        'Please check your CSV file format and try again.'
+                    );
+                }
+
                 return transactions;
             }
 
@@ -1802,14 +1896,42 @@
             }
 
             findColumnIndex(header, possibleNames) {
-                if (typeof possibleNames === 'string') {
-                    return header.findIndex(h => h.toLowerCase().trim() === possibleNames.toLowerCase());
-                }
+                // Normalize a string for flexible matching
+                const normalize = (str) => {
+                    return str
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[.\-_]/g, ' ')  // Replace punctuation with spaces
+                        .replace(/\s+/g, ' ')      // Normalize multiple spaces to single space
+                        .trim();
+                };
 
-                for (const name of possibleNames) {
+                const namesToCheck = typeof possibleNames === 'string' ? [possibleNames] : possibleNames;
+
+                // First pass: exact match (case-insensitive)
+                for (const name of namesToCheck) {
                     const idx = header.findIndex(h => h.toLowerCase().trim() === name.toLowerCase());
                     if (idx !== -1) return idx;
                 }
+
+                // Second pass: normalized match (handles punctuation/spacing differences)
+                for (const name of namesToCheck) {
+                    const normalizedName = normalize(name);
+                    const idx = header.findIndex(h => normalize(h) === normalizedName);
+                    if (idx !== -1) return idx;
+                }
+
+                // Third pass: partial match (column contains the search term)
+                for (const name of namesToCheck) {
+                    const normalizedName = normalize(name);
+                    const idx = header.findIndex(h => {
+                        const normalizedHeader = normalize(h);
+                        // Check if header contains the name or name contains the header
+                        return normalizedHeader.includes(normalizedName) || normalizedName.includes(normalizedHeader);
+                    });
+                    if (idx !== -1) return idx;
+                }
+
                 return -1;
             }
 
