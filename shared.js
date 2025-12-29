@@ -391,6 +391,9 @@ const SessionManager = {
                 <button type="button" class="session-btn session-load-btn" id="loadSessionBtn" aria-label="Load session from file">
                     <span aria-hidden="true">&#128194;</span> Load Session
                 </button>
+                <button type="button" class="session-btn session-clear-btn" id="clearSessionBtn" aria-label="Clear all stored data">
+                    <span aria-hidden="true">&#128465;</span> Clear Data
+                </button>
             </div>
         `;
     },
@@ -441,6 +444,17 @@ const SessionManager = {
             .session-load-btn:hover {
                 background: #764ba2;
                 border-color: #764ba2;
+                color: white;
+            }
+
+            .session-clear-btn {
+                background: white;
+                color: #ef4444;
+                border-color: #ef4444;
+            }
+
+            .session-clear-btn:hover {
+                background: #ef4444;
                 color: white;
             }
 
@@ -588,6 +602,27 @@ const SessionManager = {
                         this.showToast('No data found to import', 'info');
                     }
                 });
+            });
+
+            // Bind clear button
+            document.getElementById('clearSessionBtn').addEventListener('click', () => {
+                const confirmed = confirm(
+                    'Clear all stored data?\n\n' +
+                    'This will permanently delete:\n' +
+                    '• Budget planner settings\n' +
+                    '• Transaction data and rules\n' +
+                    '• Retirement forecast settings\n' +
+                    '• API keys for AI categorization\n' +
+                    '• All other saved preferences\n\n' +
+                    'This cannot be undone. Continue?'
+                );
+                if (confirmed) {
+                    this.clearSession();
+                    // Also clear API keys (stored separately per provider)
+                    ['gemini', 'openai', 'anthropic'].forEach(p => StorageUtils.remove(`apiKey_${p}`));
+                    this.showToast('All stored data cleared.', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                }
             });
         }
     },

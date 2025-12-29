@@ -1035,7 +1035,8 @@
                             State: ${this.formatCurrency(taxes.state)} |
                             FICA: ${this.formatCurrency(taxes.fica)}<br>
                             Effective Rate: ${effectiveRate}% |
-                            After-Tax Income: ${this.formatCurrency(annualGross - taxes.total)}/year
+                            After-Tax Income: ${this.formatCurrency(annualGross - taxes.total)}/year<br>
+                            <span style="font-size: 0.85em; color: #78350f; font-style: italic;">* Rough estimate assuming single filer, standard deduction. Actual taxes vary by filing status, deductions, and other factors.</span>
                         `;
                     } else {
                         this.taxEstimate.innerHTML = '<em>Enter a valid 5-digit ZIP code for tax estimation</em>';
