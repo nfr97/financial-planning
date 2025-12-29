@@ -840,8 +840,8 @@
                     newPercentage = (newAmount / annualIncome) * 100;
                 }
 
-                // Clamp percentage between 0 and 100
-                newPercentage = Math.max(0, Math.min(100, Math.round(newPercentage)));
+                // Clamp percentage between 0 and 100 (preserve decimals for user-entered amounts)
+                newPercentage = Math.max(0, Math.min(100, newPercentage));
 
                 // Clear editing state
                 const elementToUpdate = this.editingElement;
@@ -1135,13 +1135,14 @@
                     const monthlyAmount = (monthlyIncome * percentage) / 100;
                     const annualAmount = monthlyAmount * 12;
 
-                    // Update percentage display
-                    data.percent.textContent = percentage;
-                    data.slider.value = percentage;
+                    // Update percentage display (show 1 decimal only when not a whole number)
+                    const displayPercentage = Number.isInteger(percentage) ? percentage : percentage.toFixed(1);
+                    data.percent.textContent = displayPercentage;
+                    data.slider.value = Math.round(percentage);
 
                     // Update ARIA attributes for screen readers
-                    data.slider.setAttribute('aria-valuenow', percentage);
-                    data.slider.setAttribute('aria-valuetext', `${percentage} percent`);
+                    data.slider.setAttribute('aria-valuenow', displayPercentage);
+                    data.slider.setAttribute('aria-valuetext', `${displayPercentage} percent`);
 
                     // Update allocation displays (only if not currently editing)
                     if (this.editingElement !== data.monthly) {
