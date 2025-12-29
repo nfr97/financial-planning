@@ -1201,16 +1201,16 @@
             <!-- Step 2: Select Format -->
             <div class="section">
                 <h2>Step 2: Select Your Bank Format</h2>
-                <div class="format-grid">
-                    <div class="format-option selected" data-format="chase">Chase</div>
-                    <div class="format-option" data-format="bofa">Bank of America</div>
-                    <div class="format-option" data-format="wells">Wells Fargo</div>
-                    <div class="format-option" data-format="citi">Citi</div>
-                    <div class="format-option" data-format="amex">American Express</div>
-                    <div class="format-option" data-format="capital-one">Capital One</div>
-                    <div class="format-option" data-format="discover">Discover</div>
-                    <div class="format-option" data-format="generic">Generic CSV</div>
-                </div>
+                <select id="bankFormat" class="target-input">
+                    <option value="chase">Chase</option>
+                    <option value="bofa">Bank of America</option>
+                    <option value="wells">Wells Fargo</option>
+                    <option value="citi">Citi</option>
+                    <option value="amex">American Express</option>
+                    <option value="capital-one">Capital One</option>
+                    <option value="discover">Discover</option>
+                    <option value="generic">Generic CSV</option>
+                </select>
             </div>
 
             <!-- Step 3: Upload -->
@@ -1553,12 +1553,9 @@
 
             init() {
                 // Format selection
-                document.querySelectorAll('.format-option').forEach(option => {
-                    option.addEventListener('click', (e) => {
-                        document.querySelectorAll('.format-option').forEach(o => o.classList.remove('selected'));
-                        e.target.classList.add('selected');
-                        this.selectedFormat = e.target.dataset.format;
-                    });
+                const bankFormatSelect = document.getElementById('bankFormat');
+                bankFormatSelect.addEventListener('change', (e) => {
+                    this.selectedFormat = e.target.value;
                 });
 
                 // File upload
