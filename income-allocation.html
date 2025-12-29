@@ -1277,9 +1277,38 @@
                         budgetPlanner: currentData
                     };
                 },
-                // Handle import - reload page to reflect changes
-                () => {
-                    window.location.reload();
+                // Handle import - update UI directly to reflect changes
+                (result) => {
+                    // Reload saved budget planner data and update UI
+                    const savedData = StorageUtils.get('budgetPlannerData');
+                    if (savedData) {
+                        // Restore income
+                        if (savedData.monthlyIncome) {
+                            document.getElementById('income').value = allocator.formatCurrencyInput(savedData.monthlyIncome);
+                            document.getElementById('incomeFrequency').value = savedData.frequency || 'monthly';
+                        }
+
+                        // Restore allocations
+                        if (savedData.fixedCosts !== undefined) allocator.categories.fixedCosts.value = savedData.fixedCosts;
+                        if (savedData.shortTerm !== undefined) allocator.categories.shortTerm.value = savedData.shortTerm;
+                        if (savedData.longTerm !== undefined) allocator.categories.longTerm.value = savedData.longTerm;
+                        if (savedData.guiltFree !== undefined) allocator.categories.guiltFree.value = savedData.guiltFree;
+
+                        // Restore tax settings if present
+                        if (savedData.taxType) {
+                            allocator.setTaxType(savedData.taxType);
+                        }
+                        if (savedData.zipCode) {
+                            document.getElementById('zipCode').value = savedData.zipCode;
+                        }
+
+                        // Recalculate to update display
+                        allocator.calculate();
+                        SessionManager.showToast('Budget settings restored!', 'success');
+                    } else {
+                        // Fallback to reload if no data found
+                        window.location.reload();
+                    }
                 }
             );
         });
