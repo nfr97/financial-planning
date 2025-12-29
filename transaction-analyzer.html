@@ -2726,22 +2726,26 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     incomeInput.value = analyzer.formatCurrencyInput(budgetData.monthlyIncome);
                     analyzer.targets.income = budgetData.monthlyIncome;
                 }
-                // Update allocation percentages
+                // Update allocation percentages (round to 1 decimal place)
                 if (budgetData.fixedCosts !== undefined) {
-                    document.getElementById('targetFixed').value = budgetData.fixedCosts;
-                    analyzer.targets.fixedCosts = budgetData.fixedCosts;
+                    const rounded = parseFloat(budgetData.fixedCosts.toFixed(1));
+                    document.getElementById('targetFixed').value = rounded;
+                    analyzer.targets.fixedCosts = rounded;
                 }
                 if (budgetData.shortTerm !== undefined) {
-                    document.getElementById('targetShortTerm').value = budgetData.shortTerm;
-                    analyzer.targets.shortTerm = budgetData.shortTerm;
+                    const rounded = parseFloat(budgetData.shortTerm.toFixed(1));
+                    document.getElementById('targetShortTerm').value = rounded;
+                    analyzer.targets.shortTerm = rounded;
                 }
                 if (budgetData.longTerm !== undefined) {
-                    document.getElementById('targetLongTerm').value = budgetData.longTerm;
-                    analyzer.targets.longTerm = budgetData.longTerm;
+                    const rounded = parseFloat(budgetData.longTerm.toFixed(1));
+                    document.getElementById('targetLongTerm').value = rounded;
+                    analyzer.targets.longTerm = rounded;
                 }
                 if (budgetData.guiltFree !== undefined) {
-                    document.getElementById('targetGuiltFree').value = budgetData.guiltFree;
-                    analyzer.targets.guiltFree = budgetData.guiltFree;
+                    const rounded = parseFloat(budgetData.guiltFree.toFixed(1));
+                    document.getElementById('targetGuiltFree').value = rounded;
+                    analyzer.targets.guiltFree = rounded;
                 }
             }
 

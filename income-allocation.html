@@ -1161,13 +1161,13 @@
             }
 
             saveDataForOtherPages(monthlyIncome) {
-                // Save for Spending Tracker
+                // Save for Spending Tracker (round percentages to 1 decimal place)
                 StorageUtils.set('budgetPlannerData', {
                     monthlyIncome: monthlyIncome,
-                    fixedCosts: this.categories.fixedCosts.value,
-                    shortTerm: this.categories.shortTerm.value,
-                    longTerm: this.categories.longTerm.value,
-                    guiltFree: this.categories.guiltFree.value,
+                    fixedCosts: parseFloat(this.categories.fixedCosts.value.toFixed(1)),
+                    shortTerm: parseFloat(this.categories.shortTerm.value.toFixed(1)),
+                    longTerm: parseFloat(this.categories.longTerm.value.toFixed(1)),
+                    guiltFree: parseFloat(this.categories.guiltFree.value.toFixed(1)),
                     lastUpdated: new Date().toISOString()
                 });
 
@@ -1263,10 +1263,10 @@
                         frequency: document.getElementById('incomeFrequency').value,
                         taxType: allocator.taxType,
                         zipCode: document.getElementById('zipCode').value,
-                        fixedCosts: allocator.categories.fixedCosts.value,
-                        shortTerm: allocator.categories.shortTerm.value,
-                        longTerm: allocator.categories.longTerm.value,
-                        guiltFree: allocator.categories.guiltFree.value,
+                        fixedCosts: parseFloat(allocator.categories.fixedCosts.value.toFixed(1)),
+                        shortTerm: parseFloat(allocator.categories.shortTerm.value.toFixed(1)),
+                        longTerm: parseFloat(allocator.categories.longTerm.value.toFixed(1)),
+                        guiltFree: parseFloat(allocator.categories.guiltFree.value.toFixed(1)),
                         lastUpdated: new Date().toISOString()
                     };
 
