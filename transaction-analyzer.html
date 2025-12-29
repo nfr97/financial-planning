@@ -1671,10 +1671,15 @@
             saveSpendingDataForRetirement() {
                 // Calculate monthly averages for Retirement Forecast
                 const categories = this.calculateCategoryTotals();
-                const dates = this.transactions.map(t => new Date(t.date));
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
-                const months = Math.max(1, (maxDate - minDate) / (1000 * 60 * 60 * 24 * 30));
+                const dates = this.transactions.map(t => new Date(t.date)).filter(d => !isNaN(d));
+
+                // Default to 1 month if no valid dates
+                let months = 1;
+                if (dates.length > 0) {
+                    const minDate = new Date(Math.min(...dates));
+                    const maxDate = new Date(Math.max(...dates));
+                    months = Math.max(1, (maxDate - minDate) / (1000 * 60 * 60 * 24 * 30));
+                }
 
                 const monthlySpending = (categories['fixed-costs']?.total || 0) / months +
                                         (categories['guilt-free']?.total || 0) / months;
@@ -2045,11 +2050,16 @@
 
             updateStats() {
                 const dates = this.transactions.map(t => new Date(t.date)).filter(d => !isNaN(d));
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
 
-                document.getElementById('dateRange').textContent =
-                    `Showing transactions from ${minDate.toLocaleDateString()} to ${maxDate.toLocaleDateString()}`;
+                if (dates.length > 0) {
+                    const minDate = new Date(Math.min(...dates));
+                    const maxDate = new Date(Math.max(...dates));
+                    document.getElementById('dateRange').textContent =
+                        `Showing transactions from ${minDate.toLocaleDateString()} to ${maxDate.toLocaleDateString()}`;
+                } else {
+                    document.getElementById('dateRange').textContent =
+                        `Showing ${this.transactions.length} transactions`;
+                }
 
                 // Exclude inter-account transfers from income/spending calculations
                 const nonTransferTransactions = this.transactions.filter(t => !t.isTransfer);
@@ -2838,7 +2848,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
 
             // Load saved transactions if available
             const savedTransactions = StorageUtils.get('transactionData', []);
-            if (savedTransactions.length > 0) {
+            if (Array.isArray(savedTransactions) && savedTransactions.length > 0) {
                 analyzer.transactions = savedTransactions;
                 analyzer.updateDisplay();
                 document.getElementById('resultsSection').classList.remove('results-hidden');
@@ -2863,7 +2873,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
                 (result) => {
                     // Check if we have transaction data in the imported session
                     const session = StorageUtils.get('transactionData', []);
-                    if (session.length > 0) {
+                    if (Array.isArray(session) && session.length > 0) {
                         analyzer.transactions = session;
                         analyzer.updateDisplay();
                         document.getElementById('resultsSection').classList.remove('results-hidden');
