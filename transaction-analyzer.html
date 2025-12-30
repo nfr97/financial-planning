@@ -1527,46 +1527,51 @@
                 </div>
 
                 <!-- Transactions Table -->
-                <div class="section">
-                    <h2>Transaction Details</h2>
-                    <div class="transactions-container">
-                        <div class="transactions-header">
-                            <span class="transactions-title">All Transactions</span>
-                            <div class="filter-controls">
-                                <select class="filter-select" id="categoryFilter">
-                                    <option value="all">All Categories</option>
-                                    <option value="fixed-costs">Fixed Costs</option>
-                                    <option value="short-term">Short-Term Savings</option>
-                                    <option value="long-term">Long-Term Savings</option>
-                                    <option value="guilt-free">Guilt-Free Spending</option>
-                                    <option value="income">Income</option>
-                                    <option value="uncategorized">Uncategorized</option>
-                                    <option value="transfers">Transfers (Excluded)</option>
-                                </select>
-                                <select class="filter-select" id="sortOrder">
-                                    <option value="date-desc">Date (Newest)</option>
-                                    <option value="date-asc">Date (Oldest)</option>
-                                    <option value="amount-desc">Amount (High to Low)</option>
-                                    <option value="amount-asc">Amount (Low to High)</option>
-                                </select>
+                <div class="section" id="transactionDetailsSection">
+                    <button type="button" id="toggleTransactionDetails" style="width: 100%; background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px 20px; font-size: 1em; font-weight: 600; color: #6b7280; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-radius: 6px; transition: background 0.2s;">
+                        <span>Transaction Details (<span id="transactionCount">0</span>)</span>
+                        <span class="arrow" style="transition: transform 0.3s;">&#9660;</span>
+                    </button>
+                    <div id="transactionDetailsPanel" style="display: none; margin-top: 10px;">
+                        <div class="transactions-container">
+                            <div class="transactions-header">
+                                <span class="transactions-title">All Transactions</span>
+                                <div class="filter-controls">
+                                    <select class="filter-select" id="categoryFilter">
+                                        <option value="all">All Categories</option>
+                                        <option value="fixed-costs">Fixed Costs</option>
+                                        <option value="short-term">Short-Term Savings</option>
+                                        <option value="long-term">Long-Term Savings</option>
+                                        <option value="guilt-free">Guilt-Free Spending</option>
+                                        <option value="income">Income</option>
+                                        <option value="uncategorized">Uncategorized</option>
+                                        <option value="transfers">Transfers (Excluded)</option>
+                                    </select>
+                                    <select class="filter-select" id="sortOrder">
+                                        <option value="date-desc">Date (Newest)</option>
+                                        <option value="date-asc">Date (Oldest)</option>
+                                        <option value="amount-desc">Amount (High to Low)</option>
+                                        <option value="amount-asc">Amount (Low to High)</option>
+                                    </select>
+                                </div>
                             </div>
+                            <!-- Desktop Table View -->
+                            <div class="table-scroll">
+                                <table class="transactions-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Category</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionsBody"></tbody>
+                                </table>
+                            </div>
+                            <!-- Mobile Card View -->
+                            <div class="transaction-cards" id="transactionCards"></div>
                         </div>
-                        <!-- Desktop Table View -->
-                        <div class="table-scroll">
-                            <table class="transactions-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Description</th>
-                                        <th>Amount</th>
-                                        <th>Category</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="transactionsBody"></tbody>
-                            </table>
-                        </div>
-                        <!-- Mobile Card View -->
-                        <div class="transaction-cards" id="transactionCards"></div>
                     </div>
                 </div>
 
@@ -3208,6 +3213,10 @@ Return ONLY a JSON object (no markdown, no explanation):
                 const categoryFilter = document.getElementById('categoryFilter').value;
                 const sortOrder = document.getElementById('sortOrder').value;
 
+                // Update transaction count in header
+                const nonTransferCount = this.transactions.filter(t => !t.isTransfer).length;
+                document.getElementById('transactionCount').textContent = nonTransferCount;
+
                 let filtered = [...this.transactions];
 
                 // Apply category filter
@@ -3999,6 +4008,16 @@ Respond with ONLY a JSON array in this exact format, no other text:
             document.getElementById('toggleTransfers').addEventListener('click', () => {
                 const panel = document.getElementById('transfersPanel');
                 const btn = document.getElementById('toggleTransfers');
+                const arrow = btn.querySelector('.arrow');
+                const isOpen = panel.style.display !== 'none';
+                panel.style.display = isOpen ? 'none' : 'block';
+                arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
+
+            // Transaction details section toggle
+            document.getElementById('toggleTransactionDetails').addEventListener('click', () => {
+                const panel = document.getElementById('transactionDetailsPanel');
+                const btn = document.getElementById('toggleTransactionDetails');
                 const arrow = btn.querySelector('.arrow');
                 const isOpen = panel.style.display !== 'none';
                 panel.style.display = isOpen ? 'none' : 'block';
