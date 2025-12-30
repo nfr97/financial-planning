@@ -2417,32 +2417,78 @@ Return ONLY a JSON object (no markdown, no explanation):
             }
 
             categorizeTransaction(transaction) {
+                const result = this.categorizeWithConfidence(transaction);
+                return result.category;
+            }
+
+            // Categorize with confidence scoring and sanity checks
+            categorizeWithConfidence(transaction) {
                 const desc = transaction.description.toLowerCase();
                 const amount = transaction.amount;
+                const matches = [];
 
-                // Check income first (positive amounts or income patterns)
-                if (amount > 0) {
-                    for (const pattern of this.categoryPatterns['income']) {
-                        if (pattern.test(desc)) {
-                            return 'income';
-                        }
-                    }
-                    // If positive but no income pattern, might still be income or refund
-                    return 'income';
-                }
-
-                // Check expense categories
+                // Collect ALL pattern matches across categories
                 for (const [category, patterns] of Object.entries(this.categoryPatterns)) {
-                    if (category === 'income') continue;
-
                     for (const pattern of patterns) {
                         if (pattern.test(desc)) {
-                            return category;
+                            matches.push({ category, pattern: pattern.toString() });
                         }
                     }
                 }
 
-                return 'uncategorized';
+                // No matches - return uncategorized
+                if (matches.length === 0) {
+                    // For positive amounts with no pattern match, still mark as income but low confidence
+                    if (amount > 0) {
+                        return { category: 'income', confidence: 'low', reason: 'positive-amount-no-pattern' };
+                    }
+                    return { category: 'uncategorized', confidence: 'none', reason: 'no-match' };
+                }
+
+                // Single match - straightforward
+                if (matches.length === 1) {
+                    const match = matches[0];
+                    // Sanity check: income pattern but negative amount
+                    if (match.category === 'income' && amount < 0) {
+                        return { category: 'uncategorized', confidence: 'low', reason: 'income-pattern-negative-amount' };
+                    }
+                    // Sanity check: expense category but positive amount (refund?)
+                    if (match.category !== 'income' && amount > 0) {
+                        return { category: 'income', confidence: 'medium', reason: 'expense-pattern-positive-amount-likely-refund' };
+                    }
+                    return { category: match.category, confidence: 'high', reason: 'single-match' };
+                }
+
+                // Multiple matches - need to resolve conflict
+                const categories = [...new Set(matches.map(m => m.category))];
+
+                // If all matches point to same category, high confidence
+                if (categories.length === 1) {
+                    const category = categories[0];
+                    // Apply same sanity checks
+                    if (category === 'income' && amount < 0) {
+                        return { category: 'uncategorized', confidence: 'low', reason: 'income-pattern-negative-amount' };
+                    }
+                    if (category !== 'income' && amount > 0) {
+                        return { category: 'income', confidence: 'medium', reason: 'expense-pattern-positive-amount-likely-refund' };
+                    }
+                    return { category, confidence: 'high', reason: 'multiple-matches-same-category' };
+                }
+
+                // Conflicting categories - use amount as tiebreaker
+                if (amount > 0 && categories.includes('income')) {
+                    return { category: 'income', confidence: 'medium', reason: 'conflict-resolved-by-positive-amount' };
+                }
+
+                // For negative amounts, prefer expense categories in priority order
+                const expensePriority = ['fixed-costs', 'guilt-free', 'long-term', 'short-term'];
+                for (const cat of expensePriority) {
+                    if (categories.includes(cat)) {
+                        return { category: cat, confidence: 'low', reason: 'conflict-first-match-priority' };
+                    }
+                }
+
+                return { category: matches[0].category, confidence: 'low', reason: 'conflict-fallback' };
             }
 
             deduplicateTransfers() {
@@ -3275,7 +3321,10 @@ Return ONLY a JSON object (no markdown, no explanation):
                 }
             }
 
-            getCategorizationPrompt(transactionList) {
+            getCategorizationPrompt(transactionList, includeVerification = false) {
+                const verificationNote = includeVerification ?
+                    `\nSome transactions have a "suggestedCategory" - verify if this is correct or provide a better category.\n` : '';
+
                 return `You are a financial transaction categorizer. Categorize each transaction into exactly one of these categories:
 
 - fixed-costs: Essential expenses (rent, mortgage, utilities, insurance, groceries, gas, pharmacy, childcare, minimum debt payments)
@@ -3283,7 +3332,7 @@ Return ONLY a JSON object (no markdown, no explanation):
 - long-term: Retirement contributions (401k, IRA), investment transfers, brokerage deposits
 - guilt-free: Discretionary spending (restaurants, entertainment, shopping, subscriptions, travel, hobbies)
 - income: Salary, refunds, reimbursements, interest earned
-
+${verificationNote}
 Here are the transactions to categorize (negative amounts are expenses, positive are income):
 
 ${JSON.stringify(transactionList, null, 2)}
@@ -3301,93 +3350,146 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     return;
                 }
 
-                const uncategorized = this.transactions.filter(t => t.category === 'uncategorized');
-                if (uncategorized.length === 0) {
-                    this.showAiStatus('No uncategorized transactions to process!', 'success');
+                // Get uncategorized transactions
+                const uncategorized = this.transactions.filter(t => t.category === 'uncategorized' && !t.isTransfer);
+
+                // Also get low-confidence categorizations for AI verification
+                const lowConfidence = this.transactions.filter(t => {
+                    if (t.category === 'uncategorized' || t.isTransfer) return false;
+                    const result = this.categorizeWithConfidence(t);
+                    return result.confidence === 'low';
+                });
+
+                const totalToProcess = uncategorized.length + lowConfidence.length;
+
+                if (totalToProcess === 0) {
+                    this.showAiStatus('No transactions need AI categorization!', 'success');
                     return;
                 }
 
-                this.showAiStatus(`Processing ${uncategorized.length} uncategorized transactions with AI (${provider})...`, 'processing');
+                const statusParts = [];
+                if (uncategorized.length > 0) statusParts.push(`${uncategorized.length} uncategorized`);
+                if (lowConfidence.length > 0) statusParts.push(`${lowConfidence.length} to verify`);
+                this.showAiStatus(`Processing ${statusParts.join(' + ')} transactions with AI (${provider})...`, 'processing');
                 document.getElementById('aiCategorizeBtn').disabled = true;
 
                 let successCount = 0;
-                let errorCount = 0;
+                let verifiedCount = 0;
                 let lastError = '';
 
                 try {
-                    // Process in larger batches for speed (modern models handle 40+ easily)
-                    const batchSize = 40;
-                    const failedTransactions = [];
+                    // Group similar descriptions to reduce API calls
+                    const { grouped, mapping } = this.groupSimilarTransactions([...uncategorized, ...lowConfidence]);
+                    const uniqueDescriptions = Object.keys(grouped);
 
-                    for (let i = 0; i < uncategorized.length; i += batchSize) {
-                        const batch = uncategorized.slice(i, i + batchSize);
-                        const batchEnd = Math.min(i + batchSize, uncategorized.length);
-                        this.showAiStatus(`Processing uncategorized transactions ${i + 1}-${batchEnd} of ${uncategorized.length} with AI...`, 'processing');
+                    console.log(`Optimized: ${totalToProcess} transactions grouped into ${uniqueDescriptions.length} unique descriptions`);
+
+                    // Process grouped transactions in batches
+                    const batchSize = 40;
+                    const failedGroups = [];
+
+                    for (let i = 0; i < uniqueDescriptions.length; i += batchSize) {
+                        const batchDescs = uniqueDescriptions.slice(i, i + batchSize);
+                        const batchEnd = Math.min(i + batchSize, uniqueDescriptions.length);
+                        this.showAiStatus(`Processing groups ${i + 1}-${batchEnd} of ${uniqueDescriptions.length} with AI...`, 'processing');
+
+                        // Build batch with representative transactions
+                        const batch = batchDescs.map(desc => {
+                            const representative = grouped[desc][0];
+                            const isVerification = lowConfidence.includes(representative);
+                            return {
+                                ...representative,
+                                suggestedCategory: isVerification ? representative.category : undefined,
+                                _groupKey: desc
+                            };
+                        });
 
                         try {
-                            const categorizations = await this.callAI(provider, apiKey, batch);
+                            const hasVerification = batch.some(t => t.suggestedCategory);
+                            const categorizations = await this.callAI(provider, apiKey, batch, hasVerification);
 
-                            // Apply categorizations
+                            // Apply categorizations to all transactions in each group
                             categorizations.forEach(result => {
-                                const transaction = this.transactions.find(t => t.id === result.id);
-                                if (transaction && result.category && this.isValidCategory(result.category)) {
-                                    transaction.category = result.category;
-                                    this.saveRule(transaction.description, result.category);
-                                    successCount++;
-                                }
+                                const groupKey = batch.find(t => t.id === result.id)?._groupKey;
+                                if (!groupKey || !result.category || !this.isValidCategory(result.category)) return;
+
+                                // Apply to all transactions with this description
+                                grouped[groupKey].forEach(t => {
+                                    const transaction = this.transactions.find(tx => tx.id === t.id);
+                                    if (transaction) {
+                                        const wasLowConfidence = lowConfidence.includes(t);
+                                        const wasUncategorized = uncategorized.includes(t);
+                                        transaction.category = result.category;
+                                        if (wasUncategorized) successCount++;
+                                        else if (wasLowConfidence) verifiedCount++;
+                                    }
+                                });
+
+                                // Save rule for the description pattern
+                                this.saveRule(groupKey, result.category);
                             });
 
                             this.updateDisplay();
                         } catch (batchError) {
                             lastError = batchError.message;
                             console.error(`Batch error:`, batchError);
-                            failedTransactions.push(...batch);
+                            failedGroups.push(...batchDescs);
                         }
 
                         // Brief delay between batches to avoid rate limits
-                        if (i + batchSize < uncategorized.length) {
+                        if (i + batchSize < uniqueDescriptions.length) {
                             await new Promise(resolve => setTimeout(resolve, 200));
                         }
                     }
 
-                    // One retry pass for any failures (smaller batches)
-                    if (failedTransactions.length > 0 && failedTransactions.length < uncategorized.length) {
-                        this.showAiStatus(`Retrying ${failedTransactions.length} failed uncategorized transactions with AI...`, 'processing');
+                    // One retry pass for any failures
+                    if (failedGroups.length > 0 && failedGroups.length < uniqueDescriptions.length) {
+                        this.showAiStatus(`Retrying ${failedGroups.length} failed groups with AI...`, 'processing');
                         await new Promise(resolve => setTimeout(resolve, 1000));
 
+                        const retryBatch = failedGroups.map(desc => grouped[desc][0]);
+
                         try {
-                            const categorizations = await this.callAI(provider, apiKey, failedTransactions);
+                            const categorizations = await this.callAI(provider, apiKey, retryBatch, false);
                             categorizations.forEach(result => {
-                                const transaction = this.transactions.find(t => t.id === result.id);
-                                if (transaction && result.category && this.isValidCategory(result.category)) {
-                                    transaction.category = result.category;
-                                    this.saveRule(transaction.description, result.category);
-                                    successCount++;
-                                }
+                                const groupKey = retryBatch.find(t => t.id === result.id)?.description;
+                                if (!groupKey || !result.category || !this.isValidCategory(result.category)) return;
+
+                                grouped[groupKey]?.forEach(t => {
+                                    const transaction = this.transactions.find(tx => tx.id === t.id);
+                                    if (transaction) {
+                                        transaction.category = result.category;
+                                        successCount++;
+                                    }
+                                });
+                                this.saveRule(groupKey, result.category);
                             });
                             this.updateDisplay();
                         } catch (retryError) {
-                            errorCount = failedTransactions.length;
                             lastError = retryError.message;
                         }
-                    } else if (failedTransactions.length === uncategorized.length) {
-                        errorCount = failedTransactions.length;
                     }
 
-                    if (successCount > 0) {
-                        const remaining = this.transactions.filter(t => t.category === 'uncategorized').length;
+                    // Build status message
+                    const remaining = this.transactions.filter(t => t.category === 'uncategorized').length;
+                    const statusMsg = [];
+                    if (successCount > 0) statusMsg.push(`${successCount} categorized`);
+                    if (verifiedCount > 0) statusMsg.push(`${verifiedCount} verified`);
+
+                    if (statusMsg.length > 0) {
                         if (remaining > 0) {
-                            this.showAiStatus(`Categorized ${successCount}. ${remaining} still uncategorized - click again to retry. Last error: ${lastError}`, 'success');
+                            this.showAiStatus(`${statusMsg.join(', ')}. ${remaining} still uncategorized - click again to retry.`, 'success');
                         } else {
-                            this.showAiStatus(`Successfully categorized all ${successCount} transactions!`, 'success');
+                            this.showAiStatus(`Successfully processed: ${statusMsg.join(', ')}!`, 'success');
                         }
                     } else {
                         this.showAiStatus(`Failed: ${lastError}`, 'error');
                     }
                 } catch (error) {
                     console.error('AI categorization error:', error);
-                    if (successCount > 0) {
-                        this.showAiStatus(`Partially completed: ${successCount} categorized. Error: ${error.message}`, 'error');
+                    const partial = successCount + verifiedCount;
+                    if (partial > 0) {
+                        this.showAiStatus(`Partially completed: ${partial} processed. Error: ${error.message}`, 'error');
                     } else {
                         this.showAiStatus(`Error: ${error.message}`, 'error');
                     }
@@ -3400,19 +3502,54 @@ Respond with ONLY a JSON array in this exact format, no other text:
                 }
             }
 
+            // Group transactions by similar descriptions to reduce API calls
+            groupSimilarTransactions(transactions) {
+                const grouped = {};
+                const mapping = {};
+
+                transactions.forEach(t => {
+                    // Normalize description for grouping (remove varying numbers, dates)
+                    const normalized = t.description
+                        .toLowerCase()
+                        .replace(/\d{4,}/g, 'XXXX')  // Replace long numbers (card numbers, etc)
+                        .replace(/\d{1,2}\/\d{1,2}/g, 'XX/XX')  // Replace dates
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    // Use original description as key for better rule matching
+                    const key = t.description;
+
+                    if (!grouped[key]) {
+                        grouped[key] = [];
+                    }
+                    grouped[key].push(t);
+                    mapping[t.id] = key;
+                });
+
+                return { grouped, mapping };
+            }
+
             isValidCategory(category) {
                 const validCategories = ['fixed-costs', 'short-term', 'long-term', 'guilt-free', 'income'];
                 return validCategories.includes(category);
             }
 
-            async callAI(provider, apiKey, transactions) {
-                const transactionList = transactions.map(t => ({
-                    id: t.id,
-                    description: t.description,
-                    amount: t.amount
-                }));
+            async callAI(provider, apiKey, transactions, includeVerification = false) {
+                const transactionList = transactions.map(t => {
+                    const item = {
+                        id: t.id,
+                        date: t.date,  // Include date for context
+                        description: t.description,
+                        amount: t.amount
+                    };
+                    // Include suggested category for verification
+                    if (t.suggestedCategory) {
+                        item.suggestedCategory = t.suggestedCategory;
+                    }
+                    return item;
+                });
 
-                const prompt = this.getCategorizationPrompt(transactionList);
+                const prompt = this.getCategorizationPrompt(transactionList, includeVerification);
 
                 switch (provider) {
                     case 'openai':
