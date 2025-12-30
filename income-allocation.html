@@ -419,6 +419,12 @@
             text-decoration: none;
         }
 
+        .version-text {
+            margin-top: 16px;
+            font-size: 0.75em;
+            color: #9ca3af;
+        }
+
         /* Accessibility: Skip link for keyboard navigation */
         .skip-link {
             position: absolute;
@@ -559,7 +565,6 @@
         <header role="banner">
             <h1><a href="index.html" style="color: inherit; text-decoration: none;">Budget Planner</a></h1>
             <p>Allocate your income using Ramit Sethi's "I Will Teach You to Be Rich" method</p>
-            <p style="font-size: 0.75em; color: #888; margin-top: 4px;">Code version: 2025-12-29 11:40 AM ET</p>
         </header>
 
         <main id="main-content" class="content" role="main">
@@ -720,6 +725,7 @@
                 <a href="index.html" class="home-link">🏠 Home</a>
                 <a href="transaction-analyzer.html" class="nav-arrow">Continue to Spending Tracker →</a>
             </nav>
+            <p class="version-text">v2025.12.29</p>
         </footer>
     </div>
 
@@ -1334,6 +1340,31 @@
 
                 // Recalculate to update display
                 allocator.calculate();
+            }
+
+            // Check for URL params from Spending Tracker
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('source') === 'spending-tracker') {
+                const income = parseFloat(urlParams.get('income'));
+                const fixed = parseFloat(urlParams.get('fixed'));
+                const short = parseFloat(urlParams.get('short'));
+                const long = parseFloat(urlParams.get('long'));
+                const guilt = parseFloat(urlParams.get('guilt'));
+
+                if (!isNaN(income) && income > 0) {
+                    document.getElementById('income').value = allocator.formatCurrencyInput(income);
+                    document.getElementById('incomeFrequency').value = 'monthly';
+                }
+
+                if (!isNaN(fixed)) allocator.categories.fixedCosts.value = fixed;
+                if (!isNaN(short)) allocator.categories.shortTerm.value = short;
+                if (!isNaN(long)) allocator.categories.longTerm.value = long;
+                if (!isNaN(guilt)) allocator.categories.guiltFree.value = guilt;
+
+                allocator.calculate();
+
+                // Clean up URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
 
             // Initialize session toolbar

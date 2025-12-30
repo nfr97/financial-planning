@@ -666,6 +666,12 @@
             text-decoration: none;
         }
 
+        .version-text {
+            margin-top: 16px;
+            font-size: 0.75em;
+            color: #9ca3af;
+        }
+
         /* Navigation Tabs */
         .nav-tabs {
             max-width: 1200px;
@@ -1315,7 +1321,6 @@
         <header role="banner">
             <h1><a href="index.html" style="color: inherit; text-decoration: none;">Spending Tracker</a></h1>
             <p>Upload your bank transactions to see your actual spending vs. your goals</p>
-            <p style="font-size: 0.75em; color: rgba(255,255,255,0.8); margin-top: 4px;">Code version: 2025-12-29 1:55 PM ET</p>
         </header>
 
         <main id="main-content" class="content" role="main">
@@ -1411,17 +1416,13 @@
 
             <!-- AI Categorization (Optional) -->
             <div class="section" id="aiSection">
-                <h2>AI-Powered Categorization (Optional)</h2>
-                <p style="color: #666; margin-bottom: 15px;">Select your AI provider and enter your API key to automatically categorize transactions.</p>
+                <h2>AI Categorization (Optional)</h2>
+                <p style="color: #666; margin-bottom: 15px;">Use your own API key to auto-categorize transactions.</p>
 
-                <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 0.9em;">
-                    <strong style="color: #92400e;">Privacy Note:</strong>
-                    <span style="color: #78350f;">Your API key is stored in your browser's local storage (unencrypted). Only use this on a personal device you trust.</span>
-                    <details style="margin-top: 8px;">
-                        <summary style="cursor: pointer; color: #92400e; font-weight: 600;">What data is sent to AI?</summary>
-                        <p style="margin: 8px 0 0 0; color: #78350f;">Only these fields are sent for each uncategorized transaction: <strong>date</strong>, <strong>description</strong>, and <strong>amount</strong>. No account numbers, balances, or personal identifiers are included. Data is sent directly to the AI provider you select (Google, OpenAI, or Anthropic) — it never passes through our servers.</p>
-                    </details>
-                </div>
+                <details style="margin-bottom: 15px; font-size: 0.85em; color: #64748b;">
+                    <summary style="cursor: pointer;">Data sent to AI provider</summary>
+                    <p style="margin: 8px 0 0 0;">Date, description, and amount for each uncategorized transaction. Sent directly to the provider you select. API key stored in browser localStorage.</p>
+                </details>
 
                 <div class="api-key-wrapper">
                     <select id="aiProvider" class="provider-select">
@@ -1460,7 +1461,7 @@
                             <div class="stat-value income" id="totalIncome">$0</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">Total Spending</div>
+                            <div class="stat-label">Total Outflow</div>
                             <div class="stat-value expense" id="totalSpending">$0</div>
                         </div>
                         <div class="stat-box">
@@ -1562,7 +1563,7 @@
                 <!-- Actions -->
                 <div class="action-buttons">
                     <button class="btn btn-secondary" onclick="analyzer.exportSummary()">Export Summary</button>
-                    <a href="income-allocation.html" class="btn btn-primary">Update Budget Plan</a>
+                    <button class="btn btn-primary" onclick="analyzer.updateBudgetPlan()">Update Budget Plan</button>
                 </div>
             </div>
         </main>
@@ -1573,6 +1574,7 @@
                 <a href="index.html" class="home-link">🏠 Home</a>
                 <a href="retirement-simulator.html" class="nav-arrow">Continue to Retirement Simulator →</a>
             </nav>
+            <p class="version-text">v2025.12.29</p>
         </footer>
     </div>
 
@@ -3447,6 +3449,49 @@ Return ONLY a JSON object (no markdown, no explanation):
                 }
 
                 DOMUtils.downloadFile(summary, 'spending-summary.txt');
+            }
+
+            updateBudgetPlan() {
+                if (this.transactions.length === 0) {
+                    window.location.href = 'income-allocation.html';
+                    return;
+                }
+
+                const categories = this.calculateCategoryTotals();
+                const dates = this.transactions.map(t => new Date(t.date));
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                const months = Math.max(1, (maxDate - minDate) / (1000 * 60 * 60 * 24 * 30));
+
+                // Calculate actual monthly income from transactions
+                const nonTransferTransactions = this.transactions.filter(t => !t.isTransfer);
+                const totalActualIncome = nonTransferTransactions
+                    .filter(t => t.amount > 0)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                const monthlyActualIncome = totalActualIncome / months;
+
+                // Calculate actual percentages based on actual income
+                const fixedCosts = (categories['fixed-costs']?.total || 0) / months;
+                const shortTerm = (categories['short-term']?.total || 0) / months;
+                const longTerm = (categories['long-term']?.total || 0) / months;
+                const guiltFree = (categories['guilt-free']?.total || 0) / months;
+
+                const fixedPct = monthlyActualIncome > 0 ? (fixedCosts / monthlyActualIncome * 100) : 0;
+                const shortPct = monthlyActualIncome > 0 ? (shortTerm / monthlyActualIncome * 100) : 0;
+                const longPct = monthlyActualIncome > 0 ? (longTerm / monthlyActualIncome * 100) : 0;
+                const guiltFreePct = monthlyActualIncome > 0 ? (guiltFree / monthlyActualIncome * 100) : 0;
+
+                // Build URL with actual spending data
+                const params = new URLSearchParams({
+                    income: Math.round(monthlyActualIncome),
+                    fixed: fixedPct.toFixed(1),
+                    short: shortPct.toFixed(1),
+                    long: longPct.toFixed(1),
+                    guilt: guiltFreePct.toFixed(1),
+                    source: 'spending-tracker'
+                });
+
+                window.location.href = `income-allocation.html?${params.toString()}`;
             }
 
             formatCurrency(value) {
