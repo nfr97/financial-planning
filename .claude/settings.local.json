@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git mv:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:support.ynab.com)",
+      "WebFetch(domain:support.waveapps.com)",
+      "WebFetch(domain:quickbooks.intuit.com)",
+      "Bash(node -c:*)"
+    ]
+  }
+}

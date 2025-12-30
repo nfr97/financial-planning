@@ -1561,9 +1561,34 @@
 
                 // Column detection configuration (auto-detects common bank formats)
                 this.columnConfig = {
-                    dateCol: ['Date', 'Transaction Date', 'Trans Date', 'Trans. Date', 'Posted Date', 'Posting Date'],
-                    descCol: ['Description', 'Memo', 'Name', 'Merchant', 'Payee', 'Transaction Description'],
-                    amountCol: ['Amount', 'Transaction Amount', 'Debit', 'Credit', 'Value']
+                    dateCol: [
+                        'Date', 'Transaction Date', 'Trans Date', 'Trans. Date',
+                        'Posted Date', 'Posting Date', 'Post Date', 'Settlement Date',
+                        'Trade Date', 'Value Date', 'Effective Date', 'Process Date',
+                        'Txn Date', 'Transaction_Date', 'TransactionDate', 'BookingDate',
+                        'Booking Date', 'Entry Date', 'Cleared Date'
+                    ],
+                    descCol: [
+                        'Description', 'Memo', 'Name', 'Merchant', 'Payee',
+                        'Transaction Description', 'Trans Description', 'Details',
+                        'Original Description', 'Narrative', 'Particulars', 'Reference',
+                        'Transaction', 'Trans', 'Merchant Name', 'Vendor', 'Payee Name',
+                        'Transaction Details', 'Payment Details', 'Remarks'
+                    ],
+                    amountCol: [
+                        'Amount', 'Transaction Amount', 'Value', 'Sum', 'Total',
+                        'Net Amount', 'Payment Amount', 'Trans Amount', 'Amt'
+                    ],
+                    debitCol: [
+                        'Debit', 'Debit Amount', 'Debits', 'Withdrawal', 'Withdrawals',
+                        'Money Out', 'Spent', 'Payment', 'Charge', 'Charges',
+                        'Debit Amt', 'DR', 'Out', 'Expense', 'Outflow'
+                    ],
+                    creditCol: [
+                        'Credit', 'Credit Amount', 'Credits', 'Deposit', 'Deposits',
+                        'Money In', 'Received', 'Payment Received', 'Refund',
+                        'Credit Amt', 'CR', 'In', 'Income', 'Inflow'
+                    ]
                 };
 
                 // Load saved rules from localStorage
@@ -1636,8 +1661,6 @@
             }
 
             handleFiles(files) {
-                const fileNames = Array.from(files).map(f => f.name);
-
                 // File size limits
                 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB hard limit
                 const WARN_FILE_SIZE = 5 * 1024 * 1024; // 5MB warning threshold
@@ -1655,7 +1678,13 @@
                 const promises = Array.from(files).map(file => this.parseCSV(file));
 
                 Promise.all(promises).then(results => {
-                    this.transactions = results.flat();
+                    // Separate successful and failed file results
+                    const successful = results.filter(r => !r.error && r.transactions.length > 0);
+                    const failed = results.filter(r => r.error);
+                    const empty = results.filter(r => !r.error && r.transactions.length === 0);
+
+                    // Collect all transactions from successful files
+                    this.transactions = successful.flatMap(r => r.transactions);
                     this.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                     // Deduplicate inter-account transfers
@@ -1668,49 +1697,87 @@
                         }
                     });
 
-                    this.updateDisplay();
-                    document.getElementById('resultsSection').classList.remove('results-hidden');
+                    // Show results if we have any transactions
+                    if (this.transactions.length > 0) {
+                        this.updateDisplay();
+                        document.getElementById('resultsSection').classList.remove('results-hidden');
 
-                    // Show upload success feedback
-                    this.showUploadSuccess(fileNames, this.transactions.length);
+                        // Save transactions to localStorage for session persistence
+                        StorageUtils.set('transactionData', this.transactions);
 
-                    // Save transactions to localStorage for session persistence
-                    StorageUtils.set('transactionData', this.transactions);
+                        // Save spending data for Retirement Forecast page
+                        this.saveSpendingDataForRetirement();
+                    }
 
-                    // Save spending data for Retirement Forecast page
-                    this.saveSpendingDataForRetirement();
-                }).catch(error => {
-                    console.error('Error parsing files:', error);
-                    this.showError(error.message || 'Error parsing CSV file. Please check the format and try again.');
+                    // Show upload summary with per-file results
+                    this.showUploadSummary(successful, failed, empty);
                 });
             }
 
-            showUploadSuccess(fileNames, transactionCount) {
+            showUploadSummary(successful, failed, empty) {
                 const uploadArea = document.getElementById('uploadArea');
-                uploadArea.classList.add('success');
 
                 // Remove existing success info if any
                 const existingInfo = document.querySelector('.upload-success-info');
                 if (existingInfo) existingInfo.remove();
 
-                // Create success message
+                // If all files failed, show error
+                if (successful.length === 0 && failed.length > 0) {
+                    uploadArea.classList.remove('success');
+                    const errorMessages = failed.map(f => `${this.escapeHtml(f.fileName)}: ${this.escapeHtml(f.error)}`).join('\n\n');
+                    this.showError(`Failed to parse CSV file(s):\n\n${errorMessages}`);
+                    return;
+                }
+
+                // Show success state
+                uploadArea.classList.add('success');
+
+                const totalTransactions = successful.reduce((sum, r) => sum + r.transactions.length, 0);
+                const totalWarnings = successful.reduce((sum, r) => sum + r.warnings.length, 0);
                 const transferCount = this.transactions.filter(t => t.isTransfer).length;
+
                 const successInfo = document.createElement('div');
                 successInfo.className = 'upload-success-info';
-                let message = `<strong>Successfully loaded ${transactionCount} transactions!</strong>`;
-                if (transferCount > 0) {
-                    message += `<span style="color: #10b981; font-size: 0.9em; margin-top: 5px; display: block;">&#10004; ${transferCount} inter-account transfers detected and excluded from totals</span>`;
+
+                let html = `<strong>Successfully loaded ${totalTransactions.toLocaleString()} transactions!</strong>`;
+
+                // Per-file breakdown if multiple files
+                if (successful.length > 1 || failed.length > 0) {
+                    html += `<div style="margin-top: 10px; font-size: 0.9em;">`;
+                    for (const result of successful) {
+                        const detectionMethod = result.columnMapping?.detectedBy === 'ai' ? ' (AI-detected)' : '';
+                        const warningBadge = result.warnings.length > 0
+                            ? `<span style="color: #f59e0b;"> ⚠ ${result.warnings.length} skipped</span>`
+                            : '';
+                        html += `<div style="color: #10b981;">✓ ${this.escapeHtml(result.fileName)}: ${result.transactions.length} transactions${detectionMethod}${warningBadge}</div>`;
+                    }
+                    for (const result of failed) {
+                        html += `<div style="color: #ef4444;">✗ ${this.escapeHtml(result.fileName)}: ${this.escapeHtml(result.error)}</div>`;
+                    }
+                    html += `</div>`;
                 }
-                message += `<span style="margin-top: 5px; display: block;">Files: ${fileNames.map(n => this.escapeHtml(n)).join(', ')}</span>`;
-                message += `<div style="background: #f0f9ff; border-left: 3px solid #3b82f6; padding: 10px; margin-top: 10px; font-size: 0.9em;">
+
+                if (transferCount > 0) {
+                    html += `<span style="color: #10b981; font-size: 0.9em; margin-top: 5px; display: block;">&#10004; ${transferCount} inter-account transfers detected and excluded from totals</span>`;
+                }
+
+                if (totalWarnings > 0) {
+                    html += `<span style="color: #f59e0b; font-size: 0.9em; margin-top: 5px; display: block;">⚠ ${totalWarnings} rows skipped (invalid dates or amounts)</span>`;
+                }
+
+                html += `<div style="background: #f0f9ff; border-left: 3px solid #3b82f6; padding: 10px; margin-top: 10px; font-size: 0.9em;">
                     <strong style="color: #1e40af;">Smart Categorization:</strong>
-                    <span style="color: #475569;">Your transactions are first automatically categorized using pattern matching (for example, transactions containing "WALMART" or "GROCERY" are categorized as Fixed Costs). This reduces the need for AI and speeds up the process. Use AI categorization below for any remaining uncategorized transactions.</span>
+                    <span style="color: #475569;">Your transactions are first automatically categorized using pattern matching. Use AI categorization below for any remaining uncategorized transactions.</span>
                 </div>`;
-                successInfo.innerHTML = message;
+
+                successInfo.innerHTML = html;
                 uploadArea.parentNode.insertBefore(successInfo, uploadArea.nextSibling);
 
-                // Update upload area text
-                uploadArea.querySelector('.upload-text').textContent = 'Drop more CSV files to add transactions';
+                // Update upload area text to indicate more files can be added
+                const uploadText = uploadArea.querySelector('.upload-text');
+                if (uploadText) {
+                    uploadText.textContent = 'Drop more CSV files to add transactions';
+                }
             }
 
             showError(errorMessage) {
@@ -1786,59 +1853,89 @@
             parseCSV(file) {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onload = (e) => {
+                    reader.onload = async (e) => {
                         try {
-                            const text = e.target.result;
-                            const transactions = this.parseCSVText(text);
-                            resolve(transactions);
+                            const text = this.preprocessText(e.target.result);
+                            const result = await this.parseCSVText(text, file.name);
+                            resolve(result);
                         } catch (error) {
-                            reject(error);
+                            // Return error info instead of rejecting, for graceful multi-file handling
+                            resolve({
+                                transactions: [],
+                                fileName: file.name,
+                                error: error.message,
+                                warnings: []
+                            });
                         }
                     };
-                    reader.onerror = reject;
+                    reader.onerror = () => resolve({
+                        transactions: [],
+                        fileName: file.name,
+                        error: 'Failed to read file',
+                        warnings: []
+                    });
                     reader.readAsText(file);
                 });
             }
 
-            parseCSVText(text) {
-                const lines = text.trim().split('\n');
+            // Preprocess CSV text: remove BOM, normalize line endings
+            preprocessText(text) {
+                // Remove UTF-8 BOM if present
+                if (text.charCodeAt(0) === 0xFEFF) {
+                    text = text.slice(1);
+                }
+                // Normalize line endings (Windows \r\n, old Mac \r, Unix \n)
+                text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                return text.trim();
+            }
+
+            async parseCSVText(text, fileName = 'unknown') {
+                const lines = text.split('\n');
+                const warnings = [];
+
                 if (lines.length < 2) {
-                    throw new Error('CSV file is empty or has no data rows. Please upload a valid CSV file with at least a header row and one data row.');
+                    throw new Error('CSV file is empty or has no data rows.');
                 }
 
                 // Parse header
                 const header = this.parseCSVLine(lines[0]);
 
-                // Auto-detect columns
-                const dateIdx = this.findColumnIndex(header, this.columnConfig.dateCol);
-                const descIdx = this.findColumnIndex(header, this.columnConfig.descCol);
-                const amountIdx = this.findColumnIndex(header, this.columnConfig.amountCol);
-
-                // Validate that required columns were found
-                const missingColumns = [];
-                if (dateIdx === -1) {
-                    missingColumns.push(`Date column (expected: "${this.columnConfig.dateCol.join('" or "')}")`);
-                }
-                if (descIdx === -1) {
-                    missingColumns.push(`Description column (expected: "${this.columnConfig.descCol.join('" or "')}")`);
-                }
-                if (amountIdx === -1) {
-                    missingColumns.push(`Amount column (expected: "${this.columnConfig.amountCol.join('" or "')}")`);
+                // Get sample rows for format detection
+                const sampleRows = [];
+                for (let i = 1; i < Math.min(lines.length, 6); i++) {
+                    const line = lines[i].trim();
+                    if (line) sampleRows.push(this.parseCSVLine(line));
                 }
 
-                if (missingColumns.length > 0) {
+                // Detect column mapping
+                let columnMapping = this.detectColumns(header, sampleRows);
+
+                // If detection failed and AI is available, try AI-assisted detection
+                if (!columnMapping.success && this.hasAIConfigured()) {
+                    try {
+                        columnMapping = await this.detectColumnsWithAI(header, sampleRows, fileName);
+                    } catch (e) {
+                        console.warn('AI column detection failed:', e);
+                    }
+                }
+
+                // If still no success, throw with helpful error
+                if (!columnMapping.success) {
                     const foundColumns = header.map(h => `"${h}"`).join(', ');
                     throw new Error(
-                        `Could not find required columns in CSV file.\n\n` +
-                        `Missing: ${missingColumns.join(', ')}\n\n` +
+                        `Could not detect columns in "${fileName}".\n\n` +
                         `Found columns: ${foundColumns}\n\n` +
-                        `Please ensure your CSV has the correct column headers.`
+                        `Expected: Date, Description, and either Amount or Debit/Credit columns.`
                     );
                 }
 
+                // Detect date format from sample data
+                const dateFormat = this.detectDateFormat(sampleRows, columnMapping.dateIdx);
+
                 // Parse transactions
                 const transactions = [];
-                const requiredIdx = Math.max(dateIdx, descIdx, amountIdx);
+                const { dateIdx, descIdx, amountIdx, debitIdx, creditIdx } = columnMapping;
+                const requiredIdx = Math.max(dateIdx, descIdx, amountIdx ?? -1, debitIdx ?? -1, creditIdx ?? -1);
 
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
@@ -1847,37 +1944,340 @@
                     const values = this.parseCSVLine(line);
 
                     // Skip rows that don't have enough columns
-                    if (values.length <= requiredIdx) continue;
+                    if (values.length <= requiredIdx) {
+                        warnings.push({ row: i + 1, issue: 'insufficient_columns' });
+                        continue;
+                    }
 
-                    const dateStr = values[dateIdx];
-                    const description = values[descIdx];
-                    const amount = parseFloat(values[amountIdx]?.replace(/[,$]/g, '')) || 0;
+                    const dateStr = values[dateIdx]?.trim();
+                    const description = values[descIdx]?.trim();
 
-                    const date = this.parseDate(dateStr);
-                    if (!date || isNaN(amount)) continue;
+                    // Parse amount - handle single Amount column or Debit/Credit split
+                    let amount;
+                    if (amountIdx !== null && amountIdx !== -1) {
+                        amount = this.parseAmount(values[amountIdx]);
+                    } else {
+                        // Debit/Credit columns: Credit is positive, Debit is negative
+                        const credit = this.parseAmount(values[creditIdx]) || 0;
+                        const debit = this.parseAmount(values[debitIdx]) || 0;
+                        amount = credit - debit;
+                    }
+
+                    const date = this.parseDateWithFormat(dateStr, dateFormat);
+
+                    if (!date) {
+                        warnings.push({ row: i + 1, issue: 'invalid_date', value: dateStr });
+                        continue;
+                    }
+                    if (isNaN(amount) || amount === 0) {
+                        // Skip zero-amount transactions (often headers or summary rows)
+                        if (amount === 0 && !/balance|total|summary/i.test(description || '')) {
+                            warnings.push({ row: i + 1, issue: 'zero_amount' });
+                        }
+                        continue;
+                    }
 
                     transactions.push({
                         date: date,
-                        description: description,
+                        description: description || '',
                         amount: amount,
                         category: null,
-                        id: `${date}-${description}-${amount}-${i}`
+                        id: `${fileName}-${date}-${description}-${amount}-${i}`,
+                        sourceFile: fileName
                     });
                 }
 
                 // If no transactions were parsed, throw a helpful error
                 if (transactions.length === 0) {
+                    const issues = [];
+                    const dateErrors = warnings.filter(w => w.issue === 'invalid_date').length;
+                    const amountErrors = warnings.filter(w => w.issue === 'zero_amount').length;
+                    if (dateErrors > 0) issues.push(`${dateErrors} rows with unrecognized dates`);
+                    if (amountErrors > 0) issues.push(`${amountErrors} rows with zero/invalid amounts`);
+
                     throw new Error(
-                        'No valid transactions found in CSV file.\n\n' +
-                        'This could mean:\n' +
-                        '• The date format is not recognized\n' +
-                        '• The amount values cannot be parsed\n' +
-                        '• All data rows are empty\n\n' +
-                        'Please check your CSV file format and try again.'
+                        `No valid transactions found in "${fileName}".\n\n` +
+                        (issues.length > 0 ? `Issues: ${issues.join(', ')}\n\n` : '') +
+                        'Check that date and amount formats are standard.'
                     );
                 }
 
-                return transactions;
+                return {
+                    transactions,
+                    fileName,
+                    warnings,
+                    columnMapping,
+                    error: null
+                };
+            }
+
+            // Detect columns with expanded logic for Debit/Credit
+            detectColumns(header, sampleRows) {
+                const dateIdx = this.findColumnIndex(header, this.columnConfig.dateCol);
+                const descIdx = this.findColumnIndex(header, this.columnConfig.descCol);
+                let amountIdx = this.findColumnIndex(header, this.columnConfig.amountCol);
+                const debitIdx = this.findColumnIndex(header, this.columnConfig.debitCol);
+                const creditIdx = this.findColumnIndex(header, this.columnConfig.creditCol);
+
+                // Check if we have the required columns
+                const hasDate = dateIdx !== -1;
+                const hasDesc = descIdx !== -1;
+                const hasAmount = amountIdx !== -1;
+                const hasDebitCredit = debitIdx !== -1 && creditIdx !== -1;
+
+                // If we matched Amount to a Debit or Credit column, clear it and use split mode
+                if (hasAmount && (amountIdx === debitIdx || amountIdx === creditIdx)) {
+                    amountIdx = -1;
+                }
+
+                const success = hasDate && hasDesc && (hasAmount || hasDebitCredit);
+
+                return {
+                    success,
+                    dateIdx,
+                    descIdx,
+                    amountIdx: hasAmount ? amountIdx : null,
+                    debitIdx: hasDebitCredit ? debitIdx : null,
+                    creditIdx: hasDebitCredit ? creditIdx : null,
+                    mode: hasAmount ? 'single_amount' : (hasDebitCredit ? 'debit_credit' : 'unknown'),
+                    detectedBy: 'auto'
+                };
+            }
+
+            // Parse amount with support for various formats
+            parseAmount(value) {
+                if (value === null || value === undefined || value === '') return 0;
+
+                let str = String(value).trim();
+
+                // Handle parentheses notation for negatives: (100.00) -> -100.00
+                const isParenthesesNegative = /^\([\d,.\s]+\)$/.test(str);
+                if (isParenthesesNegative) {
+                    str = '-' + str.replace(/[()]/g, '');
+                }
+
+                // Handle trailing minus: 100.00- -> -100.00
+                if (/^[\d,.\s]+-$/.test(str)) {
+                    str = '-' + str.slice(0, -1);
+                }
+
+                // Handle CR/DR suffixes: 100.00 CR -> 100.00, 100.00 DR -> -100.00
+                if (/\s*CR\s*$/i.test(str)) {
+                    str = str.replace(/\s*CR\s*$/i, '');
+                } else if (/\s*DR\s*$/i.test(str)) {
+                    str = '-' + str.replace(/\s*DR\s*$/i, '');
+                }
+
+                // Remove currency symbols and thousand separators
+                str = str.replace(/[$£€¥₹,\s]/g, '');
+
+                // Handle European decimal format (1.234,56 -> 1234.56)
+                // If there's a comma after a period, it's European format
+                if (/\d+\.\d{3},\d{2}$/.test(str)) {
+                    str = str.replace(/\./g, '').replace(',', '.');
+                }
+
+                return parseFloat(str) || 0;
+            }
+
+            // Detect date format from sample data
+            detectDateFormat(sampleRows, dateIdx) {
+                if (!sampleRows.length || dateIdx === -1) return null;
+
+                const dateStrings = sampleRows
+                    .map(row => row[dateIdx])
+                    .filter(Boolean)
+                    .slice(0, 10);
+
+                // Check for named months (unambiguous)
+                for (const dateStr of dateStrings) {
+                    if (/[a-zA-Z]{3,}/.test(dateStr)) {
+                        return 'named_month';
+                    }
+                }
+
+                // Check for ISO format YYYY-MM-DD
+                for (const dateStr of dateStrings) {
+                    if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(dateStr)) {
+                        return 'YYYY-MM-DD';
+                    }
+                }
+
+                // Analyze numeric dates to determine day vs month position
+                let maxFirst = 0, maxSecond = 0;
+                for (const dateStr of dateStrings) {
+                    const match = dateStr.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+                    if (match) {
+                        maxFirst = Math.max(maxFirst, parseInt(match[1], 10));
+                        maxSecond = Math.max(maxSecond, parseInt(match[2], 10));
+                    }
+                }
+
+                // If first position > 12, it must be day (DD/MM/YYYY)
+                if (maxFirst > 12) return 'DD/MM/YYYY';
+                // If second position > 12, it must be day (MM/DD/YYYY)
+                if (maxSecond > 12) return 'MM/DD/YYYY';
+
+                // Ambiguous - default to US format
+                return 'MM/DD/YYYY';
+            }
+
+            // Parse date with detected format
+            parseDateWithFormat(dateStr, format) {
+                if (!dateStr) return null;
+                dateStr = dateStr.trim();
+
+                // Try named month formats first
+                if (format === 'named_month' || /[a-zA-Z]/.test(dateStr)) {
+                    const date = new Date(dateStr);
+                    if (!isNaN(date.getTime())) {
+                        return date.toISOString().split('T')[0];
+                    }
+                }
+
+                // ISO format
+                if (format === 'YYYY-MM-DD') {
+                    const match = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                    if (match) {
+                        const [_, year, month, day] = match;
+                        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    }
+                }
+
+                // DD/MM/YYYY format
+                if (format === 'DD/MM/YYYY') {
+                    const match = dateStr.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+                    if (match) {
+                        let [_, day, month, year] = match;
+                        if (year.length === 2) year = (parseInt(year) > 50 ? '19' : '20') + year;
+                        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    }
+                }
+
+                // MM/DD/YYYY format (default)
+                const match = dateStr.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+                if (match) {
+                    let [_, month, day, year] = match;
+                    if (year.length === 2) year = (parseInt(year) > 50 ? '19' : '20') + year;
+                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                }
+
+                // Fallback to DateUtils
+                return DateUtils.parseDate(dateStr);
+            }
+
+            // Check if AI API is configured
+            hasAIConfigured() {
+                const geminiKey = document.getElementById('geminiApiKey')?.value;
+                const openaiKey = document.getElementById('openaiApiKey')?.value;
+                const anthropicKey = document.getElementById('anthropicApiKey')?.value;
+                return !!(geminiKey || openaiKey || anthropicKey);
+            }
+
+            // AI-assisted column detection
+            async detectColumnsWithAI(header, sampleRows, fileName) {
+                const prompt = `Analyze this CSV file structure and identify the columns for a financial transaction import.
+
+File: ${fileName}
+Headers: ${JSON.stringify(header)}
+Sample data rows:
+${sampleRows.slice(0, 3).map((row, i) => `Row ${i + 1}: ${JSON.stringify(row)}`).join('\n')}
+
+Identify which column index (0-based) contains:
+1. Transaction date
+2. Description/merchant/payee
+3. Amount (single column), OR separate Debit and Credit columns
+
+Return ONLY a JSON object (no markdown, no explanation):
+{
+  "dateIdx": <number>,
+  "descIdx": <number>,
+  "amountIdx": <number or null if using debit/credit>,
+  "debitIdx": <number or null>,
+  "creditIdx": <number or null>,
+  "dateFormat": "<detected format like MM/DD/YYYY or YYYY-MM-DD>",
+  "confidence": "<high|medium|low>"
+}`;
+
+                try {
+                    const response = await this.callAIForColumnDetection(prompt);
+                    const parsed = JSON.parse(response.replace(/```json\n?|\n?```/g, '').trim());
+
+                    return {
+                        success: parsed.dateIdx !== undefined && parsed.descIdx !== undefined &&
+                                 (parsed.amountIdx !== null || (parsed.debitIdx !== null && parsed.creditIdx !== null)),
+                        dateIdx: parsed.dateIdx,
+                        descIdx: parsed.descIdx,
+                        amountIdx: parsed.amountIdx,
+                        debitIdx: parsed.debitIdx,
+                        creditIdx: parsed.creditIdx,
+                        mode: parsed.amountIdx !== null ? 'single_amount' : 'debit_credit',
+                        detectedBy: 'ai',
+                        confidence: parsed.confidence
+                    };
+                } catch (e) {
+                    console.error('AI column detection error:', e);
+                    throw e;
+                }
+            }
+
+            // Call AI API for column detection (reuses existing API infrastructure)
+            async callAIForColumnDetection(prompt) {
+                const geminiKey = document.getElementById('geminiApiKey')?.value;
+                const openaiKey = document.getElementById('openaiApiKey')?.value;
+                const anthropicKey = document.getElementById('anthropicApiKey')?.value;
+
+                if (geminiKey) {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { temperature: 0.1, maxOutputTokens: 500 }
+                        })
+                    });
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                }
+
+                if (openaiKey) {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${openaiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o-mini',
+                            messages: [{ role: 'user', content: prompt }],
+                            temperature: 0.1,
+                            max_tokens: 500
+                        })
+                    });
+                    const data = await response.json();
+                    return data.choices?.[0]?.message?.content || '';
+                }
+
+                if (anthropicKey) {
+                    const response = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': anthropicKey,
+                            'anthropic-version': '2023-06-01',
+                            'anthropic-dangerous-direct-browser-access': 'true'
+                        },
+                        body: JSON.stringify({
+                            model: 'claude-3-5-haiku-latest',
+                            max_tokens: 500,
+                            messages: [{ role: 'user', content: prompt }]
+                        })
+                    });
+                    const data = await response.json();
+                    return data.content?.[0]?.text || '';
+                }
+
+                throw new Error('No AI API configured');
             }
 
             parseCSVLine(line) {
@@ -1889,7 +2289,13 @@
                     const char = line[i];
 
                     if (char === '"') {
-                        inQuotes = !inQuotes;
+                        // Handle escaped quotes (RFC 4180: "" inside quoted field = literal ")
+                        if (inQuotes && line[i + 1] === '"') {
+                            current += '"';
+                            i++; // Skip next quote
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
                     } else if (char === ',' && !inQuotes) {
                         result.push(current.trim());
                         current = '';
