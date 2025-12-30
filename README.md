@@ -116,7 +116,8 @@ Modern browsers with ES6+ support:
 ### File Structure
 ```
 financial-planning/
-├── index.html                   # Monte Carlo Retirement Simulator
+├── index.html                   # Landing page / splash screen
+├── retirement-simulator.html    # Monte Carlo Retirement Simulator
 ├── income-allocation.html       # Income Allocation Calculator
 ├── transaction-analyzer.html    # Transaction Analyzer
 ├── shared.js                    # Shared utilities

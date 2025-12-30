@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A client-side financial planning suite with three main tools:
-- **Monte Carlo Retirement Simulator** (`index.html`) - Probabilistic retirement projections with life events modeling
+A client-side financial planning suite with a landing page and three main tools:
+- **Landing Page** (`index.html`) - Splash page introducing the suite and linking to all tools
+- **Monte Carlo Retirement Simulator** (`retirement-simulator.html`) - Probabilistic retirement projections with life events modeling
 - **Income Allocation Calculator** (`income-allocation.html`) - Budget planning based on "I Will Teach You to Be Rich" methodology
 - **Transaction Analyzer** (`transaction-analyzer.html`) - CSV transaction categorization with AI assistance
 
@@ -44,7 +45,7 @@ Tools share data via localStorage:
 - Retirement Simulator reads this to pre-populate spending fields
 - Session export/import allows backing up all tool data as a single JSON file
 
-### Key Classes (index.html)
+### Key Classes (retirement-simulator.html)
 
 **`RetirementSimulator`**
 - Monte Carlo simulation using Box-Muller transform for normal distribution
@@ -74,16 +75,16 @@ Tools share data via localStorage:
 | Key | Used By | Purpose |
 |-----|---------|---------|
 | `budgetPlannerData` | income-allocation | Budget allocation percentages |
-| `spendingTrackerData` | transaction-analyzer → index | Monthly spending/savings for retirement |
+| `spendingTrackerData` | transaction-analyzer → retirement-simulator | Monthly spending/savings for retirement |
 | `transactionData` | transaction-analyzer | Parsed transactions array |
 | `transactionRules` | transaction-analyzer | User-defined categorization rules |
-| `retirementForecastData` | index | Simulation parameters |
-| `lifeEventsData` | index | Life events array |
-| `lifeEventIdCounter` | index | Counter for unique event IDs |
+| `retirementForecastData` | retirement-simulator | Simulation parameters |
+| `lifeEventsData` | retirement-simulator | Life events array |
+| `lifeEventIdCounter` | retirement-simulator | Counter for unique event IDs |
 
 ## External Dependencies
 
-- Chart.js 4.4.0 (CDN with SRI hash) - Used only in index.html for visualizations
+- Chart.js 4.4.0 (CDN with SRI hash) - Used only in retirement-simulator.html for visualizations
 - AI APIs (optional) - Gemini/OpenAI/Anthropic for transaction categorization in transaction-analyzer
 
 ## Accessibility
