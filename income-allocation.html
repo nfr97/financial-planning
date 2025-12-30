@@ -381,6 +381,44 @@
             text-decoration: underline;
         }
 
+        .workflow-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px 0;
+            margin-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .workflow-nav a {
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .workflow-nav .nav-arrow {
+            background: #667eea;
+            color: white;
+        }
+
+        .workflow-nav .nav-arrow:hover {
+            background: #5568d3;
+            text-decoration: none;
+        }
+
+        .workflow-nav .home-link {
+            color: #667eea;
+            font-size: 0.95em;
+        }
+
+        .workflow-nav .home-link:hover {
+            background: #f0f4ff;
+            text-decoration: none;
+        }
+
         /* Accessibility: Skip link for keyboard navigation */
         .skip-link {
             position: absolute;
@@ -677,10 +715,10 @@
         </main>
 
         <footer role="contentinfo">
-            <nav aria-label="Related resources and site navigation">
-                Inspired by <a href="https://www.iwillteachyoutoberich.com/" target="_blank" rel="noopener noreferrer">Ramit Sethi's "I Will Teach You to Be Rich" <span class="sr-only">(opens in new tab)</span></a> |
-                <a href="transaction-analyzer.html">Spending Tracker</a> |
-                <a href="retirement-simulator.html">Retirement Forecast</a>
+            <p>Inspired by <a href="https://www.iwillteachyoutoberich.com/" target="_blank" rel="noopener noreferrer">Ramit Sethi's "I Will Teach You to Be Rich" <span class="sr-only">(opens in new tab)</span></a></p>
+            <nav class="workflow-nav" aria-label="Workflow navigation">
+                <a href="index.html" class="home-link">🏠 Home</a>
+                <a href="transaction-analyzer.html" class="nav-arrow">Continue to Spending Tracker →</a>
             </nav>
         </footer>
     </div>

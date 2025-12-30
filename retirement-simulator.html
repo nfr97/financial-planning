@@ -318,6 +318,44 @@
             color: #333;
         }
 
+        .workflow-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px 0;
+            margin-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .workflow-nav a {
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .workflow-nav .nav-arrow {
+            background: #667eea;
+            color: white;
+        }
+
+        .workflow-nav .nav-arrow:hover {
+            background: #5568d3;
+            text-decoration: none;
+        }
+
+        .workflow-nav .home-link {
+            color: #667eea;
+            font-size: 0.95em;
+        }
+
+        .workflow-nav .home-link:hover {
+            background: #f0f4ff;
+            text-decoration: none;
+        }
+
         /* Life Events Section */
         .life-events-section {
             margin: 30px 0;
@@ -1222,10 +1260,10 @@
             <strong>Disclaimer:</strong> This tool is for educational purposes only and does not constitute financial advice.
             Actual investment returns vary and past performance does not guarantee future results.
             Please consult with a qualified financial advisor for personalized retirement planning.
-            <br><br>
-            <a href="income-allocation.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Budget Planner</a> |
-            <a href="transaction-analyzer.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Spending Tracker</a> |
-            <a href="retirement-simulator.html" style="color: #667eea; font-weight: 600; text-decoration: none;">Retirement Forecast</a>
+            <nav class="workflow-nav" aria-label="Workflow navigation">
+                <a href="transaction-analyzer.html" class="nav-arrow">← Back to Spending Tracker</a>
+                <a href="index.html" class="home-link">🏠 Home</a>
+            </nav>
         </footer>
     </div>
 

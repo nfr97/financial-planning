@@ -530,6 +530,44 @@
             text-decoration: underline;
         }
 
+        .workflow-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px 0;
+            margin-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .workflow-nav a {
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .workflow-nav .nav-arrow {
+            background: #667eea;
+            color: white;
+        }
+
+        .workflow-nav .nav-arrow:hover {
+            background: #5568d3;
+            text-decoration: none;
+        }
+
+        .workflow-nav .home-link {
+            color: #667eea;
+            font-size: 0.95em;
+        }
+
+        .workflow-nav .home-link:hover {
+            background: #f0f4ff;
+            text-decoration: none;
+        }
+
         /* Navigation Tabs */
         .nav-tabs {
             max-width: 1200px;
@@ -1418,8 +1456,11 @@
         </main>
 
         <footer role="contentinfo">
-            <a href="income-allocation.html">Budget Planner</a> |
-            <a href="retirement-simulator.html">Retirement Forecast</a>
+            <nav class="workflow-nav" aria-label="Workflow navigation">
+                <a href="income-allocation.html" class="nav-arrow">← Back to Budget Planner</a>
+                <a href="index.html" class="home-link">🏠 Home</a>
+                <a href="retirement-simulator.html" class="nav-arrow">Continue to Retirement Simulator →</a>
+            </nav>
         </footer>
     </div>
 
