@@ -550,6 +550,16 @@
             flex-wrap: wrap;
         }
 
+        .action-help {
+            text-align: center;
+        }
+
+        .action-help .help-text {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -1562,8 +1572,10 @@
 
                 <!-- Actions -->
                 <div class="action-buttons">
-                    <button class="btn btn-secondary" onclick="analyzer.exportSummary()">Export Summary</button>
-                    <button class="btn btn-primary" onclick="analyzer.updateBudgetPlan()">Update Budget Plan</button>
+                    <div class="action-help">
+                        <button class="btn btn-primary" onclick="analyzer.updateBudgetPlan()">Update Budget Plan</button>
+                        <p class="help-text">Send your actual spending percentages to the Budget Planner to compare against recommended targets.</p>
+                    </div>
                 </div>
             </div>
         </main>
@@ -3416,39 +3428,6 @@ Return ONLY a JSON object (no markdown, no explanation):
                         this.categoryPatterns[category].unshift(regex);
                     }
                 }
-            }
-
-            exportSummary() {
-                const categories = this.calculateCategoryTotals();
-                const dates = this.transactions.map(t => new Date(t.date));
-                const minDate = new Date(Math.min(...dates));
-                const maxDate = new Date(Math.max(...dates));
-                const months = Math.max(1, (maxDate - minDate) / (1000 * 60 * 60 * 24 * 30));
-
-                let summary = `Transaction Analysis Summary\n`;
-                summary += `============================\n\n`;
-                summary += `Date Range: ${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}\n`;
-                summary += `Total Transactions: ${this.transactions.length}\n\n`;
-
-                summary += `Monthly Spending by Category:\n`;
-                summary += `-----------------------------\n`;
-
-                const categoryNames = {
-                    'fixed-costs': 'Fixed Costs',
-                    'short-term': 'Short-Term Savings',
-                    'long-term': 'Long-Term Savings',
-                    'guilt-free': 'Guilt-Free Spending',
-                    'income': 'Income',
-                    'uncategorized': 'Uncategorized'
-                };
-
-                for (const [key, name] of Object.entries(categoryNames)) {
-                    const data = categories[key] || { total: 0, count: 0 };
-                    const monthly = data.total / months;
-                    summary += `${name}: ${this.formatCurrency(monthly)}/month (${data.count} transactions)\n`;
-                }
-
-                DOMUtils.downloadFile(summary, 'spending-summary.txt');
             }
 
             updateBudgetPlan() {
