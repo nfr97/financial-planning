@@ -544,7 +544,7 @@
             runner.section('XSS Prevention');
 
             runner.test('DOMUtils.escapeHtml escapes HTML tags', () => {
-                const result = DOMUtils.escapeHtml('<script>alert("xss")</script>');
+                const result = DOMUtils.escapeHtml('<script>alert("xss")<\/script>');
                 runner.assertFalse(result.includes('<script>'));
                 runner.assertContains(result, '&lt;script&gt;');
             });
