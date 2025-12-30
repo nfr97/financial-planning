@@ -2396,13 +2396,15 @@ Return ONLY a JSON object (no markdown, no explanation):
                     if (idx !== -1) return idx;
                 }
 
-                // Third pass: partial match (column contains the search term)
+                // Third pass: partial match (header contains the search term)
+                // Only match if header is MORE specific than pattern (e.g., "Transaction Amount" matches "Amount")
+                // Do NOT match if pattern is more specific (e.g., "Debit Amount" should NOT match plain "Amount" header)
                 for (const name of namesToCheck) {
                     const normalizedName = normalize(name);
                     const idx = header.findIndex(h => {
                         const normalizedHeader = normalize(h);
-                        // Check if header contains the name or name contains the header
-                        return normalizedHeader.includes(normalizedName) || normalizedName.includes(normalizedHeader);
+                        // Only match if header contains the pattern name (header is more specific)
+                        return normalizedHeader.includes(normalizedName);
                     });
                     if (idx !== -1) return idx;
                 }
