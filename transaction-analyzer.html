@@ -1581,13 +1581,15 @@
                     ],
                     debitCol: [
                         'Debit', 'Debit Amount', 'Debits', 'Withdrawal', 'Withdrawals',
-                        'Money Out', 'Spent', 'Payment', 'Charge', 'Charges',
-                        'Debit Amt', 'DR', 'Out', 'Expense', 'Outflow'
+                        'Money Out', 'Spent', 'Charge', 'Charges', 'Debit Amt', 'Expense', 'Outflow'
                     ],
                     creditCol: [
                         'Credit', 'Credit Amount', 'Credits', 'Deposit', 'Deposits',
-                        'Money In', 'Received', 'Payment Received', 'Refund',
-                        'Credit Amt', 'CR', 'In', 'Income', 'Inflow'
+                        'Money In', 'Received', 'Payment Received', 'Refund', 'Credit Amt', 'Inflow'
+                    ],
+                    // Transaction type column that indicates debit/credit (e.g., Capital One 360)
+                    typeCol: [
+                        'Transaction Type', 'Trans Type', 'Type', 'Tran Type'
                     ]
                 };
 
@@ -1939,8 +1941,8 @@
 
                 // Parse transactions
                 const transactions = [];
-                const { dateIdx, descIdx, amountIdx, debitIdx, creditIdx } = columnMapping;
-                const requiredIdx = Math.max(dateIdx, descIdx, amountIdx ?? -1, debitIdx ?? -1, creditIdx ?? -1);
+                const { dateIdx, descIdx, amountIdx, debitIdx, creditIdx, typeIdx, mode } = columnMapping;
+                const requiredIdx = Math.max(dateIdx, descIdx, amountIdx ?? -1, debitIdx ?? -1, creditIdx ?? -1, typeIdx ?? -1);
 
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
@@ -1957,15 +1959,27 @@
                     const dateStr = values[dateIdx]?.trim();
                     const description = values[descIdx]?.trim();
 
-                    // Parse amount - handle single Amount column or Debit/Credit split
+                    // Parse amount based on mode
                     let amount;
-                    if (amountIdx !== null && amountIdx !== -1) {
-                        amount = this.parseAmount(values[amountIdx]);
-                    } else {
-                        // Debit/Credit columns: Credit is positive, Debit is negative
+                    if (mode === 'debit_credit') {
+                        // Separate Debit/Credit columns (e.g., Capital One credit card)
                         const credit = this.parseAmount(values[creditIdx]) || 0;
                         const debit = this.parseAmount(values[debitIdx]) || 0;
                         amount = credit - debit;
+                    } else if (mode === 'amount_with_type') {
+                        // Amount + Type column (e.g., Capital One 360)
+                        // Amount is always positive, Type indicates direction
+                        amount = this.parseAmount(values[amountIdx]);
+                        const transType = values[typeIdx]?.trim().toLowerCase() || '';
+                        // If type indicates debit/withdrawal/expense, negate the amount
+                        if (/debit|withdrawal|expense|payment|out/i.test(transType)) {
+                            amount = -Math.abs(amount);
+                        } else if (/credit|deposit|income|in/i.test(transType)) {
+                            amount = Math.abs(amount);
+                        }
+                    } else {
+                        // Single signed amount column (e.g., Chase)
+                        amount = this.parseAmount(values[amountIdx]);
                     }
 
                     const date = this.parseDateWithFormat(dateStr, dateFormat);
@@ -2023,16 +2037,41 @@
                 let amountIdx = this.findColumnIndex(header, this.columnConfig.amountCol);
                 const debitIdx = this.findColumnIndex(header, this.columnConfig.debitCol);
                 const creditIdx = this.findColumnIndex(header, this.columnConfig.creditCol);
+                const typeIdx = this.findColumnIndex(header, this.columnConfig.typeCol);
 
                 // Check if we have the required columns
                 const hasDate = dateIdx !== -1;
                 const hasDesc = descIdx !== -1;
-                const hasAmount = amountIdx !== -1;
+                let hasAmount = amountIdx !== -1;
                 const hasDebitCredit = debitIdx !== -1 && creditIdx !== -1;
+                const hasTypeColumn = typeIdx !== -1;
 
                 // If we matched Amount to a Debit or Credit column, clear it and use split mode
                 if (hasAmount && (amountIdx === debitIdx || amountIdx === creditIdx)) {
                     amountIdx = -1;
+                    hasAmount = false;
+                }
+
+                // Check if amounts are already signed (have negatives) by looking at sample data
+                let amountsAreSigned = false;
+                if (hasAmount && sampleRows.length > 0) {
+                    for (const row of sampleRows) {
+                        const amtStr = row[amountIdx];
+                        if (amtStr && /^[\s]*[-]/.test(amtStr)) {
+                            amountsAreSigned = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Determine the mode
+                let mode = 'unknown';
+                if (hasDebitCredit) {
+                    mode = 'debit_credit';      // e.g., Capital One credit card: separate columns
+                } else if (hasAmount && hasTypeColumn && !amountsAreSigned) {
+                    mode = 'amount_with_type';  // e.g., Capital One 360: unsigned amount + type column
+                } else if (hasAmount) {
+                    mode = 'single_amount';     // e.g., Chase: signed amount column
                 }
 
                 const success = hasDate && hasDesc && (hasAmount || hasDebitCredit);
@@ -2044,7 +2083,8 @@
                     amountIdx: hasAmount ? amountIdx : null,
                     debitIdx: hasDebitCredit ? debitIdx : null,
                     creditIdx: hasDebitCredit ? creditIdx : null,
-                    mode: hasAmount ? 'single_amount' : (hasDebitCredit ? 'debit_credit' : 'unknown'),
+                    typeIdx: (hasTypeColumn && mode === 'amount_with_type') ? typeIdx : null,
+                    mode,
                     detectedBy: 'auto'
                 };
             }
