@@ -1682,6 +1682,11 @@
 
             // Calculate statistics
             getStatistics() {
+                // Safety check for empty data
+                if (!this.allEndingBalances || this.allEndingBalances.length === 0) {
+                    return { successRate: 0, median: 0, percentile10: 0, percentile90: 0 };
+                }
+
                 const sorted = [...this.allEndingBalances].sort((a, b) => a - b);
                 const numSimulations = sorted.length;
 
@@ -1696,31 +1701,37 @@
 
                 return {
                     successRate: successRate,
-                    median: sorted[medianIndex],
-                    percentile10: sorted[p10Index],
-                    percentile90: sorted[p90Index]
+                    median: sorted[medianIndex] || 0,
+                    percentile10: sorted[p10Index] || 0,
+                    percentile90: sorted[p90Index] || 0
                 };
             }
 
             // Prepare histogram data
             getHistogramData(numBins = 15) {
+                // Safety check for empty data
+                if (!this.allEndingBalances || this.allEndingBalances.length === 0) {
+                    return { labels: ['No Data'], data: [0] };
+                }
+
                 const sorted = [...this.allEndingBalances].sort((a, b) => a - b);
                 const min = Math.min(...sorted);
                 const max = Math.max(...sorted);
                 const range = max - min;
-                const binWidth = range / numBins;
+
+                // Handle edge case where all values are the same (range = 0)
+                const binWidth = range === 0 ? 1 : range / numBins;
 
                 const bins = new Array(numBins).fill(0);
                 const labels = [];
 
                 for (let i = 0; i < numBins; i++) {
                     const binStart = min + i * binWidth;
-                    const binEnd = binStart + binWidth;
                     labels.push(this.formatCurrency(binStart));
                 }
 
                 for (const balance of sorted) {
-                    const binIndex = Math.min(Math.floor((balance - min) / binWidth), numBins - 1);
+                    const binIndex = range === 0 ? 0 : Math.min(Math.floor((balance - min) / binWidth), numBins - 1);
                     bins[binIndex]++;
                 }
 
