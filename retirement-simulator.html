@@ -2117,7 +2117,8 @@
 
             formatCurrencyInput(value) {
                 // Format as currency with commas and 2 decimal places
-                return '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                if (value === undefined || value === null || isNaN(value)) return '$0.00';
+                return '$' + Number(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             }
 
             getInputValues() {
@@ -2241,6 +2242,8 @@
 
                 try {
                     const lifeEvents = this.eventsManager.getEvents();
+                    console.log('Simulation params:', params);
+
                     const simulator = new RetirementSimulator(params, lifeEvents);
 
                     await simulator.runSimulations((percent) => {
@@ -2250,12 +2253,17 @@
                     progress.textContent = 'Calculating results...';
 
                     const stats = simulator.getStatistics();
+                    console.log('Statistics:', stats);
                     this.displayStatistics(stats, params);
 
                     const histogramData = simulator.getHistogramData();
+                    console.log('Histogram data:', histogramData);
                     this.updateHistogram(histogramData);
 
-                    this.updatePathsChart(simulator.samplePaths, params);
+                    console.log('Sample paths count:', simulator.samplePaths?.length);
+                    if (simulator.samplePaths && simulator.samplePaths.length > 0) {
+                        this.updatePathsChart(simulator.samplePaths, params);
+                    }
 
                     document.getElementById('results').classList.add('show');
                     progress.textContent = 'Simulation complete!';
@@ -2266,7 +2274,8 @@
 
                 } catch (error) {
                     console.error('Simulation error:', error);
-                    progress.textContent = 'Error running simulation. Please check your inputs.';
+                    console.error('Error stack:', error.stack);
+                    progress.textContent = 'Error: ' + error.message;
                 } finally {
                     button.disabled = false;
                     button.classList.remove('running');
@@ -2285,12 +2294,6 @@
 
             formatCurrency(value) {
                 return FinanceUtils.formatCurrencyCompact(value);
-            }
-
-            formatCurrencyInput(value) {
-                // Format as currency with commas and 2 decimal places for input fields
-                if (value === undefined || value === null || isNaN(value)) return '$0.00';
-                return '$' + Number(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             }
 
             updateHistogram(histogramData) {
@@ -2614,6 +2617,17 @@
                 });
             }
 
+            // Load income from Budget Planner for SS estimation
+            const budgetPlannerData = StorageUtils.get('budgetPlannerData');
+            if (budgetPlannerData && budgetPlannerData.monthlyIncome) {
+                const annualIncome = budgetPlannerData.monthlyIncome * 12;
+                const ssIncomeInput = document.getElementById('ssCurrentIncome');
+                if (ssIncomeInput) {
+                    ssIncomeInput.value = ui.formatCurrencyInput(annualIncome);
+                    ui.updateEstimatedSSBenefit();
+                }
+            }
+
             // Try to load from Spending Tracker data (for spending/contribution if not saved)
             if (!savedForecast) {
                 const spendingData = StorageUtils.get('spendingTrackerData');
@@ -2622,14 +2636,14 @@
                     const annualSpending = spendingData.monthlySpending * 12;
                     const spendingInput = document.getElementById('annualSpending');
                     if (spendingInput && annualSpending > 0) {
-                        spendingInput.value = '$' + annualSpending.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                        spendingInput.value = ui.formatCurrencyInput(annualSpending);
                     }
 
                     // Update Annual Contribution
                     const contribution = spendingData.monthlyRetirementSavings * 12;
                     const contributionInput = document.getElementById('annualContribution');
                     if (contributionInput && contribution > 0) {
-                        contributionInput.value = '$' + contribution.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                        contributionInput.value = ui.formatCurrencyInput(contribution);
                     }
                 } else {
                     // Fall back to Budget Planner data
@@ -2637,7 +2651,7 @@
                     if (budgetData && budgetData.annualContribution > 0) {
                         const contributionInput = document.getElementById('annualContribution');
                         if (contributionInput) {
-                            contributionInput.value = '$' + budgetData.annualContribution.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                            contributionInput.value = ui.formatCurrencyInput(budgetData.annualContribution);
                         }
                     }
                 }
@@ -2701,9 +2715,19 @@
 
                         // Handle mode switching and account restoration
                         if (savedForecast.advancedMode && savedForecast.accounts) {
-                            // Switch to advanced mode
-                            document.getElementById('advancedModeBtn').click();
+                            // Switch to advanced mode explicitly
                             ui.advancedMode = true;
+                            const simpleBtn = document.getElementById('simpleModeBtn');
+                            const advancedBtn = document.getElementById('advancedModeBtn');
+                            const simpleInputs = document.getElementById('simpleInputs');
+                            const advancedInputs = document.getElementById('advancedInputs');
+
+                            advancedBtn.classList.add('active');
+                            advancedBtn.setAttribute('aria-selected', 'true');
+                            simpleBtn.classList.remove('active');
+                            simpleBtn.setAttribute('aria-selected', 'false');
+                            simpleInputs.style.display = 'none';
+                            advancedInputs.style.display = 'block';
 
                             // Restore account balances
                             setInputValue('traditional401k', savedForecast.accounts.traditional401k, ui.formatCurrencyInput.bind(ui));
