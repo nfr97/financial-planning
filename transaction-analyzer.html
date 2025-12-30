@@ -2015,9 +2015,18 @@
                     if (dateErrors > 0) issues.push(`${dateErrors} rows with unrecognized dates`);
                     if (amountErrors > 0) issues.push(`${amountErrors} rows with zero/invalid amounts`);
 
+                    // Debug info to help diagnose parsing issues
+                    const debugInfo = [
+                        `Detected columns: date=${dateIdx}, desc=${descIdx}, amount=${amountIdx}, type=${typeIdx ?? 'none'}`,
+                        `Mode: ${mode}`,
+                        `Header: [${header.map(h => `"${h}"`).join(', ')}]`,
+                        sampleRows.length > 0 ? `Sample amount value: "${sampleRows[0][amountIdx]}"` : 'No sample rows'
+                    ];
+
                     throw new Error(
                         `No valid transactions found in "${fileName}".\n\n` +
                         (issues.length > 0 ? `Issues: ${issues.join(', ')}\n\n` : '') +
+                        `Debug info:\n${debugInfo.join('\n')}\n\n` +
                         'Check that date and amount formats are standard.'
                     );
                 }
