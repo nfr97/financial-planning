@@ -2672,22 +2672,22 @@
                 },
                 // Handle import - update UI directly to reflect changes
                 (result) => {
+                    // Helper to set input value and trigger event
+                    const setInputValue = (id, value, formatter = null) => {
+                        const el = document.getElementById(id);
+                        if (el && value !== undefined && value !== null) {
+                            el.value = formatter ? formatter(value) : value;
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            return true;
+                        }
+                        return false;
+                    };
+
                     // Reload saved retirement forecast data and update UI
                     const savedForecast = StorageUtils.get('retirementForecastData');
                     let forecastUpdated = false;
 
                     if (savedForecast) {
-                        // Helper to set input value and trigger event
-                        const setInputValue = (id, value, formatter = null) => {
-                            const el = document.getElementById(id);
-                            if (el && value !== undefined && value !== null) {
-                                el.value = formatter ? formatter(value) : value;
-                                el.dispatchEvent(new Event('input', { bubbles: true }));
-                                return true;
-                            }
-                            return false;
-                        };
-
                         // Restore all input fields with event dispatch
                         forecastUpdated = setInputValue('currentAge', savedForecast.currentAge) || forecastUpdated;
                         forecastUpdated = setInputValue('retirementAge', savedForecast.retirementAge) || forecastUpdated;
