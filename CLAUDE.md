@@ -23,6 +23,12 @@ This is a static HTML/JS application with no build step. To develop:
 
 2. Deployment is automatic via GitHub Pages on push to `main`
 
+## Workflow Preferences
+
+- **Always commit and push changes after completing work** - Don't wait to be asked
+- When making changes, commit to `main` directly for small fixes, or create a branch + PR for larger features
+- Use descriptive commit messages that explain the "why"
+
 ## Architecture
 
 ### Single-File Structure
