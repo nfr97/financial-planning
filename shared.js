@@ -869,6 +869,12 @@ const StatusBar = {
         const spending = state.spending;
         const retirement = state.retirement;
 
+        // Detect current page
+        const currentPage = window.location.pathname.split('/').pop();
+        const isBudgetPage = currentPage === 'income-allocation.html';
+        const isSpendingPage = currentPage === 'transaction-analyzer.html';
+        const isRetirementPage = currentPage === 'retirement-simulator.html';
+
         let budgetStatus = '💰 Budget: Not set';
         let spendingStatus = '📊 Spending: No data';
         let retirementStatus = '🎯 Retirement: Not simulated';
@@ -885,20 +891,26 @@ const StatusBar = {
             retirementStatus = `🎯 Success: ${retirement.successRate}%`;
         }
 
+        // Helper to create item (clickable link or current page indicator)
+        const createItem = (href, status, hasData, isCurrent, title) => {
+            if (isCurrent) {
+                return `<span class="status-item status-item-current ${hasData ? 'has-data' : ''}" title="${title} (Current Page)">
+                    📍 ${status}
+                </span>`;
+            }
+            return `<a href="${href}" class="status-item ${hasData ? 'has-data' : ''}" title="Go to ${title}">
+                ${status}
+            </a>`;
+        };
+
         return `
             <div class="status-bar" role="status" aria-label="Data flow status">
                 <div class="status-items">
-                    <a href="income-allocation.html" class="status-item ${budget ? 'has-data' : ''}" title="Budget Planner">
-                        ${budgetStatus}
-                    </a>
+                    ${createItem('income-allocation.html', budgetStatus, budget, isBudgetPage, 'Budget Planner')}
                     <span class="status-arrow" aria-hidden="true">→</span>
-                    <a href="transaction-analyzer.html" class="status-item ${spending ? 'has-data' : ''}" title="Spending Tracker">
-                        ${spendingStatus}
-                    </a>
+                    ${createItem('transaction-analyzer.html', spendingStatus, spending, isSpendingPage, 'Spending Tracker')}
                     <span class="status-arrow" aria-hidden="true">→</span>
-                    <a href="retirement-simulator.html" class="status-item ${retirement ? 'has-data' : ''}" title="Retirement Forecast">
-                        ${retirementStatus}
-                    </a>
+                    ${createItem('retirement-simulator.html', retirementStatus, retirement, isRetirementPage, 'Retirement Forecast')}
                 </div>
                 <button class="status-refine-btn" onclick="StatusBar.openRefinementModal()" aria-label="Open plan refinement">
                     ⚙️ Refine Plan
@@ -941,6 +953,7 @@ const StatusBar = {
                 border: 1px solid #e2e8f0;
                 transition: all 0.2s;
                 white-space: nowrap;
+                cursor: pointer;
             }
 
             .status-item.has-data {
@@ -949,9 +962,26 @@ const StatusBar = {
                 background: #f0f4ff;
             }
 
-            .status-item:hover {
+            /* Clickable items - enhanced hover */
+            a.status-item:hover {
                 border-color: #667eea;
                 box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+                transform: translateY(-1px);
+            }
+
+            /* Current page - non-clickable */
+            .status-item-current {
+                background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+                color: white;
+                border-color: #5568d3;
+                cursor: default;
+                font-weight: 600;
+            }
+
+            .status-item-current.has-data {
+                background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+                color: white;
+                border-color: #5568d3;
             }
 
             .status-arrow {
