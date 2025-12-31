@@ -2567,7 +2567,7 @@
 
                 // Populate accessible data table for paths chart
                 const pathsTableDiv = document.getElementById('pathsDataTable');
-                const medianDataset = datasets.find(d => d.label === 'Median Path');
+                const medianDataset = datasets.find(d => d.label === 'Median (50th Percentile)');
                 if (medianDataset && medianDataset.data) {
                     let tableHtml = '<table style="width: 100%; border-collapse: collapse;"><thead><tr><th style="text-align: left; padding: 4px; border-bottom: 1px solid #ddd;">Age</th><th style="text-align: right; padding: 4px; border-bottom: 1px solid #ddd;">Median Balance</th></tr></thead><tbody>';
                     // Show every 5 years to keep table readable
