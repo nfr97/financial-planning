@@ -1454,6 +1454,11 @@
                     }
                 }
             );
+
+            // Initialize status bar
+            if (typeof StatusBar !== 'undefined') {
+                StatusBar.init();
+            }
         });
     </script>
 </body>

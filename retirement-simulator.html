@@ -2821,6 +2821,11 @@
                 }
             );
 
+            // Initialize status bar
+            if (typeof StatusBar !== 'undefined') {
+                StatusBar.init();
+            }
+
             // Real return display - updates when growth or inflation changes
             function updateRealReturn() {
                 const growth = parseFloat(document.getElementById('expectedReturn').value) || 0;

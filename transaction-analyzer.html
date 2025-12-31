@@ -4102,6 +4102,11 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     }
                 }
             );
+
+            // Initialize status bar
+            if (typeof StatusBar !== 'undefined') {
+                StatusBar.init();
+            }
         });
     </script>
 </body>

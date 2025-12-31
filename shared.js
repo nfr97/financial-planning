@@ -748,3 +748,755 @@ const SessionManager = {
         }, 8000);
     }
 };
+
+/**
+ * Cross-Tool State Manager
+ * Provides unified access to data across all three tools
+ */
+const CrossToolState = {
+    /**
+     * Get budget planner state
+     */
+    getBudgetState() {
+        const data = StorageUtils.get('budgetPlannerData');
+        if (!data) return null;
+
+        return {
+            monthlyIncome: data.monthlyIncome || 0,
+            fixedCosts: data.fixedCosts || 0,
+            shortTerm: data.shortTerm || 0,
+            longTerm: data.longTerm || 0,
+            guiltFree: data.guiltFree || 0,
+            lastUpdated: data.lastUpdated
+        };
+    },
+
+    /**
+     * Get spending tracker state
+     */
+    getSpendingState() {
+        const data = StorageUtils.get('spendingTrackerData');
+        if (!data) return null;
+
+        return {
+            monthlySpending: data.monthlySpending || 0,
+            monthlySavings: data.monthlySavings || 0,
+            categoryBreakdown: data.categoryBreakdown || {},
+            transactionCount: data.transactionCount || 0,
+            lastUpdated: data.lastUpdated,
+            period: data.period || 'Unknown'
+        };
+    },
+
+    /**
+     * Get retirement forecast state
+     */
+    getRetirementState() {
+        const data = StorageUtils.get('retirementForecastData');
+        if (!data) return null;
+
+        return {
+            successRate: data.successRate || 0,
+            medianEndingBalance: data.medianEndingBalance || 0,
+            lastRunAt: data.lastRunAt,
+            currentAge: data.currentAge,
+            retirementAge: data.retirementAge
+        };
+    },
+
+    /**
+     * Get complete state across all tools
+     */
+    getAllState() {
+        return {
+            budget: this.getBudgetState(),
+            spending: this.getSpendingState(),
+            retirement: this.getRetirementState()
+        };
+    },
+
+    /**
+     * Calculate quick retirement estimate without full simulation
+     * @param {number} currentAge
+     * @param {number} retirementAge
+     * @param {number} currentSavings
+     * @param {number} annualContribution
+     * @param {number} annualSpending
+     * @returns {Object} Quick estimate
+     */
+    quickRetirementEstimate(currentAge, retirementAge, currentSavings, annualContribution, annualSpending) {
+        const yearsToRetirement = retirementAge - currentAge;
+        const assumedReturn = 0.07; // 7% annual return
+        const inflationRate = 0.03;
+
+        // Calculate future value of current savings
+        const futureCurrentSavings = currentSavings * Math.pow(1 + assumedReturn, yearsToRetirement);
+
+        // Calculate future value of annuity (annual contributions)
+        const futureContributions = annualContribution *
+            ((Math.pow(1 + assumedReturn, yearsToRetirement) - 1) / assumedReturn);
+
+        const totalAtRetirement = futureCurrentSavings + futureContributions;
+
+        // Estimate years of retirement funding (simple calculation)
+        const retirementYears = 90 - retirementAge; // Assume living to 90
+        const inflationAdjustedSpending = annualSpending * Math.pow(1 + inflationRate, yearsToRetirement);
+        const requiredSavings = inflationAdjustedSpending * retirementYears * 0.8; // Rough estimate
+
+        const successRate = Math.min(100, Math.max(0, (totalAtRetirement / requiredSavings) * 100));
+
+        return {
+            totalAtRetirement,
+            requiredSavings,
+            successRate: Math.round(successRate),
+            yearsToRetirement,
+            shortfall: Math.max(0, requiredSavings - totalAtRetirement)
+        };
+    }
+};
+
+/**
+ * Status Bar Component
+ * Shows data flow and connections across tools
+ */
+const StatusBar = {
+    /**
+     * Create status bar HTML
+     */
+    createHTML() {
+        const state = CrossToolState.getAllState();
+        const budget = state.budget;
+        const spending = state.spending;
+        const retirement = state.retirement;
+
+        let budgetStatus = '💰 Budget: Not set';
+        let spendingStatus = '📊 Spending: No data';
+        let retirementStatus = '🎯 Retirement: Not simulated';
+
+        if (budget) {
+            budgetStatus = `💰 Budget: ${FinanceUtils.formatCurrency(budget.monthlyIncome)}/mo`;
+        }
+
+        if (spending) {
+            spendingStatus = `📊 Tracked: ${spending.period}`;
+        }
+
+        if (retirement && retirement.successRate > 0) {
+            retirementStatus = `🎯 Success: ${retirement.successRate}%`;
+        }
+
+        return `
+            <div class="status-bar" role="status" aria-label="Data flow status">
+                <div class="status-items">
+                    <a href="income-allocation.html" class="status-item ${budget ? 'has-data' : ''}" title="Budget Planner">
+                        ${budgetStatus}
+                    </a>
+                    <span class="status-arrow" aria-hidden="true">→</span>
+                    <a href="transaction-analyzer.html" class="status-item ${spending ? 'has-data' : ''}" title="Spending Tracker">
+                        ${spendingStatus}
+                    </a>
+                    <span class="status-arrow" aria-hidden="true">→</span>
+                    <a href="retirement-simulator.html" class="status-item ${retirement ? 'has-data' : ''}" title="Retirement Forecast">
+                        ${retirementStatus}
+                    </a>
+                </div>
+                <button class="status-refine-btn" onclick="StatusBar.openRefinementModal()" aria-label="Open plan refinement">
+                    ⚙️ Refine Plan
+                </button>
+            </div>
+        `;
+    },
+
+    /**
+     * Get CSS styles for status bar
+     */
+    getStyles() {
+        return `
+            .status-bar {
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                padding: 12px 20px;
+                border-bottom: 1px solid #cbd5e1;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+
+            .status-items {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                flex: 1;
+            }
+
+            .status-item {
+                padding: 6px 12px;
+                background: white;
+                border-radius: 6px;
+                font-size: 0.9em;
+                color: #64748b;
+                text-decoration: none;
+                border: 1px solid #e2e8f0;
+                transition: all 0.2s;
+                white-space: nowrap;
+            }
+
+            .status-item.has-data {
+                color: #1e293b;
+                border-color: #667eea;
+                background: #f0f4ff;
+            }
+
+            .status-item:hover {
+                border-color: #667eea;
+                box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+            }
+
+            .status-arrow {
+                color: #cbd5e1;
+                font-size: 1.2em;
+            }
+
+            .status-refine-btn {
+                padding: 8px 16px;
+                background: #667eea;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.9em;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.2s;
+                white-space: nowrap;
+            }
+
+            .status-refine-btn:hover {
+                background: #5568d3;
+            }
+
+            @media (max-width: 768px) {
+                .status-bar {
+                    padding: 10px 15px;
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .status-items {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .status-arrow {
+                    transform: rotate(90deg);
+                    align-self: center;
+                }
+
+                .status-refine-btn {
+                    width: 100%;
+                }
+            }
+        `;
+    },
+
+    /**
+     * Initialize status bar on page
+     */
+    init() {
+        // Inject styles
+        if (!document.getElementById('status-bar-styles')) {
+            const style = document.createElement('style');
+            style.id = 'status-bar-styles';
+            style.textContent = this.getStyles();
+            document.head.appendChild(style);
+        }
+
+        // Find container and inject after session toolbar (or header if no toolbar)
+        const container = document.querySelector('.container');
+        const sessionToolbar = container?.querySelector('.session-toolbar');
+        const header = container?.querySelector('header');
+
+        if (sessionToolbar) {
+            sessionToolbar.insertAdjacentHTML('afterend', this.createHTML());
+        } else if (header) {
+            header.insertAdjacentHTML('afterend', this.createHTML());
+        }
+    },
+
+    /**
+     * Update status bar content
+     */
+    update() {
+        const statusBar = document.querySelector('.status-bar');
+        if (statusBar) {
+            const temp = document.createElement('div');
+            temp.innerHTML = this.createHTML();
+            statusBar.replaceWith(temp.firstElementChild);
+        }
+    },
+
+    /**
+     * Open refinement modal
+     */
+    openRefinementModal() {
+        RefinementModal.open();
+    }
+};
+
+/**
+ * Plan Refinement Modal
+ * Shows all three views side-by-side for iterative refinement
+ */
+const RefinementModal = {
+    /**
+     * Create modal HTML
+     */
+    createHTML() {
+        const state = CrossToolState.getAllState();
+        const budget = state.budget;
+        const spending = state.spending;
+        const retirement = state.retirement;
+
+        let budgetContent = '<p style="color: #94a3b8;">No budget set yet. <a href="income-allocation.html" style="color: #667eea;">Set up your budget →</a></p>';
+        let spendingContent = '<p style="color: #94a3b8;">No spending data. <a href="transaction-analyzer.html" style="color: #667eea;">Upload transactions →</a></p>';
+        let retirementContent = '<p style="color: #94a3b8;">No retirement projection. <a href="retirement-simulator.html" style="color: #667eea;">Run simulation →</a></p>';
+
+        if (budget) {
+            budgetContent = `
+                <div class="refine-metric">
+                    <div class="refine-label">Monthly Income</div>
+                    <div class="refine-value">${FinanceUtils.formatCurrency(budget.monthlyIncome)}</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Fixed Costs</div>
+                    <div class="refine-value">${budget.fixedCosts}%</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Savings (Short)</div>
+                    <div class="refine-value">${budget.shortTerm}%</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Savings (Long)</div>
+                    <div class="refine-value">${budget.longTerm}%</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Guilt-Free</div>
+                    <div class="refine-value">${budget.guiltFree}%</div>
+                </div>
+            `;
+        }
+
+        if (spending) {
+            const breakdown = spending.categoryBreakdown;
+            spendingContent = `
+                <div class="refine-metric">
+                    <div class="refine-label">Period</div>
+                    <div class="refine-value">${spending.period}</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Monthly Spending</div>
+                    <div class="refine-value">${FinanceUtils.formatCurrency(spending.monthlySpending)}</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Monthly Savings</div>
+                    <div class="refine-value">${FinanceUtils.formatCurrency(spending.monthlySavings)}</div>
+                </div>
+                ${breakdown && breakdown['fixed-costs'] ? `
+                <div class="refine-metric">
+                    <div class="refine-label">Actual Fixed Costs</div>
+                    <div class="refine-value">${Math.round((breakdown['fixed-costs'] / (spending.monthlySpending + spending.monthlySavings)) * 100)}%</div>
+                </div>` : ''}
+            `;
+        }
+
+        if (retirement && retirement.successRate > 0) {
+            const successColor = retirement.successRate >= 90 ? '#10b981' : retirement.successRate >= 70 ? '#f59e0b' : '#ef4444';
+            retirementContent = `
+                <div class="refine-metric">
+                    <div class="refine-label">Success Rate</div>
+                    <div class="refine-value" style="color: ${successColor}; font-size: 2em;">${retirement.successRate}%</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Median Balance</div>
+                    <div class="refine-value">${FinanceUtils.formatCurrencyCompact(retirement.medianEndingBalance)}</div>
+                </div>
+                <div class="refine-metric">
+                    <div class="refine-label">Retirement Age</div>
+                    <div class="refine-value">${retirement.retirementAge}</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="refinement-modal" role="dialog" aria-labelledby="refinement-title" aria-modal="true">
+                <div class="refinement-overlay" onclick="RefinementModal.close()"></div>
+                <div class="refinement-content">
+                    <div class="refinement-header">
+                        <h2 id="refinement-title">Your Financial Plan Review</h2>
+                        <button class="refinement-close" onclick="RefinementModal.close()" aria-label="Close dialog">×</button>
+                    </div>
+                    <div class="refinement-body">
+                        <div class="refinement-column">
+                            <h3>💰 Budget (Planned)</h3>
+                            ${budgetContent}
+                            <a href="income-allocation.html" class="refine-action-btn">Edit Budget</a>
+                        </div>
+                        <div class="refinement-column">
+                            <h3>📊 Reality (Actual)</h3>
+                            ${spendingContent}
+                            <a href="transaction-analyzer.html" class="refine-action-btn">View Details</a>
+                        </div>
+                        <div class="refinement-column">
+                            <h3>🎯 Retirement (Projection)</h3>
+                            ${retirementContent}
+                            <a href="retirement-simulator.html" class="refine-action-btn">Run Simulation</a>
+                        </div>
+                    </div>
+                    ${this.generateInsights(state)}
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Generate insights based on current state
+     */
+    generateInsights(state) {
+        const insights = [];
+        const { budget, spending, retirement } = state;
+
+        if (budget && spending) {
+            const actualIncome = spending.monthlySpending + spending.monthlySavings;
+            const incomeDiff = actualIncome - budget.monthlyIncome;
+
+            if (Math.abs(incomeDiff) > budget.monthlyIncome * 0.1) {
+                insights.push({
+                    type: 'warning',
+                    message: `Your actual income (${FinanceUtils.formatCurrency(actualIncome)}) differs from planned (${FinanceUtils.formatCurrency(budget.monthlyIncome)}) by ${FinanceUtils.formatCurrency(Math.abs(incomeDiff))}.`,
+                    action: 'Update your budget to match reality'
+                });
+            }
+
+            const breakdown = spending.categoryBreakdown || {};
+            const totalSpendingPlusSavings = spending.monthlySpending + spending.monthlySavings;
+            const actualFixed = breakdown['fixed-costs'] || 0;
+            const actualFixedPct = totalSpendingPlusSavings > 0 ? (actualFixed / totalSpendingPlusSavings) * 100 : 0;
+            const plannedFixedPct = budget.fixedCosts;
+
+            if (actualFixedPct > plannedFixedPct + 5) {
+                insights.push({
+                    type: 'alert',
+                    message: `Fixed costs are ${Math.round(actualFixedPct)}% (planned: ${plannedFixedPct}%). You're overspending by ${FinanceUtils.formatCurrency((actualFixedPct - plannedFixedPct) * totalSpendingPlusSavings / 100)}/month.`,
+                    action: 'Look for ways to reduce housing/transportation costs'
+                });
+            }
+        }
+
+        if (retirement && retirement.successRate < 90) {
+            const gap = 90 - retirement.successRate;
+            insights.push({
+                type: retirement.successRate < 70 ? 'alert' : 'warning',
+                message: `Retirement success rate is ${retirement.successRate}% (goal: 90%). You're ${gap}% below target.`,
+                action: 'Increase savings rate or adjust retirement plans'
+            });
+        }
+
+        if (!budget || !spending || !retirement) {
+            insights.push({
+                type: 'info',
+                message: 'Complete all three steps to see personalized insights and recommendations.',
+                action: 'Set budget → Track spending → Run retirement simulation'
+            });
+        }
+
+        if (insights.length === 0) {
+            insights.push({
+                type: 'success',
+                message: '🎉 Your plan looks balanced! Keep tracking your progress monthly.',
+                action: ''
+            });
+        }
+
+        const insightsHTML = insights.map(insight => `
+            <div class="insight-card insight-${insight.type}">
+                <div class="insight-message">${insight.message}</div>
+                ${insight.action ? `<div class="insight-action">💡 ${insight.action}</div>` : ''}
+            </div>
+        `).join('');
+
+        return `
+            <div class="refinement-insights">
+                <h3>💡 Insights & Recommendations</h3>
+                ${insightsHTML}
+            </div>
+        `;
+    },
+
+    /**
+     * Get CSS styles for modal
+     */
+    getStyles() {
+        return `
+            .refinement-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 10000;
+                display: none;
+            }
+
+            .refinement-modal.show {
+                display: block;
+            }
+
+            .refinement-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.7);
+                animation: fadeIn 0.3s ease;
+            }
+
+            .refinement-content {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                border-radius: 12px;
+                max-width: 1200px;
+                width: 90%;
+                max-height: 90vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+                animation: slideUp 0.3s ease;
+            }
+
+            .refinement-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 24px 30px;
+                border-bottom: 1px solid #e2e8f0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 12px 12px 0 0;
+            }
+
+            .refinement-header h2 {
+                margin: 0;
+                font-size: 1.5em;
+            }
+
+            .refinement-close {
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                font-size: 2em;
+                cursor: pointer;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+            }
+
+            .refinement-close:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+            .refinement-body {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                padding: 30px;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .refinement-column {
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+            }
+
+            .refinement-column h3 {
+                margin: 0 0 20px 0;
+                font-size: 1.2em;
+                color: #1e293b;
+            }
+
+            .refine-metric {
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .refine-metric:last-of-type {
+                border-bottom: none;
+            }
+
+            .refine-label {
+                font-size: 0.85em;
+                color: #64748b;
+                margin-bottom: 5px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .refine-value {
+                font-size: 1.3em;
+                font-weight: 700;
+                color: #1e293b;
+            }
+
+            .refine-action-btn {
+                display: block;
+                text-align: center;
+                padding: 10px;
+                background: #667eea;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                margin-top: 15px;
+                transition: background 0.2s;
+            }
+
+            .refine-action-btn:hover {
+                background: #5568d3;
+            }
+
+            .refinement-insights {
+                padding: 30px;
+            }
+
+            .refinement-insights h3 {
+                margin: 0 0 20px 0;
+                font-size: 1.2em;
+                color: #1e293b;
+            }
+
+            .insight-card {
+                padding: 16px 20px;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                border-left: 4px solid;
+            }
+
+            .insight-card.insight-success {
+                background: #d1fae5;
+                border-left-color: #10b981;
+            }
+
+            .insight-card.insight-info {
+                background: #dbeafe;
+                border-left-color: #3b82f6;
+            }
+
+            .insight-card.insight-warning {
+                background: #fef3c7;
+                border-left-color: #f59e0b;
+            }
+
+            .insight-card.insight-alert {
+                background: #fee2e2;
+                border-left-color: #ef4444;
+            }
+
+            .insight-message {
+                font-size: 1em;
+                color: #1e293b;
+                margin-bottom: 8px;
+            }
+
+            .insight-action {
+                font-size: 0.9em;
+                color: #64748b;
+                font-style: italic;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -40%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%);
+                }
+            }
+
+            @media (max-width: 900px) {
+                .refinement-body {
+                    grid-template-columns: 1fr;
+                }
+
+                .refinement-content {
+                    width: 95%;
+                    max-height: 95vh;
+                }
+            }
+        `;
+    },
+
+    /**
+     * Open the modal
+     */
+    open() {
+        // Inject styles if not already present
+        if (!document.getElementById('refinement-modal-styles')) {
+            const style = document.createElement('style');
+            style.id = 'refinement-modal-styles';
+            style.textContent = this.getStyles();
+            document.head.appendChild(style);
+        }
+
+        // Remove existing modal if any
+        const existing = document.querySelector('.refinement-modal');
+        if (existing) existing.remove();
+
+        // Create and inject modal
+        document.body.insertAdjacentHTML('beforeend', this.createHTML());
+        const modal = document.querySelector('.refinement-modal');
+
+        // Trigger animation
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+
+        // Handle ESC key
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') {
+                this.close();
+                document.removeEventListener('keydown', handleEsc);
+            }
+        };
+        document.addEventListener('keydown', handleEsc);
+    },
+
+    /**
+     * Close the modal
+     */
+    close() {
+        const modal = document.querySelector('.refinement-modal');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        }
+        document.body.style.overflow = '';
+    }
+};
