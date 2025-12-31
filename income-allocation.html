@@ -362,6 +362,119 @@
             box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
         }
 
+        /* Retirement Impact Preview */
+        .retirement-impact-preview {
+            margin-top: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 8px;
+            border: 2px solid #0ea5e9;
+            animation: slideIn 0.3s ease;
+        }
+
+        .impact-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .impact-icon {
+            font-size: 1.3em;
+        }
+
+        .impact-title {
+            font-weight: 600;
+            color: #0c4a6e;
+            font-size: 1.05em;
+        }
+
+        .impact-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .impact-metric {
+            text-align: center;
+        }
+
+        .impact-label {
+            font-size: 0.85em;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        .impact-value {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #0c4a6e;
+            line-height: 1;
+        }
+
+        .impact-value.success {
+            color: #10b981;
+        }
+
+        .impact-value.warning {
+            color: #f59e0b;
+        }
+
+        .impact-value.alert {
+            color: #ef4444;
+        }
+
+        .impact-comparison {
+            text-align: center;
+            min-height: 24px;
+        }
+
+        .impact-change {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .impact-change.positive {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .impact-change.negative {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .impact-note {
+            text-align: center;
+            font-size: 0.8em;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .impact-note a {
+            color: #0ea5e9;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .impact-note a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         footer {
             background: #f5f5f5;
             padding: 20px 30px;
@@ -695,6 +808,24 @@
                         <div class="allocation-box" tabindex="0" role="button" aria-label="Edit annual long-term savings allocation">
                             <div class="allocation-label" id="longTermAnnual-label">Annual</div>
                             <div class="allocation-amount" id="longTermAnnual" aria-labelledby="longTermAnnual-label" aria-live="polite">$12,000</div>
+                        </div>
+                    </div>
+
+                    <!-- Retirement Impact Preview -->
+                    <div id="retirementImpactPreview" class="retirement-impact-preview" style="display: none;">
+                        <div class="impact-header">
+                            <span class="impact-icon">🎯</span>
+                            <span class="impact-title">Retirement Impact</span>
+                        </div>
+                        <div class="impact-content">
+                            <div class="impact-metric">
+                                <div class="impact-label">Estimated Success Rate</div>
+                                <div class="impact-value" id="impactSuccessRate">--</div>
+                            </div>
+                            <div class="impact-comparison">
+                                <div class="impact-change" id="impactChange"></div>
+                            </div>
+                            <div class="impact-note">Based on simple projection. <a href="retirement-simulator.html">Run full simulation →</a></div>
                         </div>
                     </div>
                 </article>
@@ -1245,6 +1376,67 @@
 
                 // Save data for other pages (Spending Tracker and Retirement Forecast)
                 this.saveDataForOtherPages(monthlyIncome);
+
+                // Update retirement impact preview
+                this.updateRetirementImpact(monthlyIncome);
+            }
+
+            updateRetirementImpact(monthlyIncome) {
+                // Only show if we have retirement forecast data to compare against
+                const retirementData = StorageUtils.get('retirementForecastData');
+                if (!retirementData || !retirementData.currentAge || !retirementData.retirementAge) {
+                    return; // Don't show preview if user hasn't run simulation yet
+                }
+
+                const preview = document.getElementById('retirementImpactPreview');
+                if (!preview) return;
+
+                // Calculate quick estimate
+                const annualContribution = (monthlyIncome * this.categories.longTerm.value / 100) * 12;
+                const currentSavings = retirementData.currentSavings || 0;
+                const annualSpending = retirementData.annualRetirementSpending || (monthlyIncome * 0.7 * 12);
+
+                const estimate = CrossToolState.quickRetirementEstimate(
+                    retirementData.currentAge,
+                    retirementData.retirementAge,
+                    currentSavings,
+                    annualContribution,
+                    annualSpending
+                );
+
+                // Show the preview
+                preview.style.display = 'block';
+
+                // Update success rate display
+                const successRateEl = document.getElementById('impactSuccessRate');
+                const impactChangeEl = document.getElementById('impactChange');
+
+                successRateEl.textContent = `${estimate.successRate}%`;
+
+                // Color code based on success rate
+                successRateEl.className = 'impact-value';
+                if (estimate.successRate >= 90) {
+                    successRateEl.classList.add('success');
+                } else if (estimate.successRate >= 70) {
+                    successRateEl.classList.add('warning');
+                } else {
+                    successRateEl.classList.add('alert');
+                }
+
+                // Show comparison to actual retirement data if available
+                if (retirementData.successRate) {
+                    const diff = estimate.successRate - retirementData.successRate;
+                    if (Math.abs(diff) > 2) { // Only show if meaningful difference
+                        impactChangeEl.textContent = diff > 0 ?
+                            `+${diff}% vs full simulation` :
+                            `${diff}% vs full simulation`;
+                        impactChangeEl.className = 'impact-change ' + (diff > 0 ? 'positive' : 'negative');
+                    } else {
+                        impactChangeEl.textContent = '';
+                    }
+                } else {
+                    impactChangeEl.textContent = '';
+                }
             }
 
             saveDataForOtherPages(monthlyIncome) {

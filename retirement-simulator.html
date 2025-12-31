@@ -831,6 +831,116 @@
             font-weight: 600;
         }
 
+        /* Gap Analysis & Recommendations */
+        .gap-analysis {
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-radius: 12px;
+            border: 2px solid #f97316;
+        }
+
+        .gap-analysis h3 {
+            color: #9a3412;
+            font-size: 1.4em;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .gap-intro {
+            text-align: center;
+            color: #7c2d12;
+            font-size: 1.05em;
+            margin-bottom: 25px;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .recommendation-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #fed7aa;
+            transition: all 0.3s;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            border-color: #fb923c;
+        }
+
+        .rec-icon {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .rec-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #9a3412;
+            margin-bottom: 15px;
+        }
+
+        .rec-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #ea580c;
+            margin-bottom: 8px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rec-desc {
+            font-size: 0.9em;
+            color: #78350f;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+
+        .rec-action {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #f97316;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .rec-action:hover {
+            background: #ea580c;
+        }
+
+        .gap-note {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #78350f;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
         @media (max-width: 768px) {
             .mode-toggle-header {
                 flex-direction: column;
@@ -1263,6 +1373,42 @@
                         <p style="color: #666; font-size: 0.9em; margin-top: 12px; font-style: italic;">
                             💡 If the bands stay above $0 through retirement, you have a strong plan. If they dip to $0, consider saving more or reducing planned spending.
                         </p>
+                    </div>
+                </div>
+
+                <!-- Gap Analysis & Recommendations -->
+                <div id="gapAnalysis" class="gap-analysis" style="display: none;">
+                    <h3>🎯 How to Reach 90% Success Rate</h3>
+                    <p class="gap-intro">Your current success rate is below the recommended 90% target. Here are three ways to improve your chances:</p>
+
+                    <div class="recommendations-grid">
+                        <div class="recommendation-card">
+                            <div class="rec-icon">💰</div>
+                            <div class="rec-title">Option 1: Save More</div>
+                            <div class="rec-value" id="recSaveMore">--</div>
+                            <div class="rec-desc">Increase monthly retirement savings</div>
+                            <a href="income-allocation.html" class="rec-action">Adjust Budget →</a>
+                        </div>
+
+                        <div class="recommendation-card">
+                            <div class="rec-icon">⏰</div>
+                            <div class="rec-title">Option 2: Work Longer</div>
+                            <div class="rec-value" id="recWorkLonger">--</div>
+                            <div class="rec-desc">Delay retirement by additional years</div>
+                            <button class="rec-action" onclick="applyWorkLongerRecommendation()">Try This →</button>
+                        </div>
+
+                        <div class="recommendation-card">
+                            <div class="rec-icon">📉</div>
+                            <div class="rec-title">Option 3: Spend Less</div>
+                            <div class="rec-value" id="recSpendLess">--</div>
+                            <div class="rec-desc">Reduce annual retirement spending</div>
+                            <button class="rec-action" onclick="applySpendLessRecommendation()">Try This →</button>
+                        </div>
+                    </div>
+
+                    <div class="gap-note">
+                        💡 <strong>Tip:</strong> Combining multiple approaches often works best. Even small changes in each area can add up to a significant improvement.
                     </div>
                 </div>
             </div>
@@ -2265,6 +2411,9 @@
                         this.updatePathsChart(simulator.samplePaths, params);
                     }
 
+                    // Show gap analysis if success rate is below 90%
+                    this.updateGapAnalysis(stats, params);
+
                     document.getElementById('results').classList.add('show');
                     progress.textContent = 'Simulation complete!';
 
@@ -2290,6 +2439,104 @@
                 document.getElementById('percentile10').textContent = this.formatCurrency(stats.percentile10);
                 document.getElementById('percentile90').textContent = this.formatCurrency(stats.percentile90);
                 document.getElementById('endAge').textContent = endAge;
+            }
+
+            updateGapAnalysis(stats, params) {
+                const gapSection = document.getElementById('gapAnalysis');
+                if (!gapSection) return;
+
+                // Only show if success rate is below 90%
+                if (stats.successRate >= 90) {
+                    gapSection.style.display = 'none';
+                    return;
+                }
+
+                gapSection.style.display = 'block';
+
+                // Calculate recommendations
+                // Simple binary search to find needed adjustments
+                const TARGET_SUCCESS = 90;
+
+                // Option 1: How much more to save monthly
+                const currentAnnualSavings = params.annualContribution || 0;
+                const neededIncrease = this.calculateSavingsIncrease(params, TARGET_SUCCESS);
+                const monthlyIncrease = neededIncrease / 12;
+                document.getElementById('recSaveMore').textContent = '+' + FinanceUtils.formatCurrency(monthlyIncrease) + '/mo';
+
+                // Option 2: How many more years to work
+                const additionalYears = this.calculateWorkYears(params, TARGET_SUCCESS);
+                document.getElementById('recWorkLonger').textContent = '+' + additionalYears + ' years';
+
+                // Option 3: How much less to spend in retirement
+                const spendingReduction = this.calculateSpendingReduction(params, TARGET_SUCCESS);
+                document.getElementById('recSpendLess').textContent = '-' + FinanceUtils.formatCurrency(spendingReduction) + '/year';
+
+                // Store recommendations for "Try This" buttons
+                window.gapRecommendations = {
+                    additionalYears,
+                    spendingReduction,
+                    currentParams: params
+                };
+            }
+
+            calculateSavingsIncrease(params, targetSuccess) {
+                // Binary search for needed savings increase
+                let low = 0;
+                let high = 100000; // Max $100k/year increase
+
+                while (high - low > 100) {
+                    const mid = Math.floor((low + high) / 2);
+                    const testParams = { ...params, annualContribution: params.annualContribution + mid };
+                    const simulator = new RetirementSimulator();
+                    const results = simulator.runSimulation(testParams);
+                    const stats = simulator.getStatistics();
+
+                    if (stats.successRate >= targetSuccess) {
+                        high = mid;
+                    } else {
+                        low = mid;
+                    }
+                }
+
+                return Math.ceil(high / 1000) * 1000; // Round up to nearest $1000
+            }
+
+            calculateWorkYears(params, targetSuccess) {
+                // Try working 1, 2, 3, etc. more years
+                for (let additionalYears = 1; additionalYears <= 10; additionalYears++) {
+                    const testParams = { ...params, retirementAge: params.retirementAge + additionalYears };
+                    const simulator = new RetirementSimulator();
+                    const results = simulator.runSimulation(testParams);
+                    const stats = simulator.getStatistics();
+
+                    if (stats.successRate >= targetSuccess) {
+                        return additionalYears;
+                    }
+                }
+
+                return 10; // Cap at 10 years
+            }
+
+            calculateSpendingReduction(params, targetSuccess) {
+                // Binary search for needed spending reduction
+                let low = 0;
+                let high = params.annualRetirementSpending * 0.5; // Max 50% reduction
+
+                while (high - low > 100) {
+                    const mid = Math.floor((low + high) / 2);
+                    const testParams = { ...params, annualRetirementSpending: params.annualRetirementSpending - mid };
+                    const simulator = new RetirementSimulator();
+                    const results = simulator.runSimulation(testParams);
+                    const stats = simulator.getStatistics();
+
+                    if (stats.successRate >= targetSuccess) {
+                        high = mid;
+                    } else {
+                        low = mid;
+                    }
+                }
+
+                return Math.ceil(high / 1000) * 1000; // Round up to nearest $1000
             }
 
             formatCurrency(value) {
@@ -2872,6 +3119,39 @@
             document.getElementById('presetBalanced').addEventListener('click', () => applyPreset('balanced'));
             document.getElementById('presetAggressive').addEventListener('click', () => applyPreset('aggressive'));
         });
+
+        // Global functions for gap analysis "Try This" buttons
+        function applyWorkLongerRecommendation() {
+            if (!window.gapRecommendations) return;
+
+            const newRetirementAge = window.gapRecommendations.currentParams.retirementAge +
+                window.gapRecommendations.additionalYears;
+
+            document.getElementById('retirementAge').value = newRetirementAge;
+            document.getElementById('retirementAge').dispatchEvent(new Event('input'));
+
+            // Re-run simulation
+            document.getElementById('runSimulation').click();
+
+            // Scroll to top to see new results
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function applySpendLessRecommendation() {
+            if (!window.gapRecommendations) return;
+
+            const newSpending = window.gapRecommendations.currentParams.annualRetirementSpending -
+                window.gapRecommendations.spendingReduction;
+
+            document.getElementById('retirementSpending').value = FinanceUtils.formatCurrency(newSpending);
+            document.getElementById('retirementSpending').dispatchEvent(new Event('input'));
+
+            // Re-run simulation
+            document.getElementById('runSimulation').click();
+
+            // Scroll to top to see new results
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     </script>
 </body>
 </html>
