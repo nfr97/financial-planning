@@ -2456,7 +2456,7 @@
                     }
 
                     // Show gap analysis if success rate is below 90%
-                    this.updateGapAnalysis(stats, params);
+                    await this.updateGapAnalysis(stats, params);
 
                     document.getElementById('results').classList.add('show');
                     progress.textContent = 'Simulation complete!';
@@ -2485,7 +2485,7 @@
                 document.getElementById('endAge').textContent = endAge;
             }
 
-            updateGapAnalysis(stats, params) {
+            async updateGapAnalysis(stats, params) {
                 const gapSection = document.getElementById('gapAnalysis');
                 if (!gapSection) return;
 
@@ -2503,16 +2503,16 @@
 
                 // Option 1: How much more to save monthly
                 const currentAnnualSavings = params.annualContribution || 0;
-                const neededIncrease = this.calculateSavingsIncrease(params, TARGET_SUCCESS);
+                const neededIncrease = await this.calculateSavingsIncrease(params, TARGET_SUCCESS);
                 const monthlyIncrease = neededIncrease / 12;
                 document.getElementById('recSaveMore').textContent = '+' + FinanceUtils.formatCurrency(monthlyIncrease) + '/mo';
 
                 // Option 2: How many more years to work
-                const additionalYears = this.calculateWorkYears(params, TARGET_SUCCESS);
+                const additionalYears = await this.calculateWorkYears(params, TARGET_SUCCESS);
                 document.getElementById('recWorkLonger').textContent = '+' + additionalYears + ' years';
 
                 // Option 3: How much less to spend in retirement
-                const spendingReduction = this.calculateSpendingReduction(params, TARGET_SUCCESS);
+                const spendingReduction = await this.calculateSpendingReduction(params, TARGET_SUCCESS);
                 document.getElementById('recSpendLess').textContent = '-' + FinanceUtils.formatCurrency(spendingReduction) + '/year';
 
                 // Store recommendations for "Try This" buttons
@@ -2523,16 +2523,17 @@
                 };
             }
 
-            calculateSavingsIncrease(params, targetSuccess) {
+            async calculateSavingsIncrease(params, targetSuccess) {
                 // Binary search for needed savings increase
                 let low = 0;
                 let high = 100000; // Max $100k/year increase
+                const lifeEvents = this.eventsManager.getEvents();
 
                 while (high - low > 100) {
                     const mid = Math.floor((low + high) / 2);
                     const testParams = { ...params, annualContribution: params.annualContribution + mid };
-                    const simulator = new RetirementSimulator();
-                    const results = simulator.runSimulation(testParams);
+                    const simulator = new RetirementSimulator(testParams, lifeEvents);
+                    await simulator.runSimulations(() => {});
                     const stats = simulator.getStatistics();
 
                     if (stats.successRate >= targetSuccess) {
@@ -2545,12 +2546,14 @@
                 return Math.ceil(high / 1000) * 1000; // Round up to nearest $1000
             }
 
-            calculateWorkYears(params, targetSuccess) {
+            async calculateWorkYears(params, targetSuccess) {
                 // Try working 1, 2, 3, etc. more years
+                const lifeEvents = this.eventsManager.getEvents();
+
                 for (let additionalYears = 1; additionalYears <= 10; additionalYears++) {
                     const testParams = { ...params, retirementAge: params.retirementAge + additionalYears };
-                    const simulator = new RetirementSimulator();
-                    const results = simulator.runSimulation(testParams);
+                    const simulator = new RetirementSimulator(testParams, lifeEvents);
+                    await simulator.runSimulations(() => {});
                     const stats = simulator.getStatistics();
 
                     if (stats.successRate >= targetSuccess) {
@@ -2561,16 +2564,17 @@
                 return 10; // Cap at 10 years
             }
 
-            calculateSpendingReduction(params, targetSuccess) {
+            async calculateSpendingReduction(params, targetSuccess) {
                 // Binary search for needed spending reduction
                 let low = 0;
                 let high = params.annualRetirementSpending * 0.5; // Max 50% reduction
+                const lifeEvents = this.eventsManager.getEvents();
 
                 while (high - low > 100) {
                     const mid = Math.floor((low + high) / 2);
                     const testParams = { ...params, annualRetirementSpending: params.annualRetirementSpending - mid };
-                    const simulator = new RetirementSimulator();
-                    const results = simulator.runSimulation(testParams);
+                    const simulator = new RetirementSimulator(testParams, lifeEvents);
+                    await simulator.runSimulations(() => {});
                     const stats = simulator.getStatistics();
 
                     if (stats.successRate >= targetSuccess) {
