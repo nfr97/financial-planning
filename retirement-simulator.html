@@ -2567,12 +2567,12 @@
             async calculateSpendingReduction(params, targetSuccess) {
                 // Binary search for needed spending reduction
                 let low = 0;
-                let high = params.annualRetirementSpending * 0.5; // Max 50% reduction
+                let high = params.annualSpending * 0.5; // Max 50% reduction
                 const lifeEvents = this.eventsManager.getEvents();
 
                 while (high - low > 100) {
                     const mid = Math.floor((low + high) / 2);
-                    const testParams = { ...params, annualRetirementSpending: params.annualRetirementSpending - mid };
+                    const testParams = { ...params, annualSpending: params.annualSpending - mid };
                     const simulator = new RetirementSimulator(testParams, lifeEvents);
                     await simulator.runSimulations(() => {});
                     const stats = simulator.getStatistics();
@@ -3188,11 +3188,11 @@
         function applySpendLessRecommendation() {
             if (!window.gapRecommendations) return;
 
-            const newSpending = window.gapRecommendations.currentParams.annualRetirementSpending -
+            const newSpending = window.gapRecommendations.currentParams.annualSpending -
                 window.gapRecommendations.spendingReduction;
 
-            document.getElementById('retirementSpending').value = FinanceUtils.formatCurrency(newSpending);
-            document.getElementById('retirementSpending').dispatchEvent(new Event('input'));
+            document.getElementById('annualSpending').value = FinanceUtils.formatCurrency(newSpending);
+            document.getElementById('annualSpending').dispatchEvent(new Event('input'));
 
             // Re-run simulation
             document.getElementById('runSimulation').click();
