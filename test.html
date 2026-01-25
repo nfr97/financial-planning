@@ -1,658 +1,655 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spending Tracker - Automated Tests</title>
     <script src="shared.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-            color: #333;
-        }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+        color: #333;
+      }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
 
-        h1 {
-            margin-bottom: 10px;
-            color: #333;
-        }
+      h1 {
+        margin-bottom: 10px;
+        color: #333;
+      }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-        }
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+      }
 
-        .summary {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+      .summary {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
 
-        .summary-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            flex: 1;
-            text-align: center;
-        }
+      .summary-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        flex: 1;
+        text-align: center;
+      }
 
-        .summary-card h2 {
-            font-size: 2.5em;
-            margin-bottom: 5px;
-        }
+      .summary-card h2 {
+        font-size: 2.5em;
+        margin-bottom: 5px;
+      }
 
-        .summary-card.passed h2 { color: #10b981; }
-        .summary-card.failed h2 { color: #ef4444; }
-        .summary-card.total h2 { color: #6366f1; }
+      .summary-card.passed h2 {
+        color: #10b981;
+      }
+      .summary-card.failed h2 {
+        color: #ef4444;
+      }
+      .summary-card.total h2 {
+        color: #6366f1;
+      }
 
-        .test-section {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
+      .test-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+      }
 
-        .test-section-header {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            font-weight: 600;
-            border-bottom: 1px solid #e5e5e5;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .test-section-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        font-weight: 600;
+        border-bottom: 1px solid #e5e5e5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .test-section-header .badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 500;
-        }
+      .test-section-header .badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 500;
+      }
 
-        .badge.all-passed {
-            background: #d1fae5;
-            color: #065f46;
-        }
+      .badge.all-passed {
+        background: #d1fae5;
+        color: #065f46;
+      }
 
-        .badge.some-failed {
-            background: #fee2e2;
-            color: #991b1b;
-        }
+      .badge.some-failed {
+        background: #fee2e2;
+        color: #991b1b;
+      }
 
-        .test-item {
-            padding: 12px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .test-item {
+        padding: 12px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .test-item:last-child {
-            border-bottom: none;
-        }
+      .test-item:last-child {
+        border-bottom: none;
+      }
 
-        .test-name {
-            font-size: 0.95em;
-        }
+      .test-name {
+        font-size: 0.95em;
+      }
 
-        .test-status {
-            font-weight: 600;
-            font-size: 0.9em;
-        }
+      .test-status {
+        font-weight: 600;
+        font-size: 0.9em;
+      }
 
-        .test-status.pass {
-            color: #10b981;
-        }
+      .test-status.pass {
+        color: #10b981;
+      }
 
-        .test-status.fail {
-            color: #ef4444;
-        }
+      .test-status.fail {
+        color: #ef4444;
+      }
 
-        .test-error {
-            background: #fef2f2;
-            padding: 10px 20px 10px 40px;
-            color: #991b1b;
-            font-size: 0.9em;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
+      .test-error {
+        background: #fef2f2;
+        padding: 10px 20px 10px 40px;
+        color: #991b1b;
+        font-size: 0.9em;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
 
-        .run-button {
-            background: #6366f1;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 30px;
-        }
+      .run-button {
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 30px;
+      }
 
-        .run-button:hover {
-            background: #4f46e5;
-        }
+      .run-button:hover {
+        background: #4f46e5;
+      }
 
-        .run-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
+      .run-button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #6366f1;
-            text-decoration: none;
-        }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #6366f1;
+        text-decoration: none;
+      }
 
-        .back-link:hover {
-            text-decoration: underline;
-        }
+      .back-link:hover {
+        text-decoration: underline;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <a href="index.html" class="back-link">&larr; Back to Home</a>
-        <h1>Spending Tracker Tests</h1>
-        <p class="subtitle">Automated tests for CSV parsing, categorization, and transfer detection</p>
+      <a href="index.html" class="back-link">&larr; Back to Home</a>
+      <h1>Spending Tracker Tests</h1>
+      <p class="subtitle">
+        Automated tests for CSV parsing, categorization, and transfer detection
+      </p>
 
-        <button class="run-button" id="runTests">Run All Tests</button>
+      <button class="run-button" id="runTests">Run All Tests</button>
 
-        <div class="summary" id="summary" style="display: none;">
-            <div class="summary-card passed">
-                <h2 id="passedCount">0</h2>
-                <p>Passed</p>
-            </div>
-            <div class="summary-card failed">
-                <h2 id="failedCount">0</h2>
-                <p>Failed</p>
-            </div>
-            <div class="summary-card total">
-                <h2 id="totalCount">0</h2>
-                <p>Total</p>
-            </div>
+      <div class="summary" id="summary" style="display: none">
+        <div class="summary-card passed">
+          <h2 id="passedCount">0</h2>
+          <p>Passed</p>
         </div>
+        <div class="summary-card failed">
+          <h2 id="failedCount">0</h2>
+          <p>Failed</p>
+        </div>
+        <div class="summary-card total">
+          <h2 id="totalCount">0</h2>
+          <p>Total</p>
+        </div>
+      </div>
 
-        <div id="results"></div>
+      <div id="results"></div>
     </div>
 
     <script>
-        // Test framework
-        class TestRunner {
-            constructor() {
-                this.results = [];
-                this.currentSection = '';
-            }
-
-            section(name) {
-                this.currentSection = name;
-            }
-
-            test(name, fn) {
-                try {
-                    fn();
-                    this.results.push({
-                        section: this.currentSection,
-                        name,
-                        passed: true
-                    });
-                } catch (error) {
-                    this.results.push({
-                        section: this.currentSection,
-                        name,
-                        passed: false,
-                        error: error.message
-                    });
-                }
-            }
-
-            assertEqual(actual, expected, message = '') {
-                if (actual !== expected) {
-                    throw new Error(`${message}\nExpected: ${JSON.stringify(expected)}\nActual: ${JSON.stringify(actual)}`);
-                }
-            }
-
-            assertTrue(value, message = 'Expected true') {
-                if (!value) {
-                    throw new Error(message);
-                }
-            }
-
-            assertFalse(value, message = 'Expected false') {
-                if (value) {
-                    throw new Error(message);
-                }
-            }
-
-            assertContains(haystack, needle, message = '') {
-                if (!haystack.includes(needle)) {
-                    throw new Error(`${message}\n"${haystack}" does not contain "${needle}"`);
-                }
-            }
-
-            assertLength(arr, length, message = '') {
-                if (arr.length !== length) {
-                    throw new Error(`${message}\nExpected length: ${length}\nActual length: ${arr.length}`);
-                }
-            }
-
-            getSummary() {
-                const passed = this.results.filter(r => r.passed).length;
-                const failed = this.results.filter(r => !r.passed).length;
-                return { passed, failed, total: this.results.length };
-            }
-
-            getResultsBySection() {
-                const sections = {};
-                this.results.forEach(r => {
-                    if (!sections[r.section]) {
-                        sections[r.section] = [];
-                    }
-                    sections[r.section].push(r);
-                });
-                return sections;
-            }
+      // Test framework
+      class TestRunner {
+        constructor() {
+          this.results = [];
+          this.currentSection = '';
         }
 
-        // CSV Parser (extracted from transaction-analyzer.html for testing)
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
+        section(name) {
+          this.currentSection = name;
+        }
 
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (char === '"') {
-                    if (inQuotes && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
+        test(name, fn) {
+          try {
+            fn();
+            this.results.push({
+              section: this.currentSection,
+              name,
+              passed: true,
+            });
+          } catch (error) {
+            this.results.push({
+              section: this.currentSection,
+              name,
+              passed: false,
+              error: error.message,
+            });
+          }
+        }
+
+        assertEqual(actual, expected, message = '') {
+          if (actual !== expected) {
+            throw new Error(
+              `${message}\nExpected: ${JSON.stringify(expected)}\nActual: ${JSON.stringify(actual)}`
+            );
+          }
+        }
+
+        assertTrue(value, message = 'Expected true') {
+          if (!value) {
+            throw new Error(message);
+          }
+        }
+
+        assertFalse(value, message = 'Expected false') {
+          if (value) {
+            throw new Error(message);
+          }
+        }
+
+        assertContains(haystack, needle, message = '') {
+          if (!haystack.includes(needle)) {
+            throw new Error(`${message}\n"${haystack}" does not contain "${needle}"`);
+          }
+        }
+
+        assertLength(arr, length, message = '') {
+          if (arr.length !== length) {
+            throw new Error(`${message}\nExpected length: ${length}\nActual length: ${arr.length}`);
+          }
+        }
+
+        getSummary() {
+          const passed = this.results.filter((r) => r.passed).length;
+          const failed = this.results.filter((r) => !r.passed).length;
+          return { passed, failed, total: this.results.length };
+        }
+
+        getResultsBySection() {
+          const sections = {};
+          this.results.forEach((r) => {
+            if (!sections[r.section]) {
+              sections[r.section] = [];
             }
+            sections[r.section].push(r);
+          });
+          return sections;
+        }
+      }
+
+      // CSV Parser (extracted from transaction-analyzer.html for testing)
+      function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
             result.push(current.trim());
-            return result;
+            current = '';
+          } else {
+            current += char;
+          }
         }
+        result.push(current.trim());
+        return result;
+      }
 
-        function parseAmount(value) {
-            if (!value || value.trim() === '') return null;
-            // Normalize Unicode minus signs to ASCII hyphen-minus
-            let normalized = value.replace(/[\u2212\u2013\u2014]/g, '-');
-            // Remove currency symbols and commas
-            const cleaned = normalized.replace(/[$,()]/g, '').trim();
-            // Handle parentheses as negative
-            const isNegative = value.includes('(') && value.includes(')');
-            const num = parseFloat(cleaned);
-            return isNaN(num) ? null : (isNegative ? -Math.abs(num) : num);
-        }
+      function parseAmount(value) {
+        if (!value || value.trim() === '') return null;
+        // Normalize Unicode minus signs to ASCII hyphen-minus
+        let normalized = value.replace(/[\u2212\u2013\u2014]/g, '-');
+        // Remove currency symbols and commas
+        const cleaned = normalized.replace(/[$,()]/g, '').trim();
+        // Handle parentheses as negative
+        const isNegative = value.includes('(') && value.includes(')');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? null : isNegative ? -Math.abs(num) : num;
+      }
 
-        function parseDate(value) {
-            if (!value) return null;
-            const cleaned = value.trim();
+      function parseDate(value) {
+        if (!value) return null;
+        const cleaned = value.trim();
 
-            // Try common formats
-            const formats = [
-                // MM/DD/YYYY
-                /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
-                // YYYY-MM-DD
-                /^(\d{4})-(\d{2})-(\d{2})$/,
-                // MM-DD-YYYY
-                /^(\d{1,2})-(\d{1,2})-(\d{4})$/
-            ];
+        // Try common formats
+        const formats = [
+          // MM/DD/YYYY
+          /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+          // YYYY-MM-DD
+          /^(\d{4})-(\d{2})-(\d{2})$/,
+          // MM-DD-YYYY
+          /^(\d{1,2})-(\d{1,2})-(\d{4})$/,
+        ];
 
-            for (const format of formats) {
-                const match = cleaned.match(format);
-                if (match) {
-                    let year, month, day;
-                    if (format === formats[1]) {
-                        // YYYY-MM-DD
-                        [, year, month, day] = match;
-                    } else {
-                        // MM/DD/YYYY or MM-DD-YYYY
-                        [, month, day, year] = match;
-                    }
-                    const date = new Date(year, month - 1, day);
-                    return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
-                }
+        for (const format of formats) {
+          const match = cleaned.match(format);
+          if (match) {
+            let year, month, day;
+            if (format === formats[1]) {
+              // YYYY-MM-DD
+              [, year, month, day] = match;
+            } else {
+              // MM/DD/YYYY or MM-DD-YYYY
+              [, month, day, year] = match;
             }
-            return null;
+            const date = new Date(year, month - 1, day);
+            return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+          }
         }
+        return null;
+      }
 
-        // Category patterns (simplified from transaction-analyzer.html)
-        const categoryPatterns = {
-            'fixed-costs': [
-                /rent|mortgage|hoa/i,
-                /electric|power|utility|gas bill/i,
-                /insurance|geico|allstate|progressive/i
-            ],
-            'savings': [
-                /transfer to savings/i,
-                /emergency fund/i
-            ],
-            'investments': [
-                /vanguard|fidelity|schwab/i,
-                /401k|ira|roth/i
-            ],
-            'guilt-free': [
-                /amazon|target|walmart/i,
-                /restaurant|cafe|coffee|starbucks|mcdonald|burger|pizza|chipotle|taco.*bell|wendy|chick-fil-a|panera|subway/i,
-                /uber eats|doordash|grubhub/i,
-                /spotify|netflix|hulu|disney/i
-            ],
-            'income': [
-                /payroll|salary|direct dep/i,
-                /dividend|interest/i
-            ]
-        };
+      // Category patterns (simplified from transaction-analyzer.html)
+      const categoryPatterns = {
+        'fixed-costs': [
+          /rent|mortgage|hoa/i,
+          /electric|power|utility|gas bill/i,
+          /insurance|geico|allstate|progressive/i,
+        ],
+        savings: [/transfer to savings/i, /emergency fund/i],
+        investments: [/vanguard|fidelity|schwab/i, /401k|ira|roth/i],
+        'guilt-free': [
+          /amazon|target|walmart/i,
+          /restaurant|cafe|coffee|starbucks|mcdonald|burger|pizza|chipotle|taco.*bell|wendy|chick-fil-a|panera|subway/i,
+          /uber eats|doordash|grubhub/i,
+          /spotify|netflix|hulu|disney/i,
+        ],
+        income: [/payroll|salary|direct dep/i, /dividend|interest/i],
+      };
 
-        function categorizeTransaction(description, amount) {
-            const desc = description.toLowerCase();
+      function categorizeTransaction(description, amount) {
+        const desc = description.toLowerCase();
 
-            // Check if it's income based on amount
-            if (amount > 0) {
-                for (const pattern of categoryPatterns['income']) {
-                    if (pattern.test(desc)) {
-                        return 'income';
-                    }
-                }
+        // Check if it's income based on amount
+        if (amount > 0) {
+          for (const pattern of categoryPatterns['income']) {
+            if (pattern.test(desc)) {
+              return 'income';
             }
+          }
+        }
 
-            // Check other categories
-            for (const [category, patterns] of Object.entries(categoryPatterns)) {
-                if (category === 'income') continue;
-                for (const pattern of patterns) {
-                    if (pattern.test(desc)) {
-                        return category;
-                    }
-                }
+        // Check other categories
+        for (const [category, patterns] of Object.entries(categoryPatterns)) {
+          if (category === 'income') continue;
+          for (const pattern of patterns) {
+            if (pattern.test(desc)) {
+              return category;
             }
-
-            return 'uncategorized';
+          }
         }
 
-        // Run tests
-        async function runTests() {
-            const runner = new TestRunner();
+        return 'uncategorized';
+      }
 
-            // ============================================
-            // CSV PARSING TESTS
-            // ============================================
-            runner.section('CSV Line Parsing');
+      // Run tests
+      async function runTests() {
+        const runner = new TestRunner();
 
-            runner.test('Parse simple CSV line', () => {
-                const result = parseCSVLine('a,b,c');
-                runner.assertLength(result, 3);
-                runner.assertEqual(result[0], 'a');
-                runner.assertEqual(result[1], 'b');
-                runner.assertEqual(result[2], 'c');
-            });
+        // ============================================
+        // CSV PARSING TESTS
+        // ============================================
+        runner.section('CSV Line Parsing');
 
-            runner.test('Parse quoted fields', () => {
-                const result = parseCSVLine('"Hello, World",test,123');
-                runner.assertLength(result, 3);
-                runner.assertEqual(result[0], 'Hello, World');
-            });
+        runner.test('Parse simple CSV line', () => {
+          const result = parseCSVLine('a,b,c');
+          runner.assertLength(result, 3);
+          runner.assertEqual(result[0], 'a');
+          runner.assertEqual(result[1], 'b');
+          runner.assertEqual(result[2], 'c');
+        });
 
-            runner.test('Parse escaped quotes', () => {
-                const result = parseCSVLine('"Say ""Hello""",test');
-                runner.assertLength(result, 2);
-                runner.assertEqual(result[0], 'Say "Hello"');
-            });
+        runner.test('Parse quoted fields', () => {
+          const result = parseCSVLine('"Hello, World",test,123');
+          runner.assertLength(result, 3);
+          runner.assertEqual(result[0], 'Hello, World');
+        });
 
-            runner.test('Handle empty fields', () => {
-                const result = parseCSVLine('a,,c');
-                runner.assertLength(result, 3);
-                runner.assertEqual(result[1], '');
-            });
+        runner.test('Parse escaped quotes', () => {
+          const result = parseCSVLine('"Say ""Hello""",test');
+          runner.assertLength(result, 2);
+          runner.assertEqual(result[0], 'Say "Hello"');
+        });
 
-            runner.test('Trim whitespace', () => {
-                const result = parseCSVLine('  a  ,  b  ,  c  ');
-                runner.assertEqual(result[0], 'a');
-                runner.assertEqual(result[1], 'b');
-                runner.assertEqual(result[2], 'c');
-            });
+        runner.test('Handle empty fields', () => {
+          const result = parseCSVLine('a,,c');
+          runner.assertLength(result, 3);
+          runner.assertEqual(result[1], '');
+        });
 
-            // ============================================
-            // AMOUNT PARSING TESTS
-            // ============================================
-            runner.section('Amount Parsing');
+        runner.test('Trim whitespace', () => {
+          const result = parseCSVLine('  a  ,  b  ,  c  ');
+          runner.assertEqual(result[0], 'a');
+          runner.assertEqual(result[1], 'b');
+          runner.assertEqual(result[2], 'c');
+        });
 
-            runner.test('Parse positive amount', () => {
-                runner.assertEqual(parseAmount('100.50'), 100.50);
-            });
+        // ============================================
+        // AMOUNT PARSING TESTS
+        // ============================================
+        runner.section('Amount Parsing');
 
-            runner.test('Parse negative amount', () => {
-                runner.assertEqual(parseAmount('-50.25'), -50.25);
-            });
+        runner.test('Parse positive amount', () => {
+          runner.assertEqual(parseAmount('100.50'), 100.5);
+        });
 
-            runner.test('Parse amount with dollar sign', () => {
-                runner.assertEqual(parseAmount('$1,234.56'), 1234.56);
-            });
+        runner.test('Parse negative amount', () => {
+          runner.assertEqual(parseAmount('-50.25'), -50.25);
+        });
 
-            runner.test('Parse amount with parentheses (negative)', () => {
-                runner.assertEqual(parseAmount('(100.00)'), -100.00);
-            });
+        runner.test('Parse amount with dollar sign', () => {
+          runner.assertEqual(parseAmount('$1,234.56'), 1234.56);
+        });
 
-            runner.test('Parse amount with commas', () => {
-                runner.assertEqual(parseAmount('1,000,000.00'), 1000000.00);
-            });
+        runner.test('Parse amount with parentheses (negative)', () => {
+          runner.assertEqual(parseAmount('(100.00)'), -100.0);
+        });
 
-            runner.test('Handle empty amount', () => {
-                runner.assertEqual(parseAmount(''), null);
-            });
+        runner.test('Parse amount with commas', () => {
+          runner.assertEqual(parseAmount('1,000,000.00'), 1000000.0);
+        });
 
-            runner.test('Handle invalid amount', () => {
-                runner.assertEqual(parseAmount('not a number'), null);
-            });
+        runner.test('Handle empty amount', () => {
+          runner.assertEqual(parseAmount(''), null);
+        });
 
-            runner.test('Parse Unicode minus sign (U+2212)', () => {
-                runner.assertEqual(parseAmount('\u221270.00'), -70.00);
-            });
+        runner.test('Handle invalid amount', () => {
+          runner.assertEqual(parseAmount('not a number'), null);
+        });
 
-            runner.test('Parse en dash as minus (U+2013)', () => {
-                runner.assertEqual(parseAmount('\u201350.25'), -50.25);
-            });
+        runner.test('Parse Unicode minus sign (U+2212)', () => {
+          runner.assertEqual(parseAmount('\u221270.00'), -70.0);
+        });
 
-            // ============================================
-            // DATE PARSING TESTS
-            // ============================================
-            runner.section('Date Parsing');
+        runner.test('Parse en dash as minus (U+2013)', () => {
+          runner.assertEqual(parseAmount('\u201350.25'), -50.25);
+        });
 
-            runner.test('Parse MM/DD/YYYY format', () => {
-                runner.assertEqual(parseDate('01/15/2024'), '2024-01-15');
-            });
+        // ============================================
+        // DATE PARSING TESTS
+        // ============================================
+        runner.section('Date Parsing');
 
-            runner.test('Parse YYYY-MM-DD format (ISO)', () => {
-                runner.assertEqual(parseDate('2024-01-15'), '2024-01-15');
-            });
+        runner.test('Parse MM/DD/YYYY format', () => {
+          runner.assertEqual(parseDate('01/15/2024'), '2024-01-15');
+        });
 
-            runner.test('Parse MM-DD-YYYY format', () => {
-                runner.assertEqual(parseDate('01-15-2024'), '2024-01-15');
-            });
+        runner.test('Parse YYYY-MM-DD format (ISO)', () => {
+          runner.assertEqual(parseDate('2024-01-15'), '2024-01-15');
+        });
 
-            runner.test('Parse single digit month/day', () => {
-                runner.assertEqual(parseDate('1/5/2024'), '2024-01-05');
-            });
+        runner.test('Parse MM-DD-YYYY format', () => {
+          runner.assertEqual(parseDate('01-15-2024'), '2024-01-15');
+        });
 
-            runner.test('Handle invalid date', () => {
-                runner.assertEqual(parseDate('invalid'), null);
-            });
+        runner.test('Parse single digit month/day', () => {
+          runner.assertEqual(parseDate('1/5/2024'), '2024-01-05');
+        });
 
-            runner.test('Handle empty date', () => {
-                runner.assertEqual(parseDate(''), null);
-            });
+        runner.test('Handle invalid date', () => {
+          runner.assertEqual(parseDate('invalid'), null);
+        });
 
-            // ============================================
-            // CATEGORIZATION TESTS
-            // ============================================
-            runner.section('Transaction Categorization');
+        runner.test('Handle empty date', () => {
+          runner.assertEqual(parseDate(''), null);
+        });
 
-            runner.test('Categorize rent as fixed-costs', () => {
-                runner.assertEqual(categorizeTransaction('RENT PAYMENT', -1500), 'fixed-costs');
-            });
+        // ============================================
+        // CATEGORIZATION TESTS
+        // ============================================
+        runner.section('Transaction Categorization');
 
-            runner.test('Categorize utility as fixed-costs', () => {
-                runner.assertEqual(categorizeTransaction('ELECTRIC COMPANY', -150), 'fixed-costs');
-            });
+        runner.test('Categorize rent as fixed-costs', () => {
+          runner.assertEqual(categorizeTransaction('RENT PAYMENT', -1500), 'fixed-costs');
+        });
 
-            runner.test('Categorize insurance as fixed-costs', () => {
-                runner.assertEqual(categorizeTransaction('GEICO INSURANCE', -100), 'fixed-costs');
-            });
+        runner.test('Categorize utility as fixed-costs', () => {
+          runner.assertEqual(categorizeTransaction('ELECTRIC COMPANY', -150), 'fixed-costs');
+        });
 
-            runner.test('Categorize Spotify as guilt-free', () => {
-                runner.assertEqual(categorizeTransaction('SPOTIFY PREMIUM', -9.99), 'guilt-free');
-            });
+        runner.test('Categorize insurance as fixed-costs', () => {
+          runner.assertEqual(categorizeTransaction('GEICO INSURANCE', -100), 'fixed-costs');
+        });
 
-            runner.test('Categorize Amazon as guilt-free', () => {
-                runner.assertEqual(categorizeTransaction('AMAZON.COM', -45.99), 'guilt-free');
-            });
+        runner.test('Categorize Spotify as guilt-free', () => {
+          runner.assertEqual(categorizeTransaction('SPOTIFY PREMIUM', -9.99), 'guilt-free');
+        });
 
-            runner.test('Categorize restaurant as guilt-free', () => {
-                runner.assertEqual(categorizeTransaction('CHIPOTLE MEXICAN', -12.50), 'guilt-free');
-            });
+        runner.test('Categorize Amazon as guilt-free', () => {
+          runner.assertEqual(categorizeTransaction('AMAZON.COM', -45.99), 'guilt-free');
+        });
 
-            runner.test('Categorize payroll as income', () => {
-                runner.assertEqual(categorizeTransaction('PAYROLL DEPOSIT', 2500), 'income');
-            });
+        runner.test('Categorize restaurant as guilt-free', () => {
+          runner.assertEqual(categorizeTransaction('CHIPOTLE MEXICAN', -12.5), 'guilt-free');
+        });
 
-            runner.test('Categorize 401k as investments', () => {
-                runner.assertEqual(categorizeTransaction('401K CONTRIBUTION', -500), 'investments');
-            });
+        runner.test('Categorize payroll as income', () => {
+          runner.assertEqual(categorizeTransaction('PAYROLL DEPOSIT', 2500), 'income');
+        });
 
-            runner.test('Categorize unknown merchant as uncategorized', () => {
-                runner.assertEqual(categorizeTransaction('RANDOM STORE 123', -25), 'uncategorized');
-            });
+        runner.test('Categorize 401k as investments', () => {
+          runner.assertEqual(categorizeTransaction('401K CONTRIBUTION', -500), 'investments');
+        });
 
-            // ============================================
-            // XSS PREVENTION TESTS
-            // ============================================
-            runner.section('XSS Prevention');
+        runner.test('Categorize unknown merchant as uncategorized', () => {
+          runner.assertEqual(categorizeTransaction('RANDOM STORE 123', -25), 'uncategorized');
+        });
 
-            runner.test('DOMUtils.escapeHtml escapes HTML tags', () => {
-                const result = DOMUtils.escapeHtml('<script>alert("xss")<\/script>');
-                runner.assertFalse(result.includes('<script>'));
-                runner.assertContains(result, '&lt;script&gt;');
-            });
+        // ============================================
+        // XSS PREVENTION TESTS
+        // ============================================
+        runner.section('XSS Prevention');
 
-            runner.test('DOMUtils.escapeHtml escapes ampersands', () => {
-                const result = DOMUtils.escapeHtml('AT&T');
-                runner.assertContains(result, '&amp;');
-            });
+        runner.test('DOMUtils.escapeHtml escapes HTML tags', () => {
+          const result = DOMUtils.escapeHtml('<script>alert("xss")<\/script>');
+          runner.assertFalse(result.includes('<script>'));
+          runner.assertContains(result, '&lt;script&gt;');
+        });
 
-            runner.test('DOMUtils.escapeHtml preserves quotes', () => {
-                // Quotes don't need escaping in text content, only in attributes
-                const result = DOMUtils.escapeHtml('Say "Hello"');
-                runner.assertContains(result, 'Say "Hello"');
-            });
+        runner.test('DOMUtils.escapeHtml escapes ampersands', () => {
+          const result = DOMUtils.escapeHtml('AT&T');
+          runner.assertContains(result, '&amp;');
+        });
 
-            runner.test('DOMUtils.escapeHtml handles null', () => {
-                // null becomes empty string when assigned to textContent
-                runner.assertEqual(DOMUtils.escapeHtml(null), '');
-            });
+        runner.test('DOMUtils.escapeHtml preserves quotes', () => {
+          // Quotes don't need escaping in text content, only in attributes
+          const result = DOMUtils.escapeHtml('Say "Hello"');
+          runner.assertContains(result, 'Say "Hello"');
+        });
 
-            runner.test('DOMUtils.escapeHtml handles empty string', () => {
-                runner.assertEqual(DOMUtils.escapeHtml(''), '');
-            });
+        runner.test('DOMUtils.escapeHtml handles null', () => {
+          // null becomes empty string when assigned to textContent
+          runner.assertEqual(DOMUtils.escapeHtml(null), '');
+        });
 
-            // ============================================
-            // STORAGE UTILS TESTS
-            // ============================================
-            runner.section('Storage Utils');
+        runner.test('DOMUtils.escapeHtml handles empty string', () => {
+          runner.assertEqual(DOMUtils.escapeHtml(''), '');
+        });
 
-            runner.test('StorageUtils.set and get work correctly', () => {
-                StorageUtils.set('test-key', { foo: 'bar' });
-                const result = StorageUtils.get('test-key');
-                runner.assertEqual(result.foo, 'bar');
-                localStorage.removeItem('test-key'); // cleanup
-            });
+        // ============================================
+        // STORAGE UTILS TESTS
+        // ============================================
+        runner.section('Storage Utils');
 
-            runner.test('StorageUtils.get returns default for missing key', () => {
-                const result = StorageUtils.get('nonexistent-key', 'default');
-                runner.assertEqual(result, 'default');
-            });
+        runner.test('StorageUtils.set and get work correctly', () => {
+          StorageUtils.set('test-key', { foo: 'bar' });
+          const result = StorageUtils.get('test-key');
+          runner.assertEqual(result.foo, 'bar');
+          localStorage.removeItem('test-key'); // cleanup
+        });
 
-            runner.test('StorageUtils handles complex objects', () => {
-                const data = {
-                    transactions: [
-                        { id: '1', amount: 100, description: 'Test' }
-                    ],
-                    settings: { theme: 'dark' }
-                };
-                StorageUtils.set('complex-test', data);
-                const result = StorageUtils.get('complex-test');
-                runner.assertEqual(result.transactions[0].amount, 100);
-                localStorage.removeItem('complex-test'); // cleanup
-            });
+        runner.test('StorageUtils.get returns default for missing key', () => {
+          const result = StorageUtils.get('nonexistent-key', 'default');
+          runner.assertEqual(result, 'default');
+        });
 
-            // ============================================
-            // FORMAT UTILS TESTS
-            // ============================================
-            runner.section('Format Utils');
+        runner.test('StorageUtils handles complex objects', () => {
+          const data = {
+            transactions: [{ id: '1', amount: 100, description: 'Test' }],
+            settings: { theme: 'dark' },
+          };
+          StorageUtils.set('complex-test', data);
+          const result = StorageUtils.get('complex-test');
+          runner.assertEqual(result.transactions[0].amount, 100);
+          localStorage.removeItem('complex-test'); // cleanup
+        });
 
-            runner.test('formatCurrency formats positive amount', () => {
-                // Using a simple test since FormatUtils may format differently
-                const formatted = typeof FormatUtils !== 'undefined'
-                    ? FormatUtils.formatCurrency(1234.56)
-                    : '$1,234.56';
-                runner.assertContains(formatted, '1,234');
-            });
+        // ============================================
+        // FORMAT UTILS TESTS
+        // ============================================
+        runner.section('Format Utils');
 
-            runner.test('formatCurrency formats negative amount', () => {
-                const formatted = typeof FormatUtils !== 'undefined'
-                    ? FormatUtils.formatCurrency(-500)
-                    : '-$500.00';
-                runner.assertContains(formatted, '500');
-            });
+        runner.test('formatCurrency formats positive amount', () => {
+          // Using a simple test since FormatUtils may format differently
+          const formatted =
+            typeof FormatUtils !== 'undefined' ? FormatUtils.formatCurrency(1234.56) : '$1,234.56';
+          runner.assertContains(formatted, '1,234');
+        });
 
-            return runner;
-        }
+        runner.test('formatCurrency formats negative amount', () => {
+          const formatted =
+            typeof FormatUtils !== 'undefined' ? FormatUtils.formatCurrency(-500) : '-$500.00';
+          runner.assertContains(formatted, '500');
+        });
 
-        // Render results
-        function renderResults(runner) {
-            const summary = runner.getSummary();
-            const sections = runner.getResultsBySection();
+        return runner;
+      }
 
-            // Update summary
-            document.getElementById('summary').style.display = 'flex';
-            document.getElementById('passedCount').textContent = summary.passed;
-            document.getElementById('failedCount').textContent = summary.failed;
-            document.getElementById('totalCount').textContent = summary.total;
+      // Render results
+      function renderResults(runner) {
+        const summary = runner.getSummary();
+        const sections = runner.getResultsBySection();
 
-            // Render sections
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
+        // Update summary
+        document.getElementById('summary').style.display = 'flex';
+        document.getElementById('passedCount').textContent = summary.passed;
+        document.getElementById('failedCount').textContent = summary.failed;
+        document.getElementById('totalCount').textContent = summary.total;
 
-            for (const [sectionName, tests] of Object.entries(sections)) {
-                const allPassed = tests.every(t => t.passed);
-                const section = document.createElement('div');
-                section.className = 'test-section';
-                section.innerHTML = `
+        // Render sections
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+
+        for (const [sectionName, tests] of Object.entries(sections)) {
+          const allPassed = tests.every((t) => t.passed);
+          const section = document.createElement('div');
+          section.className = 'test-section';
+          section.innerHTML = `
                     <div class="test-section-header">
                         <span>${sectionName}</span>
                         <span class="badge ${allPassed ? 'all-passed' : 'some-failed'}">
@@ -661,9 +658,9 @@
                     </div>
                 `;
 
-                tests.forEach(test => {
-                    const item = document.createElement('div');
-                    item.innerHTML = `
+          tests.forEach((test) => {
+            const item = document.createElement('div');
+            item.innerHTML = `
                         <div class="test-item">
                             <span class="test-name">${test.name}</span>
                             <span class="test-status ${test.passed ? 'pass' : 'fail'}">
@@ -672,20 +669,20 @@
                         </div>
                         ${test.error ? `<div class="test-error">${DOMUtils.escapeHtml(test.error)}</div>` : ''}
                     `;
-                    section.appendChild(item);
-                });
+            section.appendChild(item);
+          });
 
-                resultsDiv.appendChild(section);
-            }
+          resultsDiv.appendChild(section);
         }
+      }
 
-        // Initialize when DOM is ready
-        function init() {
-            const button = document.getElementById('runTests');
+      // Initialize when DOM is ready
+      function init() {
+        const button = document.getElementById('runTests');
 
-            // Check if shared.js loaded properly
-            if (typeof DOMUtils === 'undefined') {
-                document.getElementById('results').innerHTML = `
+        // Check if shared.js loaded properly
+        if (typeof DOMUtils === 'undefined') {
+          document.getElementById('results').innerHTML = `
                     <div class="test-section">
                         <div class="test-section-header">
                             <span>Error</span>
@@ -701,48 +698,50 @@
                         </div>
                     </div>
                 `;
-                return;
-            }
+          return;
+        }
 
-            button.addEventListener('click', async () => {
-                button.disabled = true;
-                button.textContent = 'Running...';
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          button.textContent = 'Running...';
 
-                // Small delay to allow UI update
-                await new Promise(r => setTimeout(r, 100));
+          // Small delay to allow UI update
+          await new Promise((r) => setTimeout(r, 100));
 
-                try {
-                    const runner = await runTests();
-                    renderResults(runner);
-                } catch (error) {
-                    document.getElementById('results').innerHTML = `
+          try {
+            const runner = await runTests();
+            renderResults(runner);
+          } catch (error) {
+            document.getElementById('results').innerHTML = `
                         <div class="test-section">
                             <div class="test-error">Error running tests: ${error.message}</div>
                         </div>
                     `;
-                }
+          }
 
-                button.disabled = false;
-                button.textContent = 'Run All Tests';
-            });
+          button.disabled = false;
+          button.textContent = 'Run All Tests';
+        });
 
-            // Auto-run tests
-            runTests().then(renderResults).catch(error => {
-                console.error('Test error:', error);
-                document.getElementById('results').innerHTML = `
+        // Auto-run tests
+        runTests()
+          .then(renderResults)
+          .catch((error) => {
+            console.error('Test error:', error);
+            document.getElementById('results').innerHTML = `
                     <div class="test-section">
                         <div class="test-error">Error running tests: ${error.message}</div>
                     </div>
                 `;
-            });
-        }
+          });
+      }
 
-        // Run init when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+      // Run init when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
     </script>
-</body>
+  </body>
 </html>

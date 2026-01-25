@@ -1,1565 +1,1901 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Income Allocation Calculator - I Will Teach You to Be Rich</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-6eeJb4gOKqaZxKTaVh4k0VR9RnpBPLmqvxmSRoXHgNQNz3bMNqPYLNq/MDpwzi0B" crossorigin="anonymous"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+      integrity="sha384-6eeJb4gOKqaZxKTaVh4k0VR9RnpBPLmqvxmSRoXHgNQNz3bMNqPYLNq/MDpwzi0B"
+      crossorigin="anonymous"
+    ></script>
     <script src="shared.js?v=20251229"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        header p {
-            font-size: 1.1em;
-            opacity: 0.95;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        /* Development Warning Banner */
-        .dev-warning {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            border-bottom: 3px solid #d97706;
-            padding: 16px 20px;
-            text-align: center;
-            color: #92400e;
-            font-weight: 600;
-            font-size: 0.95em;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            position: relative;
-            z-index: 1000;
-        }
-
-        .dev-warning-icon {
-            font-size: 1.3em;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        .dev-warning-text {
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .dev-warning a {
-            color: #78350f;
-            text-decoration: underline;
-            font-weight: 700;
-        }
-
-        .dev-warning a:hover {
-            color: #451a03;
-        }
-
-        .philosophy-section {
-            background: #f0f4ff;
-            border-left: 4px solid #667eea;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-        }
-
-        .philosophy-section p {
-            color: #555;
-            line-height: 1.6;
-            margin: 0;
-            font-size: 1em;
-        }
-
-        .income-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f5f7fa;
-            border-radius: 8px;
-        }
-
-        .income-input-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-
-        .income-input-group label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #555;
-            font-size: 1em;
-        }
-
-        .income-input-wrapper {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .income-input-wrapper select {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 1em;
-            background: white;
-            cursor: pointer;
-            transition: border-color 0.3s;
-            min-width: 100px;
-        }
-
-        .income-input-wrapper input {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-            width: 100%;
-            min-width: 0;
-        }
-
-        .income-input-wrapper input:focus,
-        .income-input-wrapper select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .tax-toggle-wrapper {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .tax-toggle-option {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-            text-align: center;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .tax-toggle-option.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .tax-toggle-option:hover {
-            border-color: #667eea;
-        }
-
-        .tax-fields {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .tax-fields.show {
-            display: block;
-        }
-
-        .tax-estimate {
-            margin-top: 10px;
-            padding: 10px;
-            background: #fef3c7;
-            border-radius: 6px;
-            font-size: 0.9em;
-            color: #92400e;
-        }
-
-        .tax-estimate strong {
-            color: #78350f;
-        }
-
-        .categories-section {
-            margin-bottom: 30px;
-        }
-
-        .categories-section h2 {
-            margin-bottom: 20px;
-            color: #333;
-            font-size: 1.5em;
-        }
-
-        .category-item {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            border-left: 4px solid;
-        }
-
-        .category-item.fixed-costs {
-            border-left-color: #ef4444;
-        }
-
-        .category-item.short-term {
-            border-left-color: #f59e0b;
-        }
-
-        .category-item.long-term {
-            border-left-color: #10b981;
-        }
-
-        .category-item.guilt-free {
-            border-left-color: #8b5cf6;
-        }
-
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .category-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .category-percentage {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        .category-description {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-
-        .slider-container {
-            margin-bottom: 15px;
-        }
-
-        .slider {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #e0e0e0;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #667eea;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .slider::-webkit-slider-thumb:hover {
-            background: #5568d3;
-        }
-
-        .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #667eea;
-            cursor: pointer;
-            border: none;
-            transition: background 0.3s;
-        }
-
-        .slider::-moz-range-thumb:hover {
-            background: #5568d3;
-        }
-
-        .allocation-display {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .allocation-box {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .allocation-box:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
-        }
-
-        .allocation-box.editing {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-
-        .allocation-label {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .allocation-amount {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #333;
-        }
-
-        .allocation-input {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: #333;
-            border: none;
-            background: transparent;
-            text-align: center;
-            width: 100%;
-            outline: none;
-            padding: 0;
-        }
-
-
-        .preset-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .preset-btn {
-            padding: 12px 20px;
-            background: white;
-            border: 2px solid #667eea;
-            color: #667eea;
-            border-radius: 6px;
-            font-size: 0.95em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .preset-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        .preset-btn.active {
-            background: #667eea;
-            color: white;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-        }
-
-        /* Scenario Comparison */
-        .scenario-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            border: 2px solid #fbbf24;
-        }
-
-        .scenario-section h2 {
-            margin-bottom: 10px;
-            color: #92400e;
-        }
-
-        .scenario-actions {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .scenario-btn {
-            padding: 10px 18px;
-            background: white;
-            border: 2px solid #f59e0b;
-            color: #d97706;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .scenario-btn:hover {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .scenario-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-        }
-
-        .scenario-card {
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 16px;
-            position: relative;
-        }
-
-        .scenario-card.current {
-            border-color: #10b981;
-            background: #ecfdf5;
-        }
-
-        .scenario-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .scenario-name {
-            font-weight: 600;
-            font-size: 1em;
-            color: #1e293b;
-        }
-
-        .scenario-badge {
-            font-size: 0.75em;
-            padding: 3px 8px;
-            border-radius: 4px;
-            background: #10b981;
-            color: white;
-            font-weight: 600;
-        }
-
-        .scenario-allocations {
-            font-size: 0.85em;
-            color: #64748b;
-            margin-bottom: 10px;
-            line-height: 1.6;
-        }
-
-        .scenario-retirement {
-            background: #f8fafc;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        .scenario-retirement-label {
-            font-size: 0.8em;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-
-        .scenario-retirement-value {
-            font-size: 1.1em;
-            font-weight: 700;
-        }
-
-        .scenario-retirement-value.high {
-            color: #059669;
-        }
-
-        .scenario-retirement-value.medium {
-            color: #d97706;
-        }
-
-        .scenario-retirement-value.low {
-            color: #dc2626;
-        }
-
-        .scenario-actions-bottom {
-            display: flex;
-            gap: 8px;
-        }
-
-        .scenario-apply-btn {
-            flex: 1;
-            padding: 8px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .scenario-apply-btn:hover {
-            background: #5568d3;
-        }
-
-        .scenario-delete-btn {
-            padding: 8px 12px;
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .scenario-delete-btn:hover {
-            background: #fee2e2;
-            color: #dc2626;
-            border-color: #dc2626;
-        }
-
-        /* Retirement Impact Preview */
-        .retirement-impact-preview {
-            margin-top: 20px;
-            padding: 16px;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 8px;
-            border: 2px solid #0ea5e9;
-            animation: slideIn 0.3s ease;
-        }
-
-        .impact-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .impact-icon {
-            font-size: 1.3em;
-        }
-
-        .impact-title {
-            font-weight: 600;
-            color: #0c4a6e;
-            font-size: 1.05em;
-        }
-
-        .impact-content {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .impact-metric {
-            text-align: center;
-        }
-
-        .impact-label {
-            font-size: 0.85em;
-            color: #475569;
-            margin-bottom: 4px;
-        }
-
-        .impact-value {
-            font-size: 2.5em;
-            font-weight: 800;
-            color: #0c4a6e;
-            line-height: 1;
-        }
-
-        .impact-value.success {
-            color: #10b981;
-        }
-
-        .impact-value.warning {
-            color: #f59e0b;
-        }
-
-        .impact-value.alert {
-            color: #ef4444;
-        }
-
-        .impact-comparison {
-            text-align: center;
-            min-height: 24px;
-        }
-
-        .impact-change {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.9em;
-            font-weight: 600;
-        }
-
-        .impact-change.positive {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        .impact-change.negative {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .impact-note {
-            text-align: center;
-            font-size: 0.8em;
-            color: #64748b;
-            margin-top: 4px;
-        }
-
-        .impact-note a {
-            color: #0ea5e9;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .impact-note a:hover {
-            text-decoration: underline;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        footer {
-            background: #f5f5f5;
-            padding: 20px 30px;
-            border-top: 1px solid #e0e0e0;
-            text-align: center;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        footer .disclaimer {
-            font-size: 0.85em;
-            color: #888;
-            margin-bottom: 12px;
-        }
-
-        .workflow-nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            padding: 20px 0;
-            margin-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .workflow-nav a {
-            text-decoration: none;
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .workflow-nav .nav-arrow {
-            background: #667eea;
-            color: white;
-        }
-
-        .workflow-nav .nav-arrow:hover {
-            background: #5568d3;
-            text-decoration: none;
-        }
-
-        .workflow-nav .home-link {
-            color: #667eea;
-            font-size: 0.95em;
-        }
-
-        .workflow-nav .home-link:hover {
-            background: #f0f4ff;
-            text-decoration: none;
-        }
-
-        .version-text {
-            margin-top: 16px;
-            font-size: 0.75em;
-            color: #9ca3af;
-        }
-
-        /* Accessibility: Skip link for keyboard navigation */
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: #667eea;
-            color: white;
-            padding: 8px 16px;
-            z-index: 100;
-            text-decoration: none;
-            font-weight: 600;
-            border-radius: 0 0 4px 0;
-        }
-
-        .skip-link:focus {
-            top: 0;
-        }
-
-        /* Accessibility: Screen reader only text */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* Accessibility: Enhanced focus styles */
-        *:focus {
-            outline: 3px solid #667eea;
-            outline-offset: 2px;
-        }
-
-        *:focus:not(:focus-visible) {
-            outline: none;
-        }
-
-        *:focus-visible {
-            outline: 3px solid #667eea;
-            outline-offset: 2px;
-        }
-
-        .tax-toggle-option:focus-visible {
-            outline: 3px solid #333;
-            outline-offset: 2px;
-        }
-
-        .preset-btn:focus-visible {
-            outline: 3px solid #333;
-            outline-offset: 2px;
-        }
-
-        .allocation-box:focus-visible {
-            outline: 3px solid #667eea;
-            outline-offset: 2px;
-        }
-
-        /* Navigation Tabs */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      header h1 {
+        font-size: 2em;
+        margin-bottom: 10px;
+      }
+
+      header p {
+        font-size: 1.1em;
+        opacity: 0.95;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      /* Development Warning Banner */
+      .dev-warning {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        border-bottom: 3px solid #d97706;
+        padding: 16px 20px;
+        text-align: center;
+        color: #92400e;
+        font-weight: 600;
+        font-size: 0.95em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 1000;
+      }
+
+      .dev-warning-icon {
+        font-size: 1.3em;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      .dev-warning-text {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .dev-warning a {
+        color: #78350f;
+        text-decoration: underline;
+        font-weight: 700;
+      }
+
+      .dev-warning a:hover {
+        color: #451a03;
+      }
+
+      .philosophy-section {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+      }
+
+      .philosophy-section p {
+        color: #555;
+        line-height: 1.6;
+        margin: 0;
+        font-size: 1em;
+      }
+
+      .income-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f5f7fa;
+        border-radius: 8px;
+      }
+
+      .income-input-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 15px;
+      }
+
+      .income-input-group label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 1em;
+      }
+
+      .income-input-wrapper {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .income-input-wrapper select {
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 1em;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.3s;
+        min-width: 100px;
+      }
+
+      .income-input-wrapper input {
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 1em;
+        transition: border-color 0.3s;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .income-input-wrapper input:focus,
+      .income-input-wrapper select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .tax-toggle-wrapper {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+
+      .tax-toggle-option {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        text-align: center;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .tax-toggle-option.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      .tax-toggle-option:hover {
+        border-color: #667eea;
+      }
+
+      .tax-fields {
+        display: none;
+        margin-top: 15px;
+        padding: 15px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .tax-fields.show {
+        display: block;
+      }
+
+      .tax-estimate {
+        margin-top: 10px;
+        padding: 10px;
+        background: #fef3c7;
+        border-radius: 6px;
+        font-size: 0.9em;
+        color: #92400e;
+      }
+
+      .tax-estimate strong {
+        color: #78350f;
+      }
+
+      .categories-section {
+        margin-bottom: 30px;
+      }
+
+      .categories-section h2 {
+        margin-bottom: 20px;
+        color: #333;
+        font-size: 1.5em;
+      }
+
+      .category-item {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        border-left: 4px solid;
+      }
+
+      .category-item.fixed-costs {
+        border-left-color: #ef4444;
+      }
+
+      .category-item.short-term {
+        border-left-color: #f59e0b;
+      }
+
+      .category-item.long-term {
+        border-left-color: #10b981;
+      }
+
+      .category-item.guilt-free {
+        border-left-color: #8b5cf6;
+      }
+
+      .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .category-title {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .category-percentage {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .category-description {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+
+      .slider-container {
+        margin-bottom: 15px;
+      }
+
+      .slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 5px;
+        background: #e0e0e0;
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .slider::-webkit-slider-thumb:hover {
+        background: #5568d3;
+      }
+
+      .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        border: none;
+        transition: background 0.3s;
+      }
+
+      .slider::-moz-range-thumb:hover {
+        background: #5568d3;
+      }
+
+      .allocation-display {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      .allocation-box {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+      }
+
+      .allocation-box:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+      }
+
+      .allocation-box.editing {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+
+      .allocation-label {
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .allocation-amount {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .allocation-input {
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #333;
+        border: none;
+        background: transparent;
+        text-align: center;
+        width: 100%;
+        outline: none;
+        padding: 0;
+      }
+
+      .preset-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-bottom: 30px;
+      }
+
+      .preset-btn {
+        padding: 12px 20px;
+        background: white;
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 6px;
+        font-size: 0.95em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .preset-btn:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      .preset-btn.active {
+        background: #667eea;
+        color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+      }
+
+      /* Scenario Comparison */
+      .scenario-section {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border: 2px solid #fbbf24;
+      }
+
+      .scenario-section h2 {
+        margin-bottom: 10px;
+        color: #92400e;
+      }
+
+      .scenario-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .scenario-btn {
+        padding: 10px 18px;
+        background: white;
+        border: 2px solid #f59e0b;
+        color: #d97706;
+        border-radius: 6px;
+        font-size: 0.9em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .scenario-btn:hover {
+        background: #f59e0b;
+        color: white;
+      }
+
+      .scenario-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 15px;
+      }
+
+      .scenario-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        position: relative;
+      }
+
+      .scenario-card.current {
+        border-color: #10b981;
+        background: #ecfdf5;
+      }
+
+      .scenario-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .scenario-name {
+        font-weight: 600;
+        font-size: 1em;
+        color: #1e293b;
+      }
+
+      .scenario-badge {
+        font-size: 0.75em;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background: #10b981;
+        color: white;
+        font-weight: 600;
+      }
+
+      .scenario-allocations {
+        font-size: 0.85em;
+        color: #64748b;
+        margin-bottom: 10px;
+        line-height: 1.6;
+      }
+
+      .scenario-retirement {
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .scenario-retirement-label {
+        font-size: 0.8em;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+
+      .scenario-retirement-value {
+        font-size: 1.1em;
+        font-weight: 700;
+      }
+
+      .scenario-retirement-value.high {
+        color: #059669;
+      }
+
+      .scenario-retirement-value.medium {
+        color: #d97706;
+      }
+
+      .scenario-retirement-value.low {
+        color: #dc2626;
+      }
+
+      .scenario-actions-bottom {
+        display: flex;
+        gap: 8px;
+      }
+
+      .scenario-apply-btn {
+        flex: 1;
+        padding: 8px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .scenario-apply-btn:hover {
+        background: #5568d3;
+      }
+
+      .scenario-delete-btn {
+        padding: 8px 12px;
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.85em;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .scenario-delete-btn:hover {
+        background: #fee2e2;
+        color: #dc2626;
+        border-color: #dc2626;
+      }
+
+      /* Retirement Impact Preview */
+      .retirement-impact-preview {
+        margin-top: 20px;
+        padding: 16px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border-radius: 8px;
+        border: 2px solid #0ea5e9;
+        animation: slideIn 0.3s ease;
+      }
+
+      .impact-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .impact-icon {
+        font-size: 1.3em;
+      }
+
+      .impact-title {
+        font-weight: 600;
+        color: #0c4a6e;
+        font-size: 1.05em;
+      }
+
+      .impact-content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .impact-metric {
+        text-align: center;
+      }
+
+      .impact-label {
+        font-size: 0.85em;
+        color: #475569;
+        margin-bottom: 4px;
+      }
+
+      .impact-value {
+        font-size: 2.5em;
+        font-weight: 800;
+        color: #0c4a6e;
+        line-height: 1;
+      }
+
+      .impact-value.success {
+        color: #10b981;
+      }
+
+      .impact-value.warning {
+        color: #f59e0b;
+      }
+
+      .impact-value.alert {
+        color: #ef4444;
+      }
+
+      .impact-comparison {
+        text-align: center;
+        min-height: 24px;
+      }
+
+      .impact-change {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+
+      .impact-change.positive {
+        background: #d1fae5;
+        color: #059669;
+      }
+
+      .impact-change.negative {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .impact-note {
+        text-align: center;
+        font-size: 0.8em;
+        color: #64748b;
+        margin-top: 4px;
+      }
+
+      .impact-note a {
+        color: #0ea5e9;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .impact-note a:hover {
+        text-decoration: underline;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      footer {
+        background: #f5f5f5;
+        padding: 20px 30px;
+        border-top: 1px solid #e0e0e0;
+        text-align: center;
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      footer .disclaimer {
+        font-size: 0.85em;
+        color: #888;
+        margin-bottom: 12px;
+      }
+
+      .workflow-nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+        padding: 20px 0;
+        margin-top: 15px;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .workflow-nav a {
+        text-decoration: none;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .workflow-nav .nav-arrow {
+        background: #667eea;
+        color: white;
+      }
+
+      .workflow-nav .nav-arrow:hover {
+        background: #5568d3;
+        text-decoration: none;
+      }
+
+      .workflow-nav .home-link {
+        color: #667eea;
+        font-size: 0.95em;
+      }
+
+      .workflow-nav .home-link:hover {
+        background: #f0f4ff;
+        text-decoration: none;
+      }
+
+      .version-text {
+        margin-top: 16px;
+        font-size: 0.75em;
+        color: #9ca3af;
+      }
+
+      /* Accessibility: Skip link for keyboard navigation */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #667eea;
+        color: white;
+        padding: 8px 16px;
+        z-index: 100;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 0 0 4px 0;
+      }
+
+      .skip-link:focus {
+        top: 0;
+      }
+
+      /* Accessibility: Screen reader only text */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Accessibility: Enhanced focus styles */
+      *:focus {
+        outline: 3px solid #667eea;
+        outline-offset: 2px;
+      }
+
+      *:focus:not(:focus-visible) {
+        outline: none;
+      }
+
+      *:focus-visible {
+        outline: 3px solid #667eea;
+        outline-offset: 2px;
+      }
+
+      .tax-toggle-option:focus-visible {
+        outline: 3px solid #333;
+        outline-offset: 2px;
+      }
+
+      .preset-btn:focus-visible {
+        outline: 3px solid #333;
+        outline-offset: 2px;
+      }
+
+      .allocation-box:focus-visible {
+        outline: 3px solid #667eea;
+        outline-offset: 2px;
+      }
+
+      /* Navigation Tabs */
+      .nav-tabs {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        background: transparent;
+        gap: 8px;
+        padding: 0 20px;
+      }
+
+      .nav-tab {
+        padding: 14px 16px;
+        text-align: center;
+        text-decoration: none;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+        font-size: 0.95em;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        background: transparent;
+      }
+
+      .nav-tab:hover {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      .nav-tab.active {
+        color: white;
+        border-bottom-color: white;
+        font-weight: 600;
+      }
+
+      @media (max-width: 768px) {
         .nav-tabs {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            background: transparent;
-            gap: 8px;
-            padding: 0 20px;
+          padding: 0 10px;
+          gap: 4px;
         }
 
         .nav-tab {
-            padding: 14px 16px;
-            text-align: center;
-            text-decoration: none;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 500;
-            font-size: 0.95em;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            background: transparent;
+          padding: 12px 8px;
+          font-size: 0.85em;
         }
 
-        .nav-tab:hover {
-            color: rgba(255, 255, 255, 0.95);
+        header h1 {
+          font-size: 1.5em;
         }
 
-        .nav-tab.active {
-            color: white;
-            border-bottom-color: white;
-            font-weight: 600;
+        header p {
+          font-size: 1em;
         }
 
-        @media (max-width: 768px) {
-            .nav-tabs {
-                padding: 0 10px;
-                gap: 4px;
-            }
-
-            .nav-tab {
-                padding: 12px 8px;
-                font-size: 0.85em;
-            }
-
-            header h1 {
-                font-size: 1.5em;
-            }
-
-            header p {
-                font-size: 1em;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .allocation-display {
-                grid-template-columns: 1fr;
-            }
-
-            .preset-buttons {
-                grid-template-columns: 1fr;
-            }
-
-            /* Allocation chart mobile */
-            .allocation-chart-container {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .allocation-chart-wrapper {
-                width: 200px;
-                height: 200px;
-            }
-
-            .allocation-chart-legend {
-                max-width: 100%;
-            }
-
-            .allocation-chart-section {
-                padding: 15px;
-            }
+        .content {
+          padding: 20px;
         }
 
-        /* Allocation Chart */
-        .allocation-chart-section {
-            margin-top: 30px;
-            padding: 25px;
-            background: #f5f7fa;
-            border-radius: 8px;
+        .allocation-display {
+          grid-template-columns: 1fr;
         }
 
-        .allocation-chart-section h3 {
-            margin-bottom: 20px;
-            color: #333;
-            font-size: 1.2em;
+        .preset-buttons {
+          grid-template-columns: 1fr;
         }
 
+        /* Allocation chart mobile */
         .allocation-chart-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            align-items: center;
-            justify-content: center;
+          flex-direction: column;
+          gap: 20px;
         }
 
         .allocation-chart-wrapper {
-            position: relative;
-            width: 240px;
-            height: 240px;
+          width: 200px;
+          height: 200px;
         }
 
         .allocation-chart-legend {
-            flex: 1;
-            min-width: 200px;
-            max-width: 350px;
+          max-width: 100%;
         }
 
-        .allocation-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
+        .allocation-chart-section {
+          padding: 15px;
         }
+      }
 
-        .allocation-legend-item:last-child {
-            border-bottom: none;
-        }
+      /* Allocation Chart */
+      .allocation-chart-section {
+        margin-top: 30px;
+        padding: 25px;
+        background: #f5f7fa;
+        border-radius: 8px;
+      }
 
-        .allocation-legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-            flex-shrink: 0;
-        }
+      .allocation-chart-section h3 {
+        margin-bottom: 20px;
+        color: #333;
+        font-size: 1.2em;
+      }
 
-        .allocation-legend-label {
-            flex: 1;
-            font-weight: 500;
-            color: #333;
-            font-size: 0.95em;
-        }
+      .allocation-chart-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        align-items: center;
+        justify-content: center;
+      }
 
-        .allocation-legend-value {
-            font-weight: 600;
-            color: #667eea;
-            font-size: 0.95em;
-        }
+      .allocation-chart-wrapper {
+        position: relative;
+        width: 240px;
+        height: 240px;
+      }
 
-        .allocation-legend-pct {
-            color: #666;
-            font-size: 0.9em;
-            min-width: 40px;
-            text-align: right;
-        }
+      .allocation-chart-legend {
+        flex: 1;
+        min-width: 200px;
+        max-width: 350px;
+      }
 
-        .chart-download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            background: white;
-            border: 1px solid #667eea;
-            color: #667eea;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 15px;
-        }
+      .allocation-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
 
-        .chart-download-btn:hover {
-            background: #667eea;
-            color: white;
-        }
+      .allocation-legend-item:last-child {
+        border-bottom: none;
+      }
+
+      .allocation-legend-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+
+      .allocation-legend-label {
+        flex: 1;
+        font-weight: 500;
+        color: #333;
+        font-size: 0.95em;
+      }
+
+      .allocation-legend-value {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 0.95em;
+      }
+
+      .allocation-legend-pct {
+        color: #666;
+        font-size: 0.9em;
+        min-width: 40px;
+        text-align: right;
+      }
+
+      .chart-download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: white;
+        border: 1px solid #667eea;
+        color: #667eea;
+        border-radius: 6px;
+        font-size: 0.85em;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 15px;
+      }
+
+      .chart-download-btn:hover {
+        background: #667eea;
+        color: white;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Development Warning Banner -->
     <div class="dev-warning" role="alert">
-        <span class="dev-warning-icon">⚠️</span>
-        <span class="dev-warning-text">
-            <strong>BETA VERSION</strong> - This tool is under active development. Features may change and bugs may exist.
-            <a href="https://github.com/marble-stack/financial-planning/issues" target="_blank" rel="noopener">Report issues on GitHub</a>
-        </span>
+      <span class="dev-warning-icon">⚠️</span>
+      <span class="dev-warning-text">
+        <strong>BETA VERSION</strong> - This tool is under active development. Features may change
+        and bugs may exist.
+        <a
+          href="https://github.com/marble-stack/financial-planning/issues"
+          target="_blank"
+          rel="noopener"
+          >Report issues on GitHub</a
+        >
+      </span>
     </div>
 
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
-        <a href="income-allocation.html" class="nav-tab active" aria-current="page">Budget Planner</a>
-        <a href="transaction-analyzer.html" class="nav-tab">Spending Tracker</a>
-        <a href="retirement-simulator.html" class="nav-tab">Retirement Forecast</a>
+      <a href="income-allocation.html" class="nav-tab active" aria-current="page">Budget Planner</a>
+      <a href="transaction-analyzer.html" class="nav-tab">Spending Tracker</a>
+      <a href="retirement-simulator.html" class="nav-tab">Retirement Forecast</a>
     </nav>
 
     <div class="container" role="document">
-        <header role="banner">
-            <h1><a href="index.html" style="color: inherit; text-decoration: none;">Budget Planner</a></h1>
-            <p>Allocate your income using Ramit Sethi's "I Will Teach You to Be Rich" method</p>
-        </header>
+      <header role="banner">
+        <h1>
+          <a href="index.html" style="color: inherit; text-decoration: none">Budget Planner</a>
+        </h1>
+        <p>Allocate your income using Ramit Sethi's "I Will Teach You to Be Rich" method</p>
+      </header>
 
-        <main id="main-content" class="content" role="main">
-            <section class="philosophy-section" aria-label="Philosophy">
-                <p><strong>The idea is simple:</strong> divide your income into four buckets so you always know exactly where your money goes. Cover your essentials first, automate your savings, then spend the rest guilt-free on whatever makes you happy.</p>
-            </section>
+      <main id="main-content" class="content" role="main">
+        <section class="philosophy-section" aria-label="Philosophy">
+          <p>
+            <strong>The idea is simple:</strong> divide your income into four buckets so you always
+            know exactly where your money goes. Cover your essentials first, automate your savings,
+            then spend the rest guilt-free on whatever makes you happy.
+          </p>
+        </section>
 
-            <section class="income-section" aria-labelledby="income-section-heading">
-                <h2 id="income-section-heading" class="sr-only">Income Configuration</h2>
+        <section class="income-section" aria-labelledby="income-section-heading">
+          <h2 id="income-section-heading" class="sr-only">Income Configuration</h2>
 
-                <div class="tax-toggle-wrapper" role="group" aria-label="Income type selection">
-                    <button type="button" class="tax-toggle-option active" id="postTaxOption" onclick="allocator.setTaxType('post-tax')" aria-pressed="true">
-                        Post-Tax Income
-                    </button>
-                    <button type="button" class="tax-toggle-option" id="preTaxOption" onclick="allocator.setTaxType('pre-tax')" aria-pressed="false">
-                        Pre-Tax Income
-                    </button>
+          <div class="tax-toggle-wrapper" role="group" aria-label="Income type selection">
+            <button
+              type="button"
+              class="tax-toggle-option active"
+              id="postTaxOption"
+              onclick="allocator.setTaxType('post-tax')"
+              aria-pressed="true"
+            >
+              Post-Tax Income
+            </button>
+            <button
+              type="button"
+              class="tax-toggle-option"
+              id="preTaxOption"
+              onclick="allocator.setTaxType('pre-tax')"
+              aria-pressed="false"
+            >
+              Pre-Tax Income
+            </button>
+          </div>
+
+          <div class="income-input-group">
+            <label for="income">Your Income</label>
+            <div class="income-input-wrapper">
+              <label for="incomeFrequency" class="sr-only">Income frequency</label>
+              <select id="incomeFrequency" aria-label="Income frequency">
+                <option value="monthly">Monthly</option>
+                <option value="annual">Annual</option>
+              </select>
+              <input
+                type="text"
+                id="income"
+                name="income"
+                autocomplete="transaction-amount"
+                value="5000.00"
+                placeholder="Enter amount"
+                aria-describedby="income-help"
+              />
+              <span id="income-help" class="sr-only">Enter your income amount in dollars</span>
+            </div>
+          </div>
+
+          <div class="tax-fields" id="taxFields" aria-live="polite">
+            <div class="income-input-group">
+              <label for="zipCode">ZIP Code (for tax estimation)</label>
+              <input
+                type="text"
+                id="zipCode"
+                name="postal-code"
+                autocomplete="postal-code"
+                inputmode="numeric"
+                placeholder="e.g., 94102"
+                maxlength="5"
+                pattern="[0-9]{5}"
+                aria-describedby="zipcode-help"
+              />
+              <span id="zipcode-help" class="sr-only"
+                >Enter your 5-digit ZIP code for state tax estimation</span
+              >
+            </div>
+            <div
+              class="tax-estimate"
+              id="taxEstimate"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            ></div>
+          </div>
+        </section>
+
+        <section class="preset-buttons" role="group" aria-label="Allocation presets">
+          <h2 class="sr-only">Quick Preset Options</h2>
+          <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 0.95em">
+            Not sure where to start? Try one of these common approaches:
+          </p>
+          <button
+            type="button"
+            class="preset-btn"
+            onclick="applyPreset('balanced')"
+            aria-describedby="balanced-desc"
+            title="Good for most people"
+          >
+            Balanced
+          </button>
+          <span id="balanced-desc" class="sr-only"
+            >Fixed costs 50%, Short-term savings 20%, Long-term savings 20%, Guilt-free spending
+            10%</span
+          >
+          <button
+            type="button"
+            class="preset-btn"
+            onclick="applyPreset('aggressive-saver')"
+            aria-describedby="aggressive-desc"
+            title="Maximize retirement savings"
+          >
+            Aggressive Saver
+          </button>
+          <span id="aggressive-desc" class="sr-only"
+            >Fixed costs 50%, Short-term savings 15%, Long-term savings 30%, Guilt-free spending
+            5%</span
+          >
+          <button
+            type="button"
+            class="preset-btn"
+            onclick="applyPreset('debt-crusher')"
+            aria-describedby="debt-desc"
+            title="Pay off debt faster"
+          >
+            Debt Crusher
+          </button>
+          <span id="debt-desc" class="sr-only"
+            >Fixed costs 60%, Short-term savings 20%, Long-term savings 15%, Guilt-free spending
+            5%</span
+          >
+        </section>
+
+        <!-- Scenario Comparison -->
+        <section
+          class="scenario-section"
+          id="scenarioSection"
+          style="display: none"
+          aria-labelledby="scenario-heading"
+        >
+          <h2 id="scenario-heading">💡 Compare Scenarios</h2>
+          <p style="color: #666; margin-bottom: 15px; font-size: 0.95em">
+            Test different allocation strategies and see how they impact your retirement goals.
+          </p>
+
+          <div class="scenario-actions">
+            <button
+              type="button"
+              class="scenario-btn"
+              id="saveScenarioBtn"
+              onclick="allocator.saveScenario()"
+            >
+              💾 Save Current as Scenario
+            </button>
+            <button
+              type="button"
+              class="scenario-btn"
+              id="clearScenariosBtn"
+              onclick="allocator.clearScenarios()"
+            >
+              🗑️ Clear All Scenarios
+            </button>
+          </div>
+
+          <div id="scenarioGrid" class="scenario-grid"></div>
+        </section>
+
+        <section class="categories-section" aria-labelledby="categories-heading">
+          <h2 id="categories-heading">Adjust Your Allocations</h2>
+
+          <article
+            class="category-item fixed-costs"
+            aria-labelledby="fixedCosts-title"
+            role="region"
+          >
+            <div class="category-header">
+              <h3 class="category-title" id="fixedCosts-title">Fixed Costs</h3>
+              <div class="category-percentage" aria-live="polite">
+                <span id="fixedCostsPercent">50</span>%
+              </div>
+            </div>
+            <p class="category-description" id="fixedCosts-desc">
+              Must-pay bills: rent/mortgage, utilities, insurance, car payment, minimum debt
+              payments.
+              <em
+                >Tip: If this exceeds 60%, look for ways to reduce housing or transportation
+                costs.</em
+              >
+            </p>
+            <div class="slider-container">
+              <label for="fixedCostsSlider" class="sr-only"
+                >Fixed costs allocation percentage</label
+              >
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                class="slider"
+                id="fixedCostsSlider"
+                aria-describedby="fixedCosts-desc"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="50"
+                aria-valuetext="50 percent"
+              />
+            </div>
+            <div
+              class="allocation-display"
+              role="group"
+              aria-label="Fixed costs allocation amounts"
+            >
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit monthly fixed costs allocation"
+              >
+                <div class="allocation-label" id="fixedCostsMonthly-label">Monthly</div>
+                <div
+                  class="allocation-amount"
+                  id="fixedCostsMonthly"
+                  aria-labelledby="fixedCostsMonthly-label"
+                  aria-live="polite"
+                >
+                  $2,500
                 </div>
-
-                <div class="income-input-group">
-                    <label for="income">Your Income</label>
-                    <div class="income-input-wrapper">
-                        <label for="incomeFrequency" class="sr-only">Income frequency</label>
-                        <select id="incomeFrequency" aria-label="Income frequency">
-                            <option value="monthly">Monthly</option>
-                            <option value="annual">Annual</option>
-                        </select>
-                        <input type="text" id="income" name="income" autocomplete="transaction-amount" value="5000.00" placeholder="Enter amount" aria-describedby="income-help">
-                        <span id="income-help" class="sr-only">Enter your income amount in dollars</span>
-                    </div>
+              </div>
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit annual fixed costs allocation"
+              >
+                <div class="allocation-label" id="fixedCostsAnnual-label">Annual</div>
+                <div
+                  class="allocation-amount"
+                  id="fixedCostsAnnual"
+                  aria-labelledby="fixedCostsAnnual-label"
+                  aria-live="polite"
+                >
+                  $30,000
                 </div>
+              </div>
+            </div>
+          </article>
 
-                <div class="tax-fields" id="taxFields" aria-live="polite">
-                    <div class="income-input-group">
-                        <label for="zipCode">ZIP Code (for tax estimation)</label>
-                        <input type="text" id="zipCode" name="postal-code" autocomplete="postal-code" inputmode="numeric" placeholder="e.g., 94102" maxlength="5" pattern="[0-9]{5}" aria-describedby="zipcode-help">
-                        <span id="zipcode-help" class="sr-only">Enter your 5-digit ZIP code for state tax estimation</span>
-                    </div>
-                    <div class="tax-estimate" id="taxEstimate" role="status" aria-live="polite" aria-atomic="true"></div>
+          <article class="category-item short-term" aria-labelledby="shortTerm-title" role="region">
+            <div class="category-header">
+              <h3 class="category-title" id="shortTerm-title">Short-Term Savings</h3>
+              <div class="category-percentage" aria-live="polite">
+                <span id="shortTermPercent">20</span>%
+              </div>
+            </div>
+            <p class="category-description" id="shortTerm-desc">
+              Your safety net: emergency fund (aim for 3-6 months of expenses), plus savings for
+              vacations, big purchases, or goals within the next 1-5 years.
+            </p>
+            <div class="slider-container">
+              <label for="shortTermSlider" class="sr-only"
+                >Short-term savings allocation percentage</label
+              >
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value="20"
+                class="slider"
+                id="shortTermSlider"
+                aria-describedby="shortTerm-desc"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="20"
+                aria-valuetext="20 percent"
+              />
+            </div>
+            <div
+              class="allocation-display"
+              role="group"
+              aria-label="Short-term savings allocation amounts"
+            >
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit monthly short-term savings allocation"
+              >
+                <div class="allocation-label" id="shortTermMonthly-label">Monthly</div>
+                <div
+                  class="allocation-amount"
+                  id="shortTermMonthly"
+                  aria-labelledby="shortTermMonthly-label"
+                  aria-live="polite"
+                >
+                  $1,000
                 </div>
-            </section>
-
-            <section class="preset-buttons" role="group" aria-label="Allocation presets">
-                <h2 class="sr-only">Quick Preset Options</h2>
-                <p style="text-align: center; color: #666; margin-bottom: 15px; font-size: 0.95em;">Not sure where to start? Try one of these common approaches:</p>
-                <button type="button" class="preset-btn" onclick="applyPreset('balanced')" aria-describedby="balanced-desc" title="Good for most people">Balanced</button>
-                <span id="balanced-desc" class="sr-only">Fixed costs 50%, Short-term savings 20%, Long-term savings 20%, Guilt-free spending 10%</span>
-                <button type="button" class="preset-btn" onclick="applyPreset('aggressive-saver')" aria-describedby="aggressive-desc" title="Maximize retirement savings">Aggressive Saver</button>
-                <span id="aggressive-desc" class="sr-only">Fixed costs 50%, Short-term savings 15%, Long-term savings 30%, Guilt-free spending 5%</span>
-                <button type="button" class="preset-btn" onclick="applyPreset('debt-crusher')" aria-describedby="debt-desc" title="Pay off debt faster">Debt Crusher</button>
-                <span id="debt-desc" class="sr-only">Fixed costs 60%, Short-term savings 20%, Long-term savings 15%, Guilt-free spending 5%</span>
-            </section>
-
-            <!-- Scenario Comparison -->
-            <section class="scenario-section" id="scenarioSection" style="display: none;" aria-labelledby="scenario-heading">
-                <h2 id="scenario-heading">💡 Compare Scenarios</h2>
-                <p style="color: #666; margin-bottom: 15px; font-size: 0.95em;">Test different allocation strategies and see how they impact your retirement goals.</p>
-
-                <div class="scenario-actions">
-                    <button type="button" class="scenario-btn" id="saveScenarioBtn" onclick="allocator.saveScenario()">
-                        💾 Save Current as Scenario
-                    </button>
-                    <button type="button" class="scenario-btn" id="clearScenariosBtn" onclick="allocator.clearScenarios()">
-                        🗑️ Clear All Scenarios
-                    </button>
+              </div>
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit annual short-term savings allocation"
+              >
+                <div class="allocation-label" id="shortTermAnnual-label">Annual</div>
+                <div
+                  class="allocation-amount"
+                  id="shortTermAnnual"
+                  aria-labelledby="shortTermAnnual-label"
+                  aria-live="polite"
+                >
+                  $12,000
                 </div>
+              </div>
+            </div>
+          </article>
 
-                <div id="scenarioGrid" class="scenario-grid"></div>
-            </section>
-
-            <section class="categories-section" aria-labelledby="categories-heading">
-                <h2 id="categories-heading">Adjust Your Allocations</h2>
-
-                <article class="category-item fixed-costs" aria-labelledby="fixedCosts-title" role="region">
-                    <div class="category-header">
-                        <h3 class="category-title" id="fixedCosts-title">Fixed Costs</h3>
-                        <div class="category-percentage" aria-live="polite"><span id="fixedCostsPercent">50</span>%</div>
-                    </div>
-                    <p class="category-description" id="fixedCosts-desc">
-                        Must-pay bills: rent/mortgage, utilities, insurance, car payment, minimum debt payments. <em>Tip: If this exceeds 60%, look for ways to reduce housing or transportation costs.</em>
-                    </p>
-                    <div class="slider-container">
-                        <label for="fixedCostsSlider" class="sr-only">Fixed costs allocation percentage</label>
-                        <input type="range" min="0" max="100" value="50" class="slider" id="fixedCostsSlider" aria-describedby="fixedCosts-desc" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent">
-                    </div>
-                    <div class="allocation-display" role="group" aria-label="Fixed costs allocation amounts">
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit monthly fixed costs allocation">
-                            <div class="allocation-label" id="fixedCostsMonthly-label">Monthly</div>
-                            <div class="allocation-amount" id="fixedCostsMonthly" aria-labelledby="fixedCostsMonthly-label" aria-live="polite">$2,500</div>
-                        </div>
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit annual fixed costs allocation">
-                            <div class="allocation-label" id="fixedCostsAnnual-label">Annual</div>
-                            <div class="allocation-amount" id="fixedCostsAnnual" aria-labelledby="fixedCostsAnnual-label" aria-live="polite">$30,000</div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="category-item short-term" aria-labelledby="shortTerm-title" role="region">
-                    <div class="category-header">
-                        <h3 class="category-title" id="shortTerm-title">Short-Term Savings</h3>
-                        <div class="category-percentage" aria-live="polite"><span id="shortTermPercent">20</span>%</div>
-                    </div>
-                    <p class="category-description" id="shortTerm-desc">
-                        Your safety net: emergency fund (aim for 3-6 months of expenses), plus savings for vacations, big purchases, or goals within the next 1-5 years.
-                    </p>
-                    <div class="slider-container">
-                        <label for="shortTermSlider" class="sr-only">Short-term savings allocation percentage</label>
-                        <input type="range" min="0" max="100" value="20" class="slider" id="shortTermSlider" aria-describedby="shortTerm-desc" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20" aria-valuetext="20 percent">
-                    </div>
-                    <div class="allocation-display" role="group" aria-label="Short-term savings allocation amounts">
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit monthly short-term savings allocation">
-                            <div class="allocation-label" id="shortTermMonthly-label">Monthly</div>
-                            <div class="allocation-amount" id="shortTermMonthly" aria-labelledby="shortTermMonthly-label" aria-live="polite">$1,000</div>
-                        </div>
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit annual short-term savings allocation">
-                            <div class="allocation-label" id="shortTermAnnual-label">Annual</div>
-                            <div class="allocation-amount" id="shortTermAnnual" aria-labelledby="shortTermAnnual-label" aria-live="polite">$12,000</div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="category-item long-term" aria-labelledby="longTerm-title" role="region">
-                    <div class="category-header">
-                        <h3 class="category-title" id="longTerm-title">Long-Term Savings</h3>
-                        <div class="category-percentage" aria-live="polite"><span id="longTermPercent">20</span>%</div>
-                    </div>
-                    <p class="category-description" id="longTerm-desc">
-                        Future you will thank you: 401(k), IRA, and investments. <em>Tip: At minimum, contribute enough to get your employer's full 401(k) match—it's free money!</em>
-                    </p>
-                    <div class="slider-container">
-                        <label for="longTermSlider" class="sr-only">Long-term savings allocation percentage</label>
-                        <input type="range" min="0" max="100" value="20" class="slider" id="longTermSlider" aria-describedby="longTerm-desc" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20" aria-valuetext="20 percent">
-                    </div>
-                    <div class="allocation-display" role="group" aria-label="Long-term savings allocation amounts">
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit monthly long-term savings allocation">
-                            <div class="allocation-label" id="longTermMonthly-label">Monthly</div>
-                            <div class="allocation-amount" id="longTermMonthly" aria-labelledby="longTermMonthly-label" aria-live="polite">$1,000</div>
-                        </div>
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit annual long-term savings allocation">
-                            <div class="allocation-label" id="longTermAnnual-label">Annual</div>
-                            <div class="allocation-amount" id="longTermAnnual" aria-labelledby="longTermAnnual-label" aria-live="polite">$12,000</div>
-                        </div>
-                    </div>
-
-                    <!-- Retirement Impact Preview -->
-                    <div id="retirementImpactPreview" class="retirement-impact-preview" style="display: none;">
-                        <div class="impact-header">
-                            <span class="impact-icon">🎯</span>
-                            <span class="impact-title">Retirement Impact</span>
-                        </div>
-                        <div class="impact-content">
-                            <div class="impact-metric">
-                                <div class="impact-label">Estimated Success Rate</div>
-                                <div class="impact-value" id="impactSuccessRate">--</div>
-                            </div>
-                            <div class="impact-comparison">
-                                <div class="impact-change" id="impactChange"></div>
-                            </div>
-                            <div class="impact-note">Based on simple projection. <a href="retirement-simulator.html">Run full simulation →</a></div>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="category-item guilt-free" aria-labelledby="guiltFree-title" role="region">
-                    <div class="category-header">
-                        <h3 class="category-title" id="guiltFree-title">Guilt-Free Spending</h3>
-                        <div class="category-percentage" aria-live="polite"><span id="guiltFreePercent">10</span>%</div>
-                    </div>
-                    <p class="category-description" id="guiltFree-desc">
-                        This is YOUR money to enjoy—dining out, hobbies, shopping, whatever makes you happy. No guilt because your essentials and savings are already covered!
-                    </p>
-                    <div class="slider-container">
-                        <label for="guiltFreeSlider" class="sr-only">Guilt-free spending allocation percentage</label>
-                        <input type="range" min="0" max="100" value="10" class="slider" id="guiltFreeSlider" aria-describedby="guiltFree-desc" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10" aria-valuetext="10 percent">
-                    </div>
-                    <div class="allocation-display" role="group" aria-label="Guilt-free spending allocation amounts">
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit monthly guilt-free spending allocation">
-                            <div class="allocation-label" id="guiltFreeMonthly-label">Monthly</div>
-                            <div class="allocation-amount" id="guiltFreeMonthly" aria-labelledby="guiltFreeMonthly-label" aria-live="polite">$500</div>
-                        </div>
-                        <div class="allocation-box" tabindex="0" role="button" aria-label="Edit annual guilt-free spending allocation">
-                            <div class="allocation-label" id="guiltFreeAnnual-label">Annual</div>
-                            <div class="allocation-amount" id="guiltFreeAnnual" aria-labelledby="guiltFreeAnnual-label" aria-live="polite">$6,000</div>
-                        </div>
-                    </div>
-                </article>
-
-                <!-- Allocation Chart -->
-                <div class="allocation-chart-section">
-                    <h3>📊 Your Budget at a Glance</h3>
-                    <div class="allocation-chart-container">
-                        <div class="allocation-chart-wrapper">
-                            <canvas id="allocationChart" role="img" aria-label="Donut chart showing budget allocation percentages"></canvas>
-                        </div>
-                        <div class="allocation-chart-legend" id="allocationChartLegend"></div>
-                    </div>
-                    <div style="text-align: center;">
-                        <button class="chart-download-btn" id="downloadAllocationChart" aria-label="Download allocation chart as PNG image">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download PNG
-                        </button>
-                    </div>
+          <article class="category-item long-term" aria-labelledby="longTerm-title" role="region">
+            <div class="category-header">
+              <h3 class="category-title" id="longTerm-title">Long-Term Savings</h3>
+              <div class="category-percentage" aria-live="polite">
+                <span id="longTermPercent">20</span>%
+              </div>
+            </div>
+            <p class="category-description" id="longTerm-desc">
+              Future you will thank you: 401(k), IRA, and investments.
+              <em
+                >Tip: At minimum, contribute enough to get your employer's full 401(k) match—it's
+                free money!</em
+              >
+            </p>
+            <div class="slider-container">
+              <label for="longTermSlider" class="sr-only"
+                >Long-term savings allocation percentage</label
+              >
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value="20"
+                class="slider"
+                id="longTermSlider"
+                aria-describedby="longTerm-desc"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="20"
+                aria-valuetext="20 percent"
+              />
+            </div>
+            <div
+              class="allocation-display"
+              role="group"
+              aria-label="Long-term savings allocation amounts"
+            >
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit monthly long-term savings allocation"
+              >
+                <div class="allocation-label" id="longTermMonthly-label">Monthly</div>
+                <div
+                  class="allocation-amount"
+                  id="longTermMonthly"
+                  aria-labelledby="longTermMonthly-label"
+                  aria-live="polite"
+                >
+                  $1,000
                 </div>
-            </section>
-        </main>
+              </div>
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit annual long-term savings allocation"
+              >
+                <div class="allocation-label" id="longTermAnnual-label">Annual</div>
+                <div
+                  class="allocation-amount"
+                  id="longTermAnnual"
+                  aria-labelledby="longTermAnnual-label"
+                  aria-live="polite"
+                >
+                  $12,000
+                </div>
+              </div>
+            </div>
 
-        <footer role="contentinfo">
-            <p class="disclaimer"><strong>Disclaimer:</strong> This tool is for educational purposes only and does not constitute financial advice. Please consult with a qualified financial advisor for personalized planning.</p>
-            <p>Inspired by <a href="https://www.iwillteachyoutoberich.com/" target="_blank" rel="noopener noreferrer">Ramit Sethi's "I Will Teach You to Be Rich" <span class="sr-only">(opens in new tab)</span></a></p>
-            <nav class="workflow-nav" aria-label="Workflow navigation">
-                <a href="index.html" class="home-link">🏠 Home</a>
-                <a href="transaction-analyzer.html" class="nav-arrow">Continue to Spending Tracker →</a>
-            </nav>
-            <p class="version-text">v2025.12.30 12:47 PM</p>
-        </footer>
+            <!-- Retirement Impact Preview -->
+            <div
+              id="retirementImpactPreview"
+              class="retirement-impact-preview"
+              style="display: none"
+            >
+              <div class="impact-header">
+                <span class="impact-icon">🎯</span>
+                <span class="impact-title">Retirement Impact</span>
+              </div>
+              <div class="impact-content">
+                <div class="impact-metric">
+                  <div class="impact-label">Estimated Success Rate</div>
+                  <div class="impact-value" id="impactSuccessRate">--</div>
+                </div>
+                <div class="impact-comparison">
+                  <div class="impact-change" id="impactChange"></div>
+                </div>
+                <div class="impact-note">
+                  Based on simple projection.
+                  <a href="retirement-simulator.html">Run full simulation →</a>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="category-item guilt-free" aria-labelledby="guiltFree-title" role="region">
+            <div class="category-header">
+              <h3 class="category-title" id="guiltFree-title">Guilt-Free Spending</h3>
+              <div class="category-percentage" aria-live="polite">
+                <span id="guiltFreePercent">10</span>%
+              </div>
+            </div>
+            <p class="category-description" id="guiltFree-desc">
+              This is YOUR money to enjoy—dining out, hobbies, shopping, whatever makes you happy.
+              No guilt because your essentials and savings are already covered!
+            </p>
+            <div class="slider-container">
+              <label for="guiltFreeSlider" class="sr-only"
+                >Guilt-free spending allocation percentage</label
+              >
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value="10"
+                class="slider"
+                id="guiltFreeSlider"
+                aria-describedby="guiltFree-desc"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="10"
+                aria-valuetext="10 percent"
+              />
+            </div>
+            <div
+              class="allocation-display"
+              role="group"
+              aria-label="Guilt-free spending allocation amounts"
+            >
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit monthly guilt-free spending allocation"
+              >
+                <div class="allocation-label" id="guiltFreeMonthly-label">Monthly</div>
+                <div
+                  class="allocation-amount"
+                  id="guiltFreeMonthly"
+                  aria-labelledby="guiltFreeMonthly-label"
+                  aria-live="polite"
+                >
+                  $500
+                </div>
+              </div>
+              <div
+                class="allocation-box"
+                tabindex="0"
+                role="button"
+                aria-label="Edit annual guilt-free spending allocation"
+              >
+                <div class="allocation-label" id="guiltFreeAnnual-label">Annual</div>
+                <div
+                  class="allocation-amount"
+                  id="guiltFreeAnnual"
+                  aria-labelledby="guiltFreeAnnual-label"
+                  aria-live="polite"
+                >
+                  $6,000
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Allocation Chart -->
+          <div class="allocation-chart-section">
+            <h3>📊 Your Budget at a Glance</h3>
+            <div class="allocation-chart-container">
+              <div class="allocation-chart-wrapper">
+                <canvas
+                  id="allocationChart"
+                  role="img"
+                  aria-label="Donut chart showing budget allocation percentages"
+                ></canvas>
+              </div>
+              <div class="allocation-chart-legend" id="allocationChartLegend"></div>
+            </div>
+            <div style="text-align: center">
+              <button
+                class="chart-download-btn"
+                id="downloadAllocationChart"
+                aria-label="Download allocation chart as PNG image"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Download PNG
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer role="contentinfo">
+        <p class="disclaimer">
+          <strong>Disclaimer:</strong> This tool is for educational purposes only and does not
+          constitute financial advice. Please consult with a qualified financial advisor for
+          personalized planning.
+        </p>
+        <p>
+          Inspired by
+          <a href="https://www.iwillteachyoutoberich.com/" target="_blank" rel="noopener noreferrer"
+            >Ramit Sethi's "I Will Teach You to Be Rich"
+            <span class="sr-only">(opens in new tab)</span></a
+          >
+        </p>
+        <nav class="workflow-nav" aria-label="Workflow navigation">
+          <a href="index.html" class="home-link">🏠 Home</a>
+          <a href="transaction-analyzer.html" class="nav-arrow">Continue to Spending Tracker →</a>
+        </nav>
+        <p class="version-text">v2025.12.30 12:47 PM</p>
+      </footer>
     </div>
 
     <script>
-        class IncomeAllocator {
-            constructor() {
-                // Define category order (top to bottom on page)
-                this.categoryOrder = ['fixedCosts', 'shortTerm', 'longTerm', 'guiltFree'];
+      class IncomeAllocator {
+        constructor() {
+          // Define category order (top to bottom on page)
+          this.categoryOrder = ['fixedCosts', 'shortTerm', 'longTerm', 'guiltFree'];
 
-                this.categories = {
-                    fixedCosts: { slider: null, percent: null, monthly: null, annual: null, value: 50 },
-                    shortTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
-                    longTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
-                    guiltFree: { slider: null, percent: null, monthly: null, annual: null, value: 10 }
-                };
+          this.categories = {
+            fixedCosts: { slider: null, percent: null, monthly: null, annual: null, value: 50 },
+            shortTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
+            longTerm: { slider: null, percent: null, monthly: null, annual: null, value: 20 },
+            guiltFree: { slider: null, percent: null, monthly: null, annual: null, value: 10 },
+          };
 
-                this.incomeInput = null;
-                this.incomeFrequency = null;
-                this.zipCodeInput = null;
-                this.taxFields = null;
-                this.taxEstimate = null;
-                this.taxType = 'post-tax';
-                this.editingElement = null;
-                this.allocationChart = null; // Chart.js instance
+          this.incomeInput = null;
+          this.incomeFrequency = null;
+          this.zipCodeInput = null;
+          this.taxFields = null;
+          this.taxEstimate = null;
+          this.taxType = 'post-tax';
+          this.editingElement = null;
+          this.allocationChart = null; // Chart.js instance
 
-                this.init();
+          this.init();
+        }
+
+        init() {
+          // Get DOM elements
+          this.incomeInput = document.getElementById('income');
+          this.incomeFrequency = document.getElementById('incomeFrequency');
+          this.zipCodeInput = document.getElementById('zipCode');
+          this.taxFields = document.getElementById('taxFields');
+          this.taxEstimate = document.getElementById('taxEstimate');
+
+          // Initialize category elements
+          for (const [key, data] of Object.entries(this.categories)) {
+            const camelCase = key.charAt(0).toUpperCase() + key.slice(1);
+            data.slider = document.getElementById(`${key}Slider`);
+            data.percent = document.getElementById(`${key}Percent`);
+            data.monthly = document.getElementById(`${key}Monthly`);
+            data.annual = document.getElementById(`${key}Annual`);
+          }
+
+          // Add event listeners
+          this.incomeInput.addEventListener('input', () => {
+            this.formatIncomeInput();
+            this.calculate();
+          });
+          this.incomeInput.addEventListener('focus', () => this.handleIncomeFocus());
+          this.incomeInput.addEventListener('blur', () => this.handleIncomeBlur());
+          this.incomeFrequency.addEventListener('change', () => this.calculate());
+          this.zipCodeInput.addEventListener('input', () => this.calculate());
+
+          for (const [key, data] of Object.entries(this.categories)) {
+            data.slider.addEventListener('input', (e) => {
+              const newValue = parseInt(e.target.value);
+              // Update ARIA attributes for screen readers
+              e.target.setAttribute('aria-valuenow', newValue);
+              e.target.setAttribute('aria-valuetext', `${newValue} percent`);
+              this.adjustCategories(key, newValue);
+            });
+
+            // Add click handlers for editable allocation amounts
+            data.monthly.parentElement.addEventListener('click', () => {
+              this.makeEditable(key, 'monthly');
+            });
+            data.annual.parentElement.addEventListener('click', () => {
+              this.makeEditable(key, 'annual');
+            });
+
+            // Add keyboard handlers for accessibility (Enter/Space to edit)
+            data.monthly.parentElement.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.makeEditable(key, 'monthly');
+              }
+            });
+            data.annual.parentElement.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.makeEditable(key, 'annual');
+              }
+            });
+          }
+
+          // Format initial value and calculate
+          this.handleIncomeBlur();
+          this.calculate();
+        }
+
+        makeEditable(category, period) {
+          const data = this.categories[category];
+          const element = period === 'monthly' ? data.monthly : data.annual;
+          const box = element.parentElement;
+
+          // If already editing this element, finalize and exit edit mode
+          if (this.editingElement === element) {
+            this.finalizeEdit();
+            return;
+          }
+
+          // If editing another element, finalize that first
+          if (this.editingElement) {
+            this.finalizeEdit();
+          }
+
+          // Get current value (strip formatting)
+          const currentValue = this.parseIncomeValue(element.textContent);
+
+          // Replace text with input
+          box.classList.add('editing');
+          element.innerHTML = `<input type="text" class="allocation-input" value="${this.formatCurrencyInput(currentValue)}" />`;
+
+          const input = element.querySelector('input');
+          input.focus();
+          input.select();
+
+          // Store reference to editing element
+          this.editingElement = element;
+          this.editingCategory = category;
+          this.editingPeriod = period;
+
+          // Handle blur (clicking away)
+          input.addEventListener('blur', () => {
+            // Small delay to allow click events to register first
+            setTimeout(() => {
+              if (this.editingElement === element) {
+                this.finalizeEdit();
+              }
+            }, 100);
+          });
+
+          // Handle Enter key
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              this.finalizeEdit();
             }
+          });
 
-            init() {
-                // Get DOM elements
-                this.incomeInput = document.getElementById('income');
-                this.incomeFrequency = document.getElementById('incomeFrequency');
-                this.zipCodeInput = document.getElementById('zipCode');
-                this.taxFields = document.getElementById('taxFields');
-                this.taxEstimate = document.getElementById('taxEstimate');
-
-                // Initialize category elements
-                for (const [key, data] of Object.entries(this.categories)) {
-                    const camelCase = key.charAt(0).toUpperCase() + key.slice(1);
-                    data.slider = document.getElementById(`${key}Slider`);
-                    data.percent = document.getElementById(`${key}Percent`);
-                    data.monthly = document.getElementById(`${key}Monthly`);
-                    data.annual = document.getElementById(`${key}Annual`);
-                }
-
-                // Add event listeners
-                this.incomeInput.addEventListener('input', () => {
-                    this.formatIncomeInput();
-                    this.calculate();
-                });
-                this.incomeInput.addEventListener('focus', () => this.handleIncomeFocus());
-                this.incomeInput.addEventListener('blur', () => this.handleIncomeBlur());
-                this.incomeFrequency.addEventListener('change', () => this.calculate());
-                this.zipCodeInput.addEventListener('input', () => this.calculate());
-
-                for (const [key, data] of Object.entries(this.categories)) {
-                    data.slider.addEventListener('input', (e) => {
-                        const newValue = parseInt(e.target.value);
-                        // Update ARIA attributes for screen readers
-                        e.target.setAttribute('aria-valuenow', newValue);
-                        e.target.setAttribute('aria-valuetext', `${newValue} percent`);
-                        this.adjustCategories(key, newValue);
-                    });
-
-                    // Add click handlers for editable allocation amounts
-                    data.monthly.parentElement.addEventListener('click', () => {
-                        this.makeEditable(key, 'monthly');
-                    });
-                    data.annual.parentElement.addEventListener('click', () => {
-                        this.makeEditable(key, 'annual');
-                    });
-
-                    // Add keyboard handlers for accessibility (Enter/Space to edit)
-                    data.monthly.parentElement.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.makeEditable(key, 'monthly');
-                        }
-                    });
-                    data.annual.parentElement.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.makeEditable(key, 'annual');
-                        }
-                    });
-                }
-
-                // Format initial value and calculate
-                this.handleIncomeBlur();
-                this.calculate();
+          // Handle Escape key to cancel
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              this.cancelEdit();
             }
+          });
+        }
 
-            makeEditable(category, period) {
-                const data = this.categories[category];
-                const element = period === 'monthly' ? data.monthly : data.annual;
-                const box = element.parentElement;
+        finalizeEdit() {
+          if (!this.editingElement) return;
 
-                // If already editing this element, finalize and exit edit mode
-                if (this.editingElement === element) {
-                    this.finalizeEdit();
-                    return;
-                }
+          const input = this.editingElement.querySelector('input');
+          const newAmount = this.parseIncomeValue(input.value);
+          const category = this.editingCategory;
+          const period = this.editingPeriod;
+          const box = this.editingElement.parentElement;
 
-                // If editing another element, finalize that first
-                if (this.editingElement) {
-                    this.finalizeEdit();
-                }
+          // Calculate what percentage this represents
+          const monthlyIncome = this.getMonthlyIncome();
+          const annualIncome = monthlyIncome * 12;
 
-                // Get current value (strip formatting)
-                const currentValue = this.parseIncomeValue(element.textContent);
+          let newPercentage;
+          if (period === 'monthly') {
+            newPercentage = (newAmount / monthlyIncome) * 100;
+          } else {
+            newPercentage = (newAmount / annualIncome) * 100;
+          }
 
-                // Replace text with input
-                box.classList.add('editing');
-                element.innerHTML = `<input type="text" class="allocation-input" value="${this.formatCurrencyInput(currentValue)}" />`;
+          // Clamp percentage between 0 and 100 (preserve decimals for user-entered amounts)
+          newPercentage = Math.max(0, Math.min(100, newPercentage));
 
-                const input = element.querySelector('input');
-                input.focus();
-                input.select();
+          // Clear editing state
+          const elementToUpdate = this.editingElement;
+          box.classList.remove('editing');
+          this.editingElement = null;
+          this.editingCategory = null;
+          this.editingPeriod = null;
 
-                // Store reference to editing element
-                this.editingElement = element;
-                this.editingCategory = category;
-                this.editingPeriod = period;
+          // Update the category percentage (this will trigger auto-balancing and recalculate)
+          this.adjustCategories(category, newPercentage);
+        }
 
-                // Handle blur (clicking away)
-                input.addEventListener('blur', () => {
-                    // Small delay to allow click events to register first
-                    setTimeout(() => {
-                        if (this.editingElement === element) {
-                            this.finalizeEdit();
-                        }
-                    }, 100);
-                });
+        cancelEdit() {
+          if (!this.editingElement) return;
 
-                // Handle Enter key
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.finalizeEdit();
-                    }
-                });
+          const box = this.editingElement.parentElement;
 
-                // Handle Escape key to cancel
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        this.cancelEdit();
-                    }
-                });
+          // Remove editing state
+          box.classList.remove('editing');
+          this.editingElement = null;
+          this.editingCategory = null;
+          this.editingPeriod = null;
+
+          // Recalculate to restore the original formatted display
+          this.calculate();
+        }
+
+        handleIncomeFocus() {
+          // Remove formatting when user focuses to make editing easier
+          const value = this.parseIncomeValue(this.incomeInput.value);
+          if (value > 0) {
+            this.incomeInput.value = value.toFixed(2);
+          }
+        }
+
+        handleIncomeBlur() {
+          // Format with currency when user leaves the field
+          const value = this.parseIncomeValue(this.incomeInput.value);
+          if (value >= 0) {
+            this.incomeInput.value = this.formatCurrencyInput(value);
+          }
+        }
+
+        formatIncomeInput() {
+          // Real-time formatting as user types (optional, can be removed if too intrusive)
+          // For now, we'll just ensure valid numeric input
+          let value = this.incomeInput.value.replace(/[^0-9.]/g, '');
+          const parts = value.split('.');
+          if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+          }
+        }
+
+        parseIncomeValue(value) {
+          // Remove all non-numeric characters except decimal point
+          const cleaned = value.replace(/[^0-9.]/g, '');
+          return parseFloat(cleaned) || 0;
+        }
+
+        formatCurrencyInput(value) {
+          // Format as currency with commas and 2 decimal places
+          return '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        setTaxType(type) {
+          this.taxType = type;
+
+          // Update UI and ARIA states
+          const postTaxBtn = document.getElementById('postTaxOption');
+          const preTaxBtn = document.getElementById('preTaxOption');
+
+          postTaxBtn.classList.toggle('active', type === 'post-tax');
+          preTaxBtn.classList.toggle('active', type === 'pre-tax');
+
+          // Update ARIA pressed states for screen readers
+          postTaxBtn.setAttribute('aria-pressed', type === 'post-tax');
+          preTaxBtn.setAttribute('aria-pressed', type === 'pre-tax');
+
+          // Show/hide tax fields
+          if (type === 'pre-tax') {
+            this.taxFields.classList.add('show');
+          } else {
+            this.taxFields.classList.remove('show');
+          }
+
+          this.calculate();
+        }
+
+        adjustCategories(changedKey, newValue) {
+          const oldValue = this.categories[changedKey].value;
+          const difference = newValue - oldValue;
+
+          if (difference === 0) return;
+
+          // Clear any active preset since user is manually adjusting
+          document.querySelectorAll('.preset-btn').forEach((btn) => btn.classList.remove('active'));
+
+          // Update the changed category
+          this.categories[changedKey].value = newValue;
+
+          // Get the index of the changed category
+          const changedIndex = this.categoryOrder.indexOf(changedKey);
+
+          // Get categories below the changed one
+          const categoriesBelow = this.categoryOrder.slice(changedIndex + 1);
+
+          // If there are no categories below, we can't auto-balance
+          if (categoriesBelow.length === 0) {
+            this.calculate();
+            return;
+          }
+
+          // Calculate total of categories below
+          let totalBelow = 0;
+          for (const key of categoriesBelow) {
+            totalBelow += this.categories[key].value;
+          }
+
+          // Calculate what the total should be for categories below
+          // Total should be 100 - all categories above (including the changed one)
+          let totalAboveAndCurrent = 0;
+          for (let i = 0; i <= changedIndex; i++) {
+            totalAboveAndCurrent += this.categories[this.categoryOrder[i]].value;
+          }
+
+          const targetTotalBelow = 100 - totalAboveAndCurrent;
+
+          // Adjust categories below proportionally to hit the target
+          if (totalBelow > 0) {
+            // Distribute proportionally
+            let remainingToDistribute = targetTotalBelow;
+
+            for (let i = 0; i < categoriesBelow.length; i++) {
+              const key = categoriesBelow[i];
+              const isLast = i === categoriesBelow.length - 1;
+
+              if (isLast) {
+                // Give the remainder to the last category
+                this.categories[key].value = Math.max(0, Math.min(100, remainingToDistribute));
+              } else {
+                // Proportional distribution
+                const proportion = this.categories[key].value / totalBelow;
+                const newCategoryValue = Math.round(targetTotalBelow * proportion);
+                this.categories[key].value = Math.max(0, Math.min(100, newCategoryValue));
+                remainingToDistribute -= this.categories[key].value;
+              }
             }
+          } else {
+            // If all categories below are 0, distribute evenly
+            const splitAmount = Math.floor(targetTotalBelow / categoriesBelow.length);
+            let remainder = targetTotalBelow % categoriesBelow.length;
 
-            finalizeEdit() {
-                if (!this.editingElement) return;
-
-                const input = this.editingElement.querySelector('input');
-                const newAmount = this.parseIncomeValue(input.value);
-                const category = this.editingCategory;
-                const period = this.editingPeriod;
-                const box = this.editingElement.parentElement;
-
-                // Calculate what percentage this represents
-                const monthlyIncome = this.getMonthlyIncome();
-                const annualIncome = monthlyIncome * 12;
-
-                let newPercentage;
-                if (period === 'monthly') {
-                    newPercentage = (newAmount / monthlyIncome) * 100;
-                } else {
-                    newPercentage = (newAmount / annualIncome) * 100;
-                }
-
-                // Clamp percentage between 0 and 100 (preserve decimals for user-entered amounts)
-                newPercentage = Math.max(0, Math.min(100, newPercentage));
-
-                // Clear editing state
-                const elementToUpdate = this.editingElement;
-                box.classList.remove('editing');
-                this.editingElement = null;
-                this.editingCategory = null;
-                this.editingPeriod = null;
-
-                // Update the category percentage (this will trigger auto-balancing and recalculate)
-                this.adjustCategories(category, newPercentage);
+            for (const key of categoriesBelow) {
+              this.categories[key].value = splitAmount + (remainder > 0 ? 1 : 0);
+              if (remainder > 0) remainder--;
             }
+          }
 
-            cancelEdit() {
-                if (!this.editingElement) return;
+          // Recalculate and update display
+          this.calculate();
+        }
 
-                const box = this.editingElement.parentElement;
+        getMonthlyIncome() {
+          const income = this.parseIncomeValue(this.incomeInput.value);
+          const frequency = this.incomeFrequency.value;
 
-                // Remove editing state
-                box.classList.remove('editing');
-                this.editingElement = null;
-                this.editingCategory = null;
-                this.editingPeriod = null;
+          let monthlyGross = frequency === 'monthly' ? income : income / 12;
+          let annualGross = monthlyGross * 12;
 
-                // Recalculate to restore the original formatted display
-                this.calculate();
-            }
+          // If pre-tax, calculate taxes and return net income
+          if (this.taxType === 'pre-tax') {
+            const zipCode = this.zipCodeInput.value;
+            const taxes = this.estimateTaxes(annualGross, zipCode);
 
-            handleIncomeFocus() {
-                // Remove formatting when user focuses to make editing easier
-                const value = this.parseIncomeValue(this.incomeInput.value);
-                if (value > 0) {
-                    this.incomeInput.value = value.toFixed(2);
-                }
-            }
-
-            handleIncomeBlur() {
-                // Format with currency when user leaves the field
-                const value = this.parseIncomeValue(this.incomeInput.value);
-                if (value >= 0) {
-                    this.incomeInput.value = this.formatCurrencyInput(value);
-                }
-            }
-
-            formatIncomeInput() {
-                // Real-time formatting as user types (optional, can be removed if too intrusive)
-                // For now, we'll just ensure valid numeric input
-                let value = this.incomeInput.value.replace(/[^0-9.]/g, '');
-                const parts = value.split('.');
-                if (parts.length > 2) {
-                    value = parts[0] + '.' + parts.slice(1).join('');
-                }
-            }
-
-            parseIncomeValue(value) {
-                // Remove all non-numeric characters except decimal point
-                const cleaned = value.replace(/[^0-9.]/g, '');
-                return parseFloat(cleaned) || 0;
-            }
-
-            formatCurrencyInput(value) {
-                // Format as currency with commas and 2 decimal places
-                return '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            }
-
-            setTaxType(type) {
-                this.taxType = type;
-
-                // Update UI and ARIA states
-                const postTaxBtn = document.getElementById('postTaxOption');
-                const preTaxBtn = document.getElementById('preTaxOption');
-
-                postTaxBtn.classList.toggle('active', type === 'post-tax');
-                preTaxBtn.classList.toggle('active', type === 'pre-tax');
-
-                // Update ARIA pressed states for screen readers
-                postTaxBtn.setAttribute('aria-pressed', type === 'post-tax');
-                preTaxBtn.setAttribute('aria-pressed', type === 'pre-tax');
-
-                // Show/hide tax fields
-                if (type === 'pre-tax') {
-                    this.taxFields.classList.add('show');
-                } else {
-                    this.taxFields.classList.remove('show');
-                }
-
-                this.calculate();
-            }
-
-            adjustCategories(changedKey, newValue) {
-                const oldValue = this.categories[changedKey].value;
-                const difference = newValue - oldValue;
-
-                if (difference === 0) return;
-
-                // Clear any active preset since user is manually adjusting
-                document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-
-                // Update the changed category
-                this.categories[changedKey].value = newValue;
-
-                // Get the index of the changed category
-                const changedIndex = this.categoryOrder.indexOf(changedKey);
-
-                // Get categories below the changed one
-                const categoriesBelow = this.categoryOrder.slice(changedIndex + 1);
-
-                // If there are no categories below, we can't auto-balance
-                if (categoriesBelow.length === 0) {
-                    this.calculate();
-                    return;
-                }
-
-                // Calculate total of categories below
-                let totalBelow = 0;
-                for (const key of categoriesBelow) {
-                    totalBelow += this.categories[key].value;
-                }
-
-                // Calculate what the total should be for categories below
-                // Total should be 100 - all categories above (including the changed one)
-                let totalAboveAndCurrent = 0;
-                for (let i = 0; i <= changedIndex; i++) {
-                    totalAboveAndCurrent += this.categories[this.categoryOrder[i]].value;
-                }
-
-                const targetTotalBelow = 100 - totalAboveAndCurrent;
-
-                // Adjust categories below proportionally to hit the target
-                if (totalBelow > 0) {
-                    // Distribute proportionally
-                    let remainingToDistribute = targetTotalBelow;
-
-                    for (let i = 0; i < categoriesBelow.length; i++) {
-                        const key = categoriesBelow[i];
-                        const isLast = i === categoriesBelow.length - 1;
-
-                        if (isLast) {
-                            // Give the remainder to the last category
-                            this.categories[key].value = Math.max(0, Math.min(100, remainingToDistribute));
-                        } else {
-                            // Proportional distribution
-                            const proportion = this.categories[key].value / totalBelow;
-                            const newCategoryValue = Math.round(targetTotalBelow * proportion);
-                            this.categories[key].value = Math.max(0, Math.min(100, newCategoryValue));
-                            remainingToDistribute -= this.categories[key].value;
-                        }
-                    }
-                } else {
-                    // If all categories below are 0, distribute evenly
-                    const splitAmount = Math.floor(targetTotalBelow / categoriesBelow.length);
-                    let remainder = targetTotalBelow % categoriesBelow.length;
-
-                    for (const key of categoriesBelow) {
-                        this.categories[key].value = splitAmount + (remainder > 0 ? 1 : 0);
-                        if (remainder > 0) remainder--;
-                    }
-                }
-
-                // Recalculate and update display
-                this.calculate();
-            }
-
-            getMonthlyIncome() {
-                const income = this.parseIncomeValue(this.incomeInput.value);
-                const frequency = this.incomeFrequency.value;
-
-                let monthlyGross = frequency === 'monthly' ? income : income / 12;
-                let annualGross = monthlyGross * 12;
-
-                // If pre-tax, calculate taxes and return net income
-                if (this.taxType === 'pre-tax') {
-                    const zipCode = this.zipCodeInput.value;
-                    const taxes = this.estimateTaxes(annualGross, zipCode);
-
-                    // Update tax estimate display
-                    if (zipCode && zipCode.length === 5) {
-                        const effectiveRate = (taxes.total / annualGross * 100).toFixed(1);
-                        this.taxEstimate.innerHTML = `
+            // Update tax estimate display
+            if (zipCode && zipCode.length === 5) {
+              const effectiveRate = ((taxes.total / annualGross) * 100).toFixed(1);
+              this.taxEstimate.innerHTML = `
                             <strong>Estimated Annual Taxes: ${this.formatCurrency(taxes.total)}</strong><br>
                             Federal: ${this.formatCurrency(taxes.federal)} |
                             State: ${this.formatCurrency(taxes.state)} |
@@ -1568,500 +1904,514 @@
                             After-Tax Income: ${this.formatCurrency(annualGross - taxes.total)}/year<br>
                             <span style="font-size: 0.85em; color: #78350f; font-style: italic;">* Rough estimate assuming single filer, standard deduction. Actual taxes vary by filing status, deductions, and other factors.</span>
                         `;
-                    } else {
-                        this.taxEstimate.innerHTML = '<em>Enter a valid 5-digit ZIP code for tax estimation</em>';
-                    }
-
-                    const monthlyNet = (annualGross - taxes.total) / 12;
-                    return monthlyNet;
-                }
-
-                return monthlyGross;
+            } else {
+              this.taxEstimate.innerHTML =
+                '<em>Enter a valid 5-digit ZIP code for tax estimation</em>';
             }
 
-            estimateTaxes(annualIncome, zipCode) {
-                // Default to no taxes if invalid input
-                if (!annualIncome || annualIncome <= 0) {
-                    return { federal: 0, state: 0, fica: 0, total: 0 };
-                }
+            const monthlyNet = (annualGross - taxes.total) / 12;
+            return monthlyNet;
+          }
 
-                // Calculate federal income tax (2024 single filer brackets - simplified)
-                let federalTax = 0;
-                const standardDeduction = 14600;
-                const taxableIncome = Math.max(0, annualIncome - standardDeduction);
+          return monthlyGross;
+        }
 
-                if (taxableIncome <= 11600) {
-                    federalTax = taxableIncome * 0.10;
-                } else if (taxableIncome <= 47150) {
-                    federalTax = 1160 + (taxableIncome - 11600) * 0.12;
-                } else if (taxableIncome <= 100525) {
-                    federalTax = 5426 + (taxableIncome - 47150) * 0.22;
-                } else if (taxableIncome <= 191950) {
-                    federalTax = 17168.5 + (taxableIncome - 100525) * 0.24;
-                } else if (taxableIncome <= 243725) {
-                    federalTax = 39110.5 + (taxableIncome - 191950) * 0.32;
-                } else if (taxableIncome <= 609350) {
-                    federalTax = 55678.5 + (taxableIncome - 243725) * 0.35;
-                } else {
-                    federalTax = 183647.25 + (taxableIncome - 609350) * 0.37;
-                }
+        estimateTaxes(annualIncome, zipCode) {
+          // Default to no taxes if invalid input
+          if (!annualIncome || annualIncome <= 0) {
+            return { federal: 0, state: 0, fica: 0, total: 0 };
+          }
 
-                // Calculate FICA (Social Security + Medicare)
-                const socialSecurityWageBase = 160200;
-                const socialSecurityTax = Math.min(annualIncome, socialSecurityWageBase) * 0.062;
-                const medicareTax = annualIncome * 0.0145;
-                const additionalMedicareTax = annualIncome > 200000 ? (annualIncome - 200000) * 0.009 : 0;
-                const ficaTax = socialSecurityTax + medicareTax + additionalMedicareTax;
+          // Calculate federal income tax (2024 single filer brackets - simplified)
+          let federalTax = 0;
+          const standardDeduction = 14600;
+          const taxableIncome = Math.max(0, annualIncome - standardDeduction);
 
-                // Get state tax based on ZIP code
-                const stateTaxRate = this.getStateTaxRate(zipCode);
-                const stateTax = annualIncome * stateTaxRate;
+          if (taxableIncome <= 11600) {
+            federalTax = taxableIncome * 0.1;
+          } else if (taxableIncome <= 47150) {
+            federalTax = 1160 + (taxableIncome - 11600) * 0.12;
+          } else if (taxableIncome <= 100525) {
+            federalTax = 5426 + (taxableIncome - 47150) * 0.22;
+          } else if (taxableIncome <= 191950) {
+            federalTax = 17168.5 + (taxableIncome - 100525) * 0.24;
+          } else if (taxableIncome <= 243725) {
+            federalTax = 39110.5 + (taxableIncome - 191950) * 0.32;
+          } else if (taxableIncome <= 609350) {
+            federalTax = 55678.5 + (taxableIncome - 243725) * 0.35;
+          } else {
+            federalTax = 183647.25 + (taxableIncome - 609350) * 0.37;
+          }
 
-                return {
-                    federal: federalTax,
-                    state: stateTax,
-                    fica: ficaTax,
-                    total: federalTax + stateTax + ficaTax
-                };
+          // Calculate FICA (Social Security + Medicare)
+          const socialSecurityWageBase = 160200;
+          const socialSecurityTax = Math.min(annualIncome, socialSecurityWageBase) * 0.062;
+          const medicareTax = annualIncome * 0.0145;
+          const additionalMedicareTax = annualIncome > 200000 ? (annualIncome - 200000) * 0.009 : 0;
+          const ficaTax = socialSecurityTax + medicareTax + additionalMedicareTax;
+
+          // Get state tax based on ZIP code
+          const stateTaxRate = this.getStateTaxRate(zipCode);
+          const stateTax = annualIncome * stateTaxRate;
+
+          return {
+            federal: federalTax,
+            state: stateTax,
+            fica: ficaTax,
+            total: federalTax + stateTax + ficaTax,
+          };
+        }
+
+        getStateTaxRate(zipCode) {
+          if (!zipCode || zipCode.length !== 5) {
+            return 0.05; // Default 5% if no ZIP provided
+          }
+
+          const zip = parseInt(zipCode);
+
+          // State tax rates by ZIP code ranges (approximate)
+          // Using effective rates for middle-income earners
+          // No state income tax states
+          if (zip >= 99500 && zip <= 99950) return 0; // Alaska
+          if (zip >= 32000 && zip <= 34999) return 0; // Florida
+          if (zip >= 89000 && zip <= 89899) return 0; // Nevada
+          if (zip >= 3000 && zip <= 3899) return 0; // New Hampshire
+          if (zip >= 57000 && zip <= 57799) return 0; // South Dakota
+          if (zip >= 37000 && zip <= 38599) return 0; // Tennessee
+          if (zip >= 75000 && zip <= 79999) return 0; // Texas
+          if (zip >= 88500 && zip <= 88599) return 0; // Texas (El Paso area)
+          if (zip >= 98000 && zip <= 99499) return 0; // Washington
+          if (zip >= 82000 && zip <= 83199) return 0; // Wyoming
+
+          // States with income tax (alphabetical by state)
+          if (zip >= 35000 && zip <= 36999) return 0.05; // Alabama
+          if (zip >= 85000 && zip <= 86599) return 0.025; // Arizona
+          if (zip >= 71600 && zip <= 72999) return 0.055; // Arkansas
+          if (zip >= 90000 && zip <= 96199) return 0.093; // California
+          if (zip >= 80000 && zip <= 81699) return 0.044; // Colorado
+          if (zip >= 6000 && zip <= 6999) return 0.05; // Connecticut
+          if (zip >= 19700 && zip <= 19999) return 0.066; // Delaware
+          if (zip >= 20000 && zip <= 20599) return 0.0895; // DC - high rate
+          if (zip >= 30000 && zip <= 31999) return 0.055; // Georgia
+          if (zip >= 96700 && zip <= 96899) return 0.11; // Hawaii - high
+          if (zip >= 83200 && zip <= 83899) return 0.058; // Idaho
+          if (zip >= 60000 && zip <= 62999) return 0.0495; // Illinois
+          if (zip >= 46000 && zip <= 47999) return 0.0315; // Indiana
+          if (zip >= 50000 && zip <= 52899) return 0.06; // Iowa
+          if (zip >= 66000 && zip <= 67999) return 0.057; // Kansas
+          if (zip >= 40000 && zip <= 42799) return 0.045; // Kentucky
+          if (zip >= 70000 && zip <= 71499) return 0.0425; // Louisiana
+          if (zip >= 3900 && zip <= 4999) return 0.0715; // Maine
+          if (zip >= 20600 && zip <= 21999) return 0.0575; // Maryland
+          if (zip >= 1000 && zip <= 2799) return 0.05; // Massachusetts
+          if (zip >= 48000 && zip <= 49999) return 0.0425; // Michigan
+          if (zip >= 55000 && zip <= 56799) return 0.0985; // Minnesota - high
+          if (zip >= 38600 && zip <= 39799) return 0.05; // Mississippi
+          if (zip >= 63000 && zip <= 65899) return 0.049; // Missouri
+          if (zip >= 59000 && zip <= 59999) return 0.0675; // Montana
+          if (zip >= 68000 && zip <= 69399) return 0.0684; // Nebraska
+          if (zip >= 87000 && zip <= 88499) return 0.059; // New Mexico
+          if (zip >= 10000 && zip <= 14999) return 0.0685; // New York state
+          if (zip >= 100 && zip <= 119) return 0.1065; // NYC (add local tax)
+          if (zip >= 27000 && zip <= 28999) return 0.0525; // North Carolina
+          if (zip >= 58000 && zip <= 58899) return 0.029; // North Dakota
+          if (zip >= 43000 && zip <= 45999) return 0.04; // Ohio
+          if (zip >= 73000 && zip <= 74999) return 0.0475; // Oklahoma
+          if (zip >= 97000 && zip <= 97999) return 0.099; // Oregon - high
+          if (zip >= 15000 && zip <= 19699) return 0.0307; // Pennsylvania
+          if (zip >= 2800 && zip <= 2999) return 0.0599; // Rhode Island
+          if (zip >= 29000 && zip <= 29999) return 0.065; // South Carolina
+          if (zip >= 84000 && zip <= 84799) return 0.0465; // Utah
+          if (zip >= 5000 && zip <= 5999) return 0.086; // Vermont
+          if (zip >= 22000 && zip <= 24699) return 0.0575; // Virginia
+          if (zip >= 24700 && zip <= 26899) return 0.065; // West Virginia
+          if (zip >= 53000 && zip <= 54999) return 0.0765; // Wisconsin
+
+          // Default for unknown ZIPs
+          return 0.05; // 5% default
+        }
+
+        calculate() {
+          const monthlyIncome = this.getMonthlyIncome();
+
+          // Calculate and display allocations for each category
+          for (const [key, data] of Object.entries(this.categories)) {
+            const percentage = data.value;
+
+            const monthlyAmount = (monthlyIncome * percentage) / 100;
+            const annualAmount = monthlyAmount * 12;
+
+            // Update percentage display (show 1 decimal only when not a whole number)
+            const displayPercentage = Number.isInteger(percentage)
+              ? percentage
+              : percentage.toFixed(1);
+            data.percent.textContent = displayPercentage;
+            data.slider.value = Math.round(percentage);
+
+            // Update ARIA attributes for screen readers
+            data.slider.setAttribute('aria-valuenow', displayPercentage);
+            data.slider.setAttribute('aria-valuetext', `${displayPercentage} percent`);
+
+            // Update allocation displays (only if not currently editing)
+            if (this.editingElement !== data.monthly) {
+              data.monthly.textContent = this.formatCurrency(monthlyAmount);
             }
-
-            getStateTaxRate(zipCode) {
-                if (!zipCode || zipCode.length !== 5) {
-                    return 0.05; // Default 5% if no ZIP provided
-                }
-
-                const zip = parseInt(zipCode);
-
-                // State tax rates by ZIP code ranges (approximate)
-                // Using effective rates for middle-income earners
-                // No state income tax states
-                if (zip >= 99500 && zip <= 99950) return 0;        // Alaska
-                if (zip >= 32000 && zip <= 34999) return 0;        // Florida
-                if (zip >= 89000 && zip <= 89899) return 0;        // Nevada
-                if (zip >= 3000 && zip <= 3899) return 0;          // New Hampshire
-                if (zip >= 57000 && zip <= 57799) return 0;        // South Dakota
-                if (zip >= 37000 && zip <= 38599) return 0;        // Tennessee
-                if (zip >= 75000 && zip <= 79999) return 0;        // Texas
-                if (zip >= 88500 && zip <= 88599) return 0;        // Texas (El Paso area)
-                if (zip >= 98000 && zip <= 99499) return 0;        // Washington
-                if (zip >= 82000 && zip <= 83199) return 0;        // Wyoming
-
-                // States with income tax (alphabetical by state)
-                if (zip >= 35000 && zip <= 36999) return 0.05;     // Alabama
-                if (zip >= 85000 && zip <= 86599) return 0.025;    // Arizona
-                if (zip >= 71600 && zip <= 72999) return 0.055;    // Arkansas
-                if (zip >= 90000 && zip <= 96199) return 0.093;    // California
-                if (zip >= 80000 && zip <= 81699) return 0.044;    // Colorado
-                if (zip >= 6000 && zip <= 6999) return 0.05;       // Connecticut
-                if (zip >= 19700 && zip <= 19999) return 0.066;    // Delaware
-                if (zip >= 20000 && zip <= 20599) return 0.0895;   // DC - high rate
-                if (zip >= 30000 && zip <= 31999) return 0.055;    // Georgia
-                if (zip >= 96700 && zip <= 96899) return 0.11;     // Hawaii - high
-                if (zip >= 83200 && zip <= 83899) return 0.058;    // Idaho
-                if (zip >= 60000 && zip <= 62999) return 0.0495;   // Illinois
-                if (zip >= 46000 && zip <= 47999) return 0.0315;   // Indiana
-                if (zip >= 50000 && zip <= 52899) return 0.06;     // Iowa
-                if (zip >= 66000 && zip <= 67999) return 0.057;    // Kansas
-                if (zip >= 40000 && zip <= 42799) return 0.045;    // Kentucky
-                if (zip >= 70000 && zip <= 71499) return 0.0425;   // Louisiana
-                if (zip >= 3900 && zip <= 4999) return 0.0715;     // Maine
-                if (zip >= 20600 && zip <= 21999) return 0.0575;   // Maryland
-                if (zip >= 1000 && zip <= 2799) return 0.05;       // Massachusetts
-                if (zip >= 48000 && zip <= 49999) return 0.0425;   // Michigan
-                if (zip >= 55000 && zip <= 56799) return 0.0985;   // Minnesota - high
-                if (zip >= 38600 && zip <= 39799) return 0.05;     // Mississippi
-                if (zip >= 63000 && zip <= 65899) return 0.049;    // Missouri
-                if (zip >= 59000 && zip <= 59999) return 0.0675;   // Montana
-                if (zip >= 68000 && zip <= 69399) return 0.0684;   // Nebraska
-                if (zip >= 87000 && zip <= 88499) return 0.059;    // New Mexico
-                if (zip >= 10000 && zip <= 14999) return 0.0685;   // New York state
-                if (zip >= 100 && zip <= 119) return 0.1065;       // NYC (add local tax)
-                if (zip >= 27000 && zip <= 28999) return 0.0525;   // North Carolina
-                if (zip >= 58000 && zip <= 58899) return 0.029;    // North Dakota
-                if (zip >= 43000 && zip <= 45999) return 0.04;     // Ohio
-                if (zip >= 73000 && zip <= 74999) return 0.0475;   // Oklahoma
-                if (zip >= 97000 && zip <= 97999) return 0.099;    // Oregon - high
-                if (zip >= 15000 && zip <= 19699) return 0.0307;   // Pennsylvania
-                if (zip >= 2800 && zip <= 2999) return 0.0599;     // Rhode Island
-                if (zip >= 29000 && zip <= 29999) return 0.065;    // South Carolina
-                if (zip >= 84000 && zip <= 84799) return 0.0465;   // Utah
-                if (zip >= 5000 && zip <= 5999) return 0.086;      // Vermont
-                if (zip >= 22000 && zip <= 24699) return 0.0575;   // Virginia
-                if (zip >= 24700 && zip <= 26899) return 0.065;    // West Virginia
-                if (zip >= 53000 && zip <= 54999) return 0.0765;   // Wisconsin
-
-                // Default for unknown ZIPs
-                return 0.05; // 5% default
+            if (this.editingElement !== data.annual) {
+              data.annual.textContent = this.formatCurrency(annualAmount);
             }
+          }
 
-            calculate() {
-                const monthlyIncome = this.getMonthlyIncome();
+          // Save data for other pages (Spending Tracker and Retirement Forecast)
+          this.saveDataForOtherPages(monthlyIncome);
 
-                // Calculate and display allocations for each category
-                for (const [key, data] of Object.entries(this.categories)) {
-                    const percentage = data.value;
+          // Update retirement impact preview
+          this.updateRetirementImpact(monthlyIncome);
 
-                    const monthlyAmount = (monthlyIncome * percentage) / 100;
-                    const annualAmount = monthlyAmount * 12;
+          // Update scenario comparison
+          this.renderScenarios();
 
-                    // Update percentage display (show 1 decimal only when not a whole number)
-                    const displayPercentage = Number.isInteger(percentage) ? percentage : percentage.toFixed(1);
-                    data.percent.textContent = displayPercentage;
-                    data.slider.value = Math.round(percentage);
+          // Update allocation chart
+          this.updateAllocationChart(monthlyIncome);
+        }
 
-                    // Update ARIA attributes for screen readers
-                    data.slider.setAttribute('aria-valuenow', displayPercentage);
-                    data.slider.setAttribute('aria-valuetext', `${displayPercentage} percent`);
+        updateAllocationChart(monthlyIncome) {
+          const ctx = document.getElementById('allocationChart');
+          const legendContainer = document.getElementById('allocationChartLegend');
+          if (!ctx) return;
 
-                    // Update allocation displays (only if not currently editing)
-                    if (this.editingElement !== data.monthly) {
-                        data.monthly.textContent = this.formatCurrency(monthlyAmount);
-                    }
-                    if (this.editingElement !== data.annual) {
-                        data.annual.textContent = this.formatCurrency(annualAmount);
-                    }
-                }
+          // Category configuration with colors (matching the category cards)
+          const categoryConfig = [
+            { key: 'fixedCosts', name: 'Fixed Costs', color: '#ef4444' },
+            { key: 'shortTerm', name: 'Short-Term Savings', color: '#f59e0b' },
+            { key: 'longTerm', name: 'Long-Term Savings', color: '#10b981' },
+            { key: 'guiltFree', name: 'Guilt-Free', color: '#8b5cf6' },
+          ];
 
-                // Save data for other pages (Spending Tracker and Retirement Forecast)
-                this.saveDataForOtherPages(monthlyIncome);
+          // Prepare chart data
+          const chartData = categoryConfig.map((cat) => ({
+            ...cat,
+            value: this.categories[cat.key].value,
+            amount: (monthlyIncome * this.categories[cat.key].value) / 100,
+          }));
 
-                // Update retirement impact preview
-                this.updateRetirementImpact(monthlyIncome);
+          const labels = chartData.map((d) => d.name);
+          const data = chartData.map((d) => d.value);
+          const colors = chartData.map((d) => d.color);
 
-                // Update scenario comparison
-                this.renderScenarios();
+          // Destroy existing chart if present
+          if (this.allocationChart) {
+            this.allocationChart.destroy();
+          }
 
-                // Update allocation chart
-                this.updateAllocationChart(monthlyIncome);
-            }
-
-            updateAllocationChart(monthlyIncome) {
-                const ctx = document.getElementById('allocationChart');
-                const legendContainer = document.getElementById('allocationChartLegend');
-                if (!ctx) return;
-
-                // Category configuration with colors (matching the category cards)
-                const categoryConfig = [
-                    { key: 'fixedCosts', name: 'Fixed Costs', color: '#ef4444' },
-                    { key: 'shortTerm', name: 'Short-Term Savings', color: '#f59e0b' },
-                    { key: 'longTerm', name: 'Long-Term Savings', color: '#10b981' },
-                    { key: 'guiltFree', name: 'Guilt-Free', color: '#8b5cf6' }
-                ];
-
-                // Prepare chart data
-                const chartData = categoryConfig.map(cat => ({
-                    ...cat,
-                    value: this.categories[cat.key].value,
-                    amount: (monthlyIncome * this.categories[cat.key].value) / 100
-                }));
-
-                const labels = chartData.map(d => d.name);
-                const data = chartData.map(d => d.value);
-                const colors = chartData.map(d => d.color);
-
-                // Destroy existing chart if present
-                if (this.allocationChart) {
-                    this.allocationChart.destroy();
-                }
-
-                // Create new chart
-                this.allocationChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: colors,
-                            borderColor: '#ffffff',
-                            borderWidth: 3
-                        }]
+          // Create new chart
+          this.allocationChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: data,
+                  backgroundColor: colors,
+                  borderColor: '#ffffff',
+                  borderWidth: 3,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  display: false,
+                },
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const idx = context.dataIndex;
+                      const pct = chartData[idx].value;
+                      const amt = this.formatCurrency(chartData[idx].amount);
+                      return `${context.label}: ${pct}% (${amt}/mo)`;
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: (context) => {
-                                        const idx = context.dataIndex;
-                                        const pct = chartData[idx].value;
-                                        const amt = this.formatCurrency(chartData[idx].amount);
-                                        return `${context.label}: ${pct}% (${amt}/mo)`;
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '55%'
-                    }
-                });
+                  },
+                },
+              },
+              cutout: '55%',
+            },
+          });
 
-                // Render custom legend
-                legendContainer.innerHTML = chartData.map(cat => `
+          // Render custom legend
+          legendContainer.innerHTML = chartData
+            .map(
+              (cat) => `
                     <div class="allocation-legend-item">
                         <div class="allocation-legend-color" style="background: ${cat.color};"></div>
                         <span class="allocation-legend-label">${cat.name}</span>
                         <span class="allocation-legend-value">${this.formatCurrency(cat.amount)}/mo</span>
                         <span class="allocation-legend-pct">${cat.value}%</span>
                     </div>
-                `).join('');
+                `
+            )
+            .join('');
+        }
+
+        downloadAllocationChart() {
+          const canvas = document.getElementById('allocationChart');
+          if (!canvas) return;
+
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext('2d');
+
+          tempCtx.fillStyle = '#ffffff';
+          tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          tempCtx.drawImage(canvas, 0, 0);
+
+          const link = document.createElement('a');
+          link.download = 'budget-allocation.png';
+          link.href = tempCanvas.toDataURL('image/png');
+          link.click();
+        }
+
+        updateRetirementImpact(monthlyIncome) {
+          // Only show if we have retirement forecast data to compare against
+          const retirementData = StorageUtils.get('retirementForecastData');
+          if (!retirementData || !retirementData.currentAge || !retirementData.retirementAge) {
+            return; // Don't show preview if user hasn't run simulation yet
+          }
+
+          const preview = document.getElementById('retirementImpactPreview');
+          if (!preview) return;
+
+          // Calculate quick estimate
+          const annualContribution = ((monthlyIncome * this.categories.longTerm.value) / 100) * 12;
+          const currentSavings = retirementData.currentSavings || 0;
+          const annualSpending =
+            retirementData.annualRetirementSpending || monthlyIncome * 0.7 * 12;
+
+          const estimate = CrossToolState.quickRetirementEstimate(
+            retirementData.currentAge,
+            retirementData.retirementAge,
+            currentSavings,
+            annualContribution,
+            annualSpending
+          );
+
+          // Show the preview
+          preview.style.display = 'block';
+
+          // Update success rate display
+          const successRateEl = document.getElementById('impactSuccessRate');
+          const impactChangeEl = document.getElementById('impactChange');
+
+          successRateEl.textContent = `${estimate.successRate}%`;
+
+          // Color code based on success rate
+          successRateEl.className = 'impact-value';
+          if (estimate.successRate >= 90) {
+            successRateEl.classList.add('success');
+          } else if (estimate.successRate >= 70) {
+            successRateEl.classList.add('warning');
+          } else {
+            successRateEl.classList.add('alert');
+          }
+
+          // Show comparison to actual retirement data if available
+          if (retirementData.successRate) {
+            const diff = estimate.successRate - retirementData.successRate;
+            if (Math.abs(diff) > 2) {
+              // Only show if meaningful difference
+              impactChangeEl.textContent =
+                diff > 0 ? `+${diff}% vs full simulation` : `${diff}% vs full simulation`;
+              impactChangeEl.className = 'impact-change ' + (diff > 0 ? 'positive' : 'negative');
+            } else {
+              impactChangeEl.textContent = '';
+            }
+          } else {
+            impactChangeEl.textContent = '';
+          }
+        }
+
+        saveDataForOtherPages(monthlyIncome) {
+          // Save for Spending Tracker (round percentages to 1 decimal place)
+          StorageUtils.set('budgetPlannerData', {
+            monthlyIncome: monthlyIncome,
+            fixedCosts: parseFloat(this.categories.fixedCosts.value.toFixed(1)),
+            shortTerm: parseFloat(this.categories.shortTerm.value.toFixed(1)),
+            longTerm: parseFloat(this.categories.longTerm.value.toFixed(1)),
+            guiltFree: parseFloat(this.categories.guiltFree.value.toFixed(1)),
+            lastUpdated: new Date().toISOString(),
+          });
+
+          // Save retirement savings amount for Retirement Forecast
+          const monthlyRetirementSavings = (monthlyIncome * this.categories.longTerm.value) / 100;
+          StorageUtils.set('budgetRetirementData', {
+            annualContribution: monthlyRetirementSavings * 12,
+            lastUpdated: new Date().toISOString(),
+          });
+        }
+
+        formatCurrency(value) {
+          return FinanceUtils.formatCurrency(value);
+        }
+
+        setPreset(preset) {
+          const presets = {
+            balanced: {
+              fixedCosts: 50,
+              shortTerm: 20,
+              longTerm: 20,
+              guiltFree: 10,
+            },
+            'aggressive-saver': {
+              fixedCosts: 50,
+              shortTerm: 15,
+              longTerm: 30,
+              guiltFree: 5,
+            },
+            'debt-crusher': {
+              fixedCosts: 60,
+              shortTerm: 20,
+              longTerm: 15,
+              guiltFree: 5,
+            },
+          };
+
+          const presetValues = presets[preset];
+          if (presetValues) {
+            // Highlight active preset button
+            document.querySelectorAll('.preset-btn').forEach((btn) => {
+              btn.classList.remove('active');
+              if (btn.getAttribute('onclick')?.includes(preset)) {
+                btn.classList.add('active');
+              }
+            });
+
+            for (const [key, value] of Object.entries(presetValues)) {
+              this.categories[key].value = value;
+              this.categories[key].slider.value = value;
+            }
+            this.calculate();
+          }
+        }
+
+        saveScenario() {
+          const scenarios = StorageUtils.get('budgetScenarios') || [];
+          const monthlyIncome = this.monthlyIncome;
+
+          // Create scenario object
+          const scenario = {
+            id: Date.now(),
+            name: `Scenario ${scenarios.length + 1}`,
+            timestamp: new Date().toISOString(),
+            income: monthlyIncome,
+            allocations: {
+              fixedCosts: this.categories.fixedCosts.value,
+              shortTerm: this.categories.shortTerm.value,
+              longTerm: this.categories.longTerm.value,
+              guiltFree: this.categories.guiltFree.value,
+            },
+          };
+
+          // Calculate retirement impact for this scenario
+          const retirementData = StorageUtils.get('retirementForecastData');
+          if (retirementData && retirementData.currentAge && retirementData.retirementAge) {
+            const annualContribution =
+              ((monthlyIncome * this.categories.longTerm.value) / 100) * 12;
+            const currentSavings = retirementData.currentSavings || 0;
+            const annualSpending =
+              retirementData.annualRetirementSpending || monthlyIncome * 0.7 * 12;
+
+            const estimate = CrossToolState.quickRetirementEstimate(
+              retirementData.currentAge,
+              retirementData.retirementAge,
+              currentSavings,
+              annualContribution,
+              annualSpending
+            );
+            scenario.retirementSuccessRate = estimate.successRate;
+          }
+
+          scenarios.push(scenario);
+          StorageUtils.set('budgetScenarios', scenarios);
+          this.renderScenarios();
+        }
+
+        applyScenario(scenarioId) {
+          const scenarios = StorageUtils.get('budgetScenarios') || [];
+          const scenario = scenarios.find((s) => s.id === scenarioId);
+
+          if (scenario) {
+            // Apply the allocations
+            this.categories.fixedCosts.value = scenario.allocations.fixedCosts;
+            this.categories.fixedCosts.slider.value = scenario.allocations.fixedCosts;
+            this.categories.shortTerm.value = scenario.allocations.shortTerm;
+            this.categories.shortTerm.slider.value = scenario.allocations.shortTerm;
+            this.categories.longTerm.value = scenario.allocations.longTerm;
+            this.categories.longTerm.slider.value = scenario.allocations.longTerm;
+            this.categories.guiltFree.value = scenario.allocations.guiltFree;
+            this.categories.guiltFree.slider.value = scenario.allocations.guiltFree;
+
+            // Optionally update income if different
+            if (scenario.income && scenario.income !== this.monthlyIncome) {
+              document.getElementById('income').value = this.formatCurrencyInput(scenario.income);
             }
 
-            downloadAllocationChart() {
-                const canvas = document.getElementById('allocationChart');
-                if (!canvas) return;
+            this.calculate();
+            this.renderScenarios();
 
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
+            // Clear preset highlighting
+            document
+              .querySelectorAll('.preset-btn')
+              .forEach((btn) => btn.classList.remove('active'));
+          }
+        }
 
-                tempCtx.fillStyle = '#ffffff';
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.drawImage(canvas, 0, 0);
+        deleteScenario(scenarioId) {
+          let scenarios = StorageUtils.get('budgetScenarios') || [];
+          scenarios = scenarios.filter((s) => s.id !== scenarioId);
+          StorageUtils.set('budgetScenarios', scenarios);
+          this.renderScenarios();
+        }
 
-                const link = document.createElement('a');
-                link.download = 'budget-allocation.png';
-                link.href = tempCanvas.toDataURL('image/png');
-                link.click();
-            }
+        clearScenarios() {
+          if (confirm('Are you sure you want to clear all saved scenarios?')) {
+            StorageUtils.remove('budgetScenarios');
+            this.renderScenarios();
+          }
+        }
 
-            updateRetirementImpact(monthlyIncome) {
-                // Only show if we have retirement forecast data to compare against
-                const retirementData = StorageUtils.get('retirementForecastData');
-                if (!retirementData || !retirementData.currentAge || !retirementData.retirementAge) {
-                    return; // Don't show preview if user hasn't run simulation yet
-                }
+        renderScenarios() {
+          const scenarios = StorageUtils.get('budgetScenarios') || [];
+          const section = document.getElementById('scenarioSection');
+          const grid = document.getElementById('scenarioGrid');
 
-                const preview = document.getElementById('retirementImpactPreview');
-                if (!preview) return;
+          if (scenarios.length === 0) {
+            section.style.display = 'none';
+            return;
+          }
 
-                // Calculate quick estimate
-                const annualContribution = (monthlyIncome * this.categories.longTerm.value / 100) * 12;
-                const currentSavings = retirementData.currentSavings || 0;
-                const annualSpending = retirementData.annualRetirementSpending || (monthlyIncome * 0.7 * 12);
+          section.style.display = 'block';
 
-                const estimate = CrossToolState.quickRetirementEstimate(
-                    retirementData.currentAge,
-                    retirementData.retirementAge,
-                    currentSavings,
-                    annualContribution,
-                    annualSpending
-                );
+          // Get current allocations to determine if a scenario is currently active
+          const currentAllocations = {
+            fixedCosts: this.categories.fixedCosts.value,
+            shortTerm: this.categories.shortTerm.value,
+            longTerm: this.categories.longTerm.value,
+            guiltFree: this.categories.guiltFree.value,
+          };
 
-                // Show the preview
-                preview.style.display = 'block';
+          grid.innerHTML = scenarios
+            .map((scenario) => {
+              // Check if this scenario matches current allocations
+              const isCurrent = Object.keys(currentAllocations).every(
+                (key) => Math.abs(currentAllocations[key] - scenario.allocations[key]) < 0.5
+              );
 
-                // Update success rate display
-                const successRateEl = document.getElementById('impactSuccessRate');
-                const impactChangeEl = document.getElementById('impactChange');
+              const successRate = scenario.retirementSuccessRate || null;
+              const rateClass = successRate >= 90 ? 'high' : successRate >= 70 ? 'medium' : 'low';
 
-                successRateEl.textContent = `${estimate.successRate}%`;
-
-                // Color code based on success rate
-                successRateEl.className = 'impact-value';
-                if (estimate.successRate >= 90) {
-                    successRateEl.classList.add('success');
-                } else if (estimate.successRate >= 70) {
-                    successRateEl.classList.add('warning');
-                } else {
-                    successRateEl.classList.add('alert');
-                }
-
-                // Show comparison to actual retirement data if available
-                if (retirementData.successRate) {
-                    const diff = estimate.successRate - retirementData.successRate;
-                    if (Math.abs(diff) > 2) { // Only show if meaningful difference
-                        impactChangeEl.textContent = diff > 0 ?
-                            `+${diff}% vs full simulation` :
-                            `${diff}% vs full simulation`;
-                        impactChangeEl.className = 'impact-change ' + (diff > 0 ? 'positive' : 'negative');
-                    } else {
-                        impactChangeEl.textContent = '';
-                    }
-                } else {
-                    impactChangeEl.textContent = '';
-                }
-            }
-
-            saveDataForOtherPages(monthlyIncome) {
-                // Save for Spending Tracker (round percentages to 1 decimal place)
-                StorageUtils.set('budgetPlannerData', {
-                    monthlyIncome: monthlyIncome,
-                    fixedCosts: parseFloat(this.categories.fixedCosts.value.toFixed(1)),
-                    shortTerm: parseFloat(this.categories.shortTerm.value.toFixed(1)),
-                    longTerm: parseFloat(this.categories.longTerm.value.toFixed(1)),
-                    guiltFree: parseFloat(this.categories.guiltFree.value.toFixed(1)),
-                    lastUpdated: new Date().toISOString()
-                });
-
-                // Save retirement savings amount for Retirement Forecast
-                const monthlyRetirementSavings = (monthlyIncome * this.categories.longTerm.value) / 100;
-                StorageUtils.set('budgetRetirementData', {
-                    annualContribution: monthlyRetirementSavings * 12,
-                    lastUpdated: new Date().toISOString()
-                });
-            }
-
-            formatCurrency(value) {
-                return FinanceUtils.formatCurrency(value);
-            }
-
-            setPreset(preset) {
-                const presets = {
-                    'balanced': {
-                        fixedCosts: 50,
-                        shortTerm: 20,
-                        longTerm: 20,
-                        guiltFree: 10
-                    },
-                    'aggressive-saver': {
-                        fixedCosts: 50,
-                        shortTerm: 15,
-                        longTerm: 30,
-                        guiltFree: 5
-                    },
-                    'debt-crusher': {
-                        fixedCosts: 60,
-                        shortTerm: 20,
-                        longTerm: 15,
-                        guiltFree: 5
-                    }
-                };
-
-                const presetValues = presets[preset];
-                if (presetValues) {
-                    // Highlight active preset button
-                    document.querySelectorAll('.preset-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                        if (btn.getAttribute('onclick')?.includes(preset)) {
-                            btn.classList.add('active');
-                        }
-                    });
-
-                    for (const [key, value] of Object.entries(presetValues)) {
-                        this.categories[key].value = value;
-                        this.categories[key].slider.value = value;
-                    }
-                    this.calculate();
-                }
-            }
-
-            saveScenario() {
-                const scenarios = StorageUtils.get('budgetScenarios') || [];
-                const monthlyIncome = this.monthlyIncome;
-
-                // Create scenario object
-                const scenario = {
-                    id: Date.now(),
-                    name: `Scenario ${scenarios.length + 1}`,
-                    timestamp: new Date().toISOString(),
-                    income: monthlyIncome,
-                    allocations: {
-                        fixedCosts: this.categories.fixedCosts.value,
-                        shortTerm: this.categories.shortTerm.value,
-                        longTerm: this.categories.longTerm.value,
-                        guiltFree: this.categories.guiltFree.value
-                    }
-                };
-
-                // Calculate retirement impact for this scenario
-                const retirementData = StorageUtils.get('retirementForecastData');
-                if (retirementData && retirementData.currentAge && retirementData.retirementAge) {
-                    const annualContribution = (monthlyIncome * this.categories.longTerm.value / 100) * 12;
-                    const currentSavings = retirementData.currentSavings || 0;
-                    const annualSpending = retirementData.annualRetirementSpending || (monthlyIncome * 0.7 * 12);
-
-                    const estimate = CrossToolState.quickRetirementEstimate(
-                        retirementData.currentAge,
-                        retirementData.retirementAge,
-                        currentSavings,
-                        annualContribution,
-                        annualSpending
-                    );
-                    scenario.retirementSuccessRate = estimate.successRate;
-                }
-
-                scenarios.push(scenario);
-                StorageUtils.set('budgetScenarios', scenarios);
-                this.renderScenarios();
-            }
-
-            applyScenario(scenarioId) {
-                const scenarios = StorageUtils.get('budgetScenarios') || [];
-                const scenario = scenarios.find(s => s.id === scenarioId);
-
-                if (scenario) {
-                    // Apply the allocations
-                    this.categories.fixedCosts.value = scenario.allocations.fixedCosts;
-                    this.categories.fixedCosts.slider.value = scenario.allocations.fixedCosts;
-                    this.categories.shortTerm.value = scenario.allocations.shortTerm;
-                    this.categories.shortTerm.slider.value = scenario.allocations.shortTerm;
-                    this.categories.longTerm.value = scenario.allocations.longTerm;
-                    this.categories.longTerm.slider.value = scenario.allocations.longTerm;
-                    this.categories.guiltFree.value = scenario.allocations.guiltFree;
-                    this.categories.guiltFree.slider.value = scenario.allocations.guiltFree;
-
-                    // Optionally update income if different
-                    if (scenario.income && scenario.income !== this.monthlyIncome) {
-                        document.getElementById('income').value = this.formatCurrencyInput(scenario.income);
-                    }
-
-                    this.calculate();
-                    this.renderScenarios();
-
-                    // Clear preset highlighting
-                    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-                }
-            }
-
-            deleteScenario(scenarioId) {
-                let scenarios = StorageUtils.get('budgetScenarios') || [];
-                scenarios = scenarios.filter(s => s.id !== scenarioId);
-                StorageUtils.set('budgetScenarios', scenarios);
-                this.renderScenarios();
-            }
-
-            clearScenarios() {
-                if (confirm('Are you sure you want to clear all saved scenarios?')) {
-                    StorageUtils.remove('budgetScenarios');
-                    this.renderScenarios();
-                }
-            }
-
-            renderScenarios() {
-                const scenarios = StorageUtils.get('budgetScenarios') || [];
-                const section = document.getElementById('scenarioSection');
-                const grid = document.getElementById('scenarioGrid');
-
-                if (scenarios.length === 0) {
-                    section.style.display = 'none';
-                    return;
-                }
-
-                section.style.display = 'block';
-
-                // Get current allocations to determine if a scenario is currently active
-                const currentAllocations = {
-                    fixedCosts: this.categories.fixedCosts.value,
-                    shortTerm: this.categories.shortTerm.value,
-                    longTerm: this.categories.longTerm.value,
-                    guiltFree: this.categories.guiltFree.value
-                };
-
-                grid.innerHTML = scenarios.map(scenario => {
-                    // Check if this scenario matches current allocations
-                    const isCurrent = Object.keys(currentAllocations).every(key =>
-                        Math.abs(currentAllocations[key] - scenario.allocations[key]) < 0.5
-                    );
-
-                    const successRate = scenario.retirementSuccessRate || null;
-                    const rateClass = successRate >= 90 ? 'high' :
-                                     successRate >= 70 ? 'medium' : 'low';
-
-                    return `
+              return `
                         <div class="scenario-card ${isCurrent ? 'current' : ''}">
                             <div class="scenario-header">
                                 <div class="scenario-name">${DOMUtils.escapeHTML(scenario.name)}</div>
@@ -2073,179 +2423,190 @@
                                 🎯 Long-term: ${scenario.allocations.longTerm.toFixed(0)}%<br>
                                 ✨ Guilt-free: ${scenario.allocations.guiltFree.toFixed(0)}%
                             </div>
-                            ${successRate !== null ? `
+                            ${
+                              successRate !== null
+                                ? `
                                 <div class="scenario-retirement">
                                     <div class="scenario-retirement-label">Retirement Success</div>
                                     <div class="scenario-retirement-value ${rateClass}">${successRate}%</div>
                                 </div>
-                            ` : ''}
+                            `
+                                : ''
+                            }
                             <div class="scenario-actions-bottom">
                                 ${!isCurrent ? `<button class="scenario-apply-btn" onclick="allocator.applyScenario(${scenario.id})">Apply</button>` : ''}
                                 <button class="scenario-delete-btn" onclick="allocator.deleteScenario(${scenario.id})">Delete</button>
                             </div>
                         </div>
                     `;
-                }).join('');
-            }
+            })
+            .join('');
+        }
+      }
+
+      // Global function for preset buttons
+      let allocator;
+
+      function applyPreset(presetName) {
+        allocator.setPreset(presetName);
+      }
+
+      // Initialize the application
+      DOMUtils.ready(() => {
+        allocator = new IncomeAllocator();
+
+        // Load saved budget planner data
+        const savedData = StorageUtils.get('budgetPlannerData');
+        if (savedData) {
+          // Restore income
+          if (savedData.monthlyIncome) {
+            document.getElementById('income').value = allocator.formatCurrencyInput(
+              savedData.monthlyIncome
+            );
+            document.getElementById('incomeFrequency').value = 'monthly';
+          }
+
+          // Restore allocations
+          if (savedData.fixedCosts !== undefined)
+            allocator.categories.fixedCosts.value = savedData.fixedCosts;
+          if (savedData.shortTerm !== undefined)
+            allocator.categories.shortTerm.value = savedData.shortTerm;
+          if (savedData.longTerm !== undefined)
+            allocator.categories.longTerm.value = savedData.longTerm;
+          if (savedData.guiltFree !== undefined)
+            allocator.categories.guiltFree.value = savedData.guiltFree;
+
+          // Restore tax settings if present
+          if (savedData.taxType) {
+            allocator.setTaxType(savedData.taxType);
+          }
+          if (savedData.zipCode) {
+            document.getElementById('zipCode').value = savedData.zipCode;
+          }
+
+          // Recalculate to update display
+          allocator.calculate();
         }
 
-        // Global function for preset buttons
-        let allocator;
+        // Render saved scenarios
+        allocator.renderScenarios();
 
-        function applyPreset(presetName) {
-            allocator.setPreset(presetName);
+        // Check for URL params from Spending Tracker
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('source') === 'spending-tracker') {
+          const income = parseFloat(urlParams.get('income'));
+          const fixed = parseFloat(urlParams.get('fixed'));
+          const short = parseFloat(urlParams.get('short'));
+          const long = parseFloat(urlParams.get('long'));
+          const guilt = parseFloat(urlParams.get('guilt'));
+
+          if (!isNaN(income) && income > 0) {
+            document.getElementById('income').value = allocator.formatCurrencyInput(income);
+            document.getElementById('incomeFrequency').value = 'monthly';
+          }
+
+          if (!isNaN(fixed)) allocator.categories.fixedCosts.value = fixed;
+          if (!isNaN(short)) allocator.categories.shortTerm.value = short;
+          if (!isNaN(long)) allocator.categories.longTerm.value = long;
+          if (!isNaN(guilt)) allocator.categories.guiltFree.value = guilt;
+
+          allocator.calculate();
+
+          // Clean up URL without reloading
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // Initialize the application
-        DOMUtils.ready(() => {
-            allocator = new IncomeAllocator();
+        // Initialize session toolbar
+        SessionManager.initToolbar(
+          // Get current page data for export
+          () => {
+            const currentData = {
+              monthlyIncome: allocator.getMonthlyIncome(),
+              frequency: document.getElementById('incomeFrequency').value,
+              taxType: allocator.taxType,
+              zipCode: document.getElementById('zipCode').value,
+              fixedCosts: parseFloat(allocator.categories.fixedCosts.value.toFixed(1)),
+              shortTerm: parseFloat(allocator.categories.shortTerm.value.toFixed(1)),
+              longTerm: parseFloat(allocator.categories.longTerm.value.toFixed(1)),
+              guiltFree: parseFloat(allocator.categories.guiltFree.value.toFixed(1)),
+              lastUpdated: new Date().toISOString(),
+            };
 
-            // Load saved budget planner data
+            // Also save to localStorage
+            StorageUtils.set('budgetPlannerData', currentData);
+
+            return {
+              budgetPlanner: currentData,
+            };
+          },
+          // Handle import - update UI directly to reflect changes
+          (result) => {
+            // Reload saved budget planner data and update UI
             const savedData = StorageUtils.get('budgetPlannerData');
             if (savedData) {
-                // Restore income
-                if (savedData.monthlyIncome) {
-                    document.getElementById('income').value = allocator.formatCurrencyInput(savedData.monthlyIncome);
-                    document.getElementById('incomeFrequency').value = 'monthly';
-                }
+              // Restore income with the saved frequency
+              if (savedData.monthlyIncome) {
+                const incomeInput = document.getElementById('income');
+                const freqInput = document.getElementById('incomeFrequency');
+                const frequency = savedData.frequency || 'monthly';
+                freqInput.value = frequency;
 
-                // Restore allocations
-                if (savedData.fixedCosts !== undefined) allocator.categories.fixedCosts.value = savedData.fixedCosts;
-                if (savedData.shortTerm !== undefined) allocator.categories.shortTerm.value = savedData.shortTerm;
-                if (savedData.longTerm !== undefined) allocator.categories.longTerm.value = savedData.longTerm;
-                if (savedData.guiltFree !== undefined) allocator.categories.guiltFree.value = savedData.guiltFree;
-
-                // Restore tax settings if present
-                if (savedData.taxType) {
-                    allocator.setTaxType(savedData.taxType);
+                // Convert monthly income back to the display frequency
+                let displayIncome = savedData.monthlyIncome;
+                if (frequency === 'annual') {
+                  displayIncome = savedData.monthlyIncome * 12;
+                } else if (frequency === 'biweekly') {
+                  displayIncome = (savedData.monthlyIncome * 12) / 26;
                 }
-                if (savedData.zipCode) {
-                    document.getElementById('zipCode').value = savedData.zipCode;
-                }
+                incomeInput.value = allocator.formatCurrencyInput(displayIncome);
 
-                // Recalculate to update display
-                allocator.calculate();
+                // Trigger input event to ensure allocator picks up the change
+                incomeInput.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+
+              // Restore allocations - update both internal value AND slider UI
+              const restoreCategory = (key, value) => {
+                if (value !== undefined) {
+                  allocator.categories[key].value = value;
+                  // Also update the slider element
+                  if (allocator.categories[key].slider) {
+                    allocator.categories[key].slider.value = Math.round(value);
+                  }
+                }
+              };
+              restoreCategory('fixedCosts', savedData.fixedCosts);
+              restoreCategory('shortTerm', savedData.shortTerm);
+              restoreCategory('longTerm', savedData.longTerm);
+              restoreCategory('guiltFree', savedData.guiltFree);
+
+              // Restore tax settings if present
+              if (savedData.taxType) {
+                allocator.setTaxType(savedData.taxType);
+              }
+              if (savedData.zipCode) {
+                document.getElementById('zipCode').value = savedData.zipCode;
+              }
+
+              // Recalculate to update display
+              allocator.calculate();
+              SessionManager.showToast('Budget settings restored!', 'success');
+            } else {
+              // Fallback to reload if no data found
+              window.location.reload();
             }
+          }
+        );
 
-            // Render saved scenarios
-            allocator.renderScenarios();
+        // Initialize status bar
+        if (typeof StatusBar !== 'undefined') {
+          StatusBar.init();
+        }
 
-            // Check for URL params from Spending Tracker
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('source') === 'spending-tracker') {
-                const income = parseFloat(urlParams.get('income'));
-                const fixed = parseFloat(urlParams.get('fixed'));
-                const short = parseFloat(urlParams.get('short'));
-                const long = parseFloat(urlParams.get('long'));
-                const guilt = parseFloat(urlParams.get('guilt'));
-
-                if (!isNaN(income) && income > 0) {
-                    document.getElementById('income').value = allocator.formatCurrencyInput(income);
-                    document.getElementById('incomeFrequency').value = 'monthly';
-                }
-
-                if (!isNaN(fixed)) allocator.categories.fixedCosts.value = fixed;
-                if (!isNaN(short)) allocator.categories.shortTerm.value = short;
-                if (!isNaN(long)) allocator.categories.longTerm.value = long;
-                if (!isNaN(guilt)) allocator.categories.guiltFree.value = guilt;
-
-                allocator.calculate();
-
-                // Clean up URL without reloading
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-
-            // Initialize session toolbar
-            SessionManager.initToolbar(
-                // Get current page data for export
-                () => {
-                    const currentData = {
-                        monthlyIncome: allocator.getMonthlyIncome(),
-                        frequency: document.getElementById('incomeFrequency').value,
-                        taxType: allocator.taxType,
-                        zipCode: document.getElementById('zipCode').value,
-                        fixedCosts: parseFloat(allocator.categories.fixedCosts.value.toFixed(1)),
-                        shortTerm: parseFloat(allocator.categories.shortTerm.value.toFixed(1)),
-                        longTerm: parseFloat(allocator.categories.longTerm.value.toFixed(1)),
-                        guiltFree: parseFloat(allocator.categories.guiltFree.value.toFixed(1)),
-                        lastUpdated: new Date().toISOString()
-                    };
-
-                    // Also save to localStorage
-                    StorageUtils.set('budgetPlannerData', currentData);
-
-                    return {
-                        budgetPlanner: currentData
-                    };
-                },
-                // Handle import - update UI directly to reflect changes
-                (result) => {
-                    // Reload saved budget planner data and update UI
-                    const savedData = StorageUtils.get('budgetPlannerData');
-                    if (savedData) {
-                        // Restore income with the saved frequency
-                        if (savedData.monthlyIncome) {
-                            const incomeInput = document.getElementById('income');
-                            const freqInput = document.getElementById('incomeFrequency');
-                            const frequency = savedData.frequency || 'monthly';
-                            freqInput.value = frequency;
-
-                            // Convert monthly income back to the display frequency
-                            let displayIncome = savedData.monthlyIncome;
-                            if (frequency === 'annual') {
-                                displayIncome = savedData.monthlyIncome * 12;
-                            } else if (frequency === 'biweekly') {
-                                displayIncome = (savedData.monthlyIncome * 12) / 26;
-                            }
-                            incomeInput.value = allocator.formatCurrencyInput(displayIncome);
-
-                            // Trigger input event to ensure allocator picks up the change
-                            incomeInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-
-                        // Restore allocations - update both internal value AND slider UI
-                        const restoreCategory = (key, value) => {
-                            if (value !== undefined) {
-                                allocator.categories[key].value = value;
-                                // Also update the slider element
-                                if (allocator.categories[key].slider) {
-                                    allocator.categories[key].slider.value = Math.round(value);
-                                }
-                            }
-                        };
-                        restoreCategory('fixedCosts', savedData.fixedCosts);
-                        restoreCategory('shortTerm', savedData.shortTerm);
-                        restoreCategory('longTerm', savedData.longTerm);
-                        restoreCategory('guiltFree', savedData.guiltFree);
-
-                        // Restore tax settings if present
-                        if (savedData.taxType) {
-                            allocator.setTaxType(savedData.taxType);
-                        }
-                        if (savedData.zipCode) {
-                            document.getElementById('zipCode').value = savedData.zipCode;
-                        }
-
-                        // Recalculate to update display
-                        allocator.calculate();
-                        SessionManager.showToast('Budget settings restored!', 'success');
-                    } else {
-                        // Fallback to reload if no data found
-                        window.location.reload();
-                    }
-                }
-            );
-
-            // Initialize status bar
-            if (typeof StatusBar !== 'undefined') {
-                StatusBar.init();
-            }
-
-            // Chart download button
-            document.getElementById('downloadAllocationChart').addEventListener('click', () => {
-                allocator.downloadAllocationChart();
-            });
+        // Chart download button
+        document.getElementById('downloadAllocationChart').addEventListener('click', () => {
+          allocator.downloadAllocationChart();
         });
+      });
     </script>
-</body>
+  </body>
 </html>

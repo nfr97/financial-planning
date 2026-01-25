@@ -8,193 +8,193 @@
  */
 
 const FinanceUtils = {
-    /**
-     * Format a number as currency using standard formatting ($1,234)
-     * @param {number} value - The value to format
-     * @param {Object} options - Formatting options
-     * @param {number} options.minimumFractionDigits - Minimum decimal places (default: 0)
-     * @param {number} options.maximumFractionDigits - Maximum decimal places (default: 0)
-     * @returns {string} Formatted currency string
-     */
-    formatCurrency(value, options = {}) {
-        const { minimumFractionDigits = 0, maximumFractionDigits = 0 } = options;
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits,
-            maximumFractionDigits
-        }).format(value);
-    },
+  /**
+   * Format a number as currency using standard formatting ($1,234)
+   * @param {number} value - The value to format
+   * @param {Object} options - Formatting options
+   * @param {number} options.minimumFractionDigits - Minimum decimal places (default: 0)
+   * @param {number} options.maximumFractionDigits - Maximum decimal places (default: 0)
+   * @returns {string} Formatted currency string
+   */
+  formatCurrency(value, options = {}) {
+    const { minimumFractionDigits = 0, maximumFractionDigits = 0 } = options;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits,
+      maximumFractionDigits,
+    }).format(value);
+  },
 
-    /**
-     * Format a number as compact currency ($1.5M, $250K, $500)
-     * Useful for charts and compact displays
-     * @param {number} value - The value to format
-     * @returns {string} Compact formatted currency string
-     */
-    formatCurrencyCompact(value) {
-        const absValue = Math.abs(value);
-        const sign = value < 0 ? '-' : '';
+  /**
+   * Format a number as compact currency ($1.5M, $250K, $500)
+   * Useful for charts and compact displays
+   * @param {number} value - The value to format
+   * @returns {string} Compact formatted currency string
+   */
+  formatCurrencyCompact(value) {
+    const absValue = Math.abs(value);
+    const sign = value < 0 ? '-' : '';
 
-        if (absValue >= 1000000) {
-            return sign + '$' + (absValue / 1000000).toFixed(absValue >= 10000000 ? 1 : 2) + 'M';
-        } else if (absValue >= 1000) {
-            return sign + '$' + (absValue / 1000).toFixed(0) + 'K';
-        } else {
-            return sign + '$' + absValue.toFixed(0);
-        }
-    },
-
-    /**
-     * Format a percentage value
-     * @param {number} value - The value to format (e.g., 50 for 50%)
-     * @param {number} decimals - Number of decimal places (default: 1)
-     * @returns {string} Formatted percentage string
-     */
-    formatPercent(value, decimals = 1) {
-        return value.toFixed(decimals) + '%';
+    if (absValue >= 1000000) {
+      return sign + '$' + (absValue / 1000000).toFixed(absValue >= 10000000 ? 1 : 2) + 'M';
+    } else if (absValue >= 1000) {
+      return sign + '$' + (absValue / 1000).toFixed(0) + 'K';
+    } else {
+      return sign + '$' + absValue.toFixed(0);
     }
+  },
+
+  /**
+   * Format a percentage value
+   * @param {number} value - The value to format (e.g., 50 for 50%)
+   * @param {number} decimals - Number of decimal places (default: 1)
+   * @returns {string} Formatted percentage string
+   */
+  formatPercent(value, decimals = 1) {
+    return value.toFixed(decimals) + '%';
+  },
 };
 
 const StorageUtils = {
-    /**
-     * Get a value from localStorage with optional default
-     * @param {string} key - The storage key
-     * @param {*} defaultValue - Default value if key doesn't exist
-     * @returns {*} The stored value or default
-     */
-    get(key, defaultValue = null) {
-        try {
-            const item = localStorage.getItem(key);
-            if (item === null) return defaultValue;
-            return JSON.parse(item);
-        } catch (e) {
-            // If JSON parsing fails, return raw string or default
-            const item = localStorage.getItem(key);
-            return item !== null ? item : defaultValue;
-        }
-    },
-
-    /**
-     * Set a value in localStorage
-     * @param {string} key - The storage key
-     * @param {*} value - The value to store (will be JSON stringified if object)
-     */
-    set(key, value) {
-        try {
-            if (typeof value === 'object') {
-                localStorage.setItem(key, JSON.stringify(value));
-            } else {
-                localStorage.setItem(key, value);
-            }
-        } catch (e) {
-            console.warn('Failed to save to localStorage:', e);
-        }
-    },
-
-    /**
-     * Remove a value from localStorage
-     * @param {string} key - The storage key to remove
-     */
-    remove(key) {
-        localStorage.removeItem(key);
+  /**
+   * Get a value from localStorage with optional default
+   * @param {string} key - The storage key
+   * @param {*} defaultValue - Default value if key doesn't exist
+   * @returns {*} The stored value or default
+   */
+  get(key, defaultValue = null) {
+    try {
+      const item = localStorage.getItem(key);
+      if (item === null) return defaultValue;
+      return JSON.parse(item);
+    } catch (e) {
+      // If JSON parsing fails, return raw string or default
+      const item = localStorage.getItem(key);
+      return item !== null ? item : defaultValue;
     }
+  },
+
+  /**
+   * Set a value in localStorage
+   * @param {string} key - The storage key
+   * @param {*} value - The value to store (will be JSON stringified if object)
+   */
+  set(key, value) {
+    try {
+      if (typeof value === 'object') {
+        localStorage.setItem(key, JSON.stringify(value));
+      } else {
+        localStorage.setItem(key, value);
+      }
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e);
+    }
+  },
+
+  /**
+   * Remove a value from localStorage
+   * @param {string} key - The storage key to remove
+   */
+  remove(key) {
+    localStorage.removeItem(key);
+  },
 };
 
 const DOMUtils = {
-    /**
-     * Escape HTML special characters to prevent XSS
-     * @param {string} text - The text to escape
-     * @returns {string} Escaped text safe for HTML insertion
-     */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    },
+  /**
+   * Escape HTML special characters to prevent XSS
+   * @param {string} text - The text to escape
+   * @returns {string} Escaped text safe for HTML insertion
+   */
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
 
-    /**
-     * Run a function when the DOM is ready
-     * @param {Function} fn - The function to run
-     */
-    ready(fn) {
-        if (document.readyState !== 'loading') {
-            fn();
-        } else {
-            document.addEventListener('DOMContentLoaded', fn);
-        }
-    },
-
-    /**
-     * Create a downloadable file from content
-     * @param {string} content - The file content
-     * @param {string} filename - The name of the file to download
-     * @param {string} mimeType - The MIME type (default: text/plain)
-     */
-    downloadFile(content, filename, mimeType = 'text/plain') {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
+  /**
+   * Run a function when the DOM is ready
+   * @param {Function} fn - The function to run
+   */
+  ready(fn) {
+    if (document.readyState !== 'loading') {
+      fn();
+    } else {
+      document.addEventListener('DOMContentLoaded', fn);
     }
+  },
+
+  /**
+   * Create a downloadable file from content
+   * @param {string} content - The file content
+   * @param {string} filename - The name of the file to download
+   * @param {string} mimeType - The MIME type (default: text/plain)
+   */
+  downloadFile(content, filename, mimeType = 'text/plain') {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 const DateUtils = {
-    /**
-     * Parse a date string in various formats
-     * @param {string} dateStr - The date string to parse
-     * @returns {string|null} ISO date string (YYYY-MM-DD) or null if invalid
-     */
-    parseDate(dateStr) {
-        if (!dateStr) return null;
+  /**
+   * Parse a date string in various formats
+   * @param {string} dateStr - The date string to parse
+   * @returns {string|null} ISO date string (YYYY-MM-DD) or null if invalid
+   */
+  parseDate(dateStr) {
+    if (!dateStr) return null;
 
-        dateStr = dateStr.replace(/"/g, '').trim();
+    dateStr = dateStr.replace(/"/g, '').trim();
 
-        // Try various formats
-        const formats = [
-            /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,  // MM/DD/YYYY
-            /^(\d{4})-(\d{2})-(\d{2})$/,        // YYYY-MM-DD
-            /^(\d{1,2})-(\d{1,2})-(\d{4})$/     // MM-DD-YYYY
-        ];
+    // Try various formats
+    const formats = [
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // MM/DD/YYYY
+      /^(\d{4})-(\d{2})-(\d{2})$/, // YYYY-MM-DD
+      /^(\d{1,2})-(\d{1,2})-(\d{4})$/, // MM-DD-YYYY
+    ];
 
-        for (let i = 0; i < formats.length; i++) {
-            const match = dateStr.match(formats[i]);
-            if (match) {
-                if (i === 1) {
-                    // YYYY-MM-DD - already in correct format
-                    return `${match[1]}-${match[2]}-${match[3]}`;
-                } else {
-                    // MM/DD/YYYY or MM-DD-YYYY
-                    const month = match[1].padStart(2, '0');
-                    const day = match[2].padStart(2, '0');
-                    const year = match[3];
-                    return `${year}-${month}-${day}`;
-                }
-            }
+    for (let i = 0; i < formats.length; i++) {
+      const match = dateStr.match(formats[i]);
+      if (match) {
+        if (i === 1) {
+          // YYYY-MM-DD - already in correct format
+          return `${match[1]}-${match[2]}-${match[3]}`;
+        } else {
+          // MM/DD/YYYY or MM-DD-YYYY
+          const month = match[1].padStart(2, '0');
+          const day = match[2].padStart(2, '0');
+          const year = match[3];
+          return `${year}-${month}-${day}`;
         }
-
-        // Fallback: try native Date parsing
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime())) {
-            return date.toISOString().split('T')[0];
-        }
-
-        return null;
-    },
-
-    /**
-     * Format a date for display
-     * @param {string|Date} date - The date to format
-     * @param {Object} options - Intl.DateTimeFormat options
-     * @returns {string} Formatted date string
-     */
-    formatDate(date, options = {}) {
-        const d = typeof date === 'string' ? new Date(date) : date;
-        return d.toLocaleDateString('en-US', options);
+      }
     }
+
+    // Fallback: try native Date parsing
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+
+    return null;
+  },
+
+  /**
+   * Format a date for display
+   * @param {string|Date} date - The date to format
+   * @param {Object} options - Intl.DateTimeFormat options
+   * @returns {string} Formatted date string
+   */
+  formatDate(date, options = {}) {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleDateString('en-US', options);
+  },
 };
 
 /**
@@ -202,188 +202,188 @@ const DateUtils = {
  * Allows users to export their data as a JSON file and import it later
  */
 const SessionManager = {
-    VERSION: '1.0',
+  VERSION: '1.0',
 
-    /**
-     * Storage keys used by each page
-     */
-    STORAGE_KEYS: {
-        budgetPlanner: 'budgetPlannerData',
-        budgetRetirement: 'budgetRetirementData',
-        spendingTracker: 'spendingTrackerData',
-        transactionRules: 'transactionRules',
-        transactionData: 'transactionData',
-        bankFormat: 'bankFormat',
-        aiProvider: 'aiProvider',
-        retirementForecast: 'retirementForecastData',
-        lifeEvents: 'lifeEventsData'
-    },
+  /**
+   * Storage keys used by each page
+   */
+  STORAGE_KEYS: {
+    budgetPlanner: 'budgetPlannerData',
+    budgetRetirement: 'budgetRetirementData',
+    spendingTracker: 'spendingTrackerData',
+    transactionRules: 'transactionRules',
+    transactionData: 'transactionData',
+    bankFormat: 'bankFormat',
+    aiProvider: 'aiProvider',
+    retirementForecast: 'retirementForecastData',
+    lifeEvents: 'lifeEventsData',
+  },
 
-    /**
-     * Export all session data as a downloadable JSON file
-     * @param {Object} pageData - Additional page-specific data to include
-     * @returns {Object} The complete session object
-     */
-    exportSession(pageData = {}) {
-        const session = {
-            version: this.VERSION,
-            exportedAt: new Date().toISOString(),
-            budgetPlanner: StorageUtils.get(this.STORAGE_KEYS.budgetPlanner, null),
-            budgetRetirement: StorageUtils.get(this.STORAGE_KEYS.budgetRetirement, null),
-            spendingTracker: StorageUtils.get(this.STORAGE_KEYS.spendingTracker, null),
-            transactionRules: StorageUtils.get(this.STORAGE_KEYS.transactionRules, {}),
-            transactionData: StorageUtils.get(this.STORAGE_KEYS.transactionData, []),
-            bankFormat: StorageUtils.get(this.STORAGE_KEYS.bankFormat, 'chase'),
-            aiProvider: StorageUtils.get(this.STORAGE_KEYS.aiProvider, 'gemini'),
-            retirementForecast: StorageUtils.get(this.STORAGE_KEYS.retirementForecast, null),
-            lifeEvents: StorageUtils.get(this.STORAGE_KEYS.lifeEvents, []),
-            ...pageData
-        };
+  /**
+   * Export all session data as a downloadable JSON file
+   * @param {Object} pageData - Additional page-specific data to include
+   * @returns {Object} The complete session object
+   */
+  exportSession(pageData = {}) {
+    const session = {
+      version: this.VERSION,
+      exportedAt: new Date().toISOString(),
+      budgetPlanner: StorageUtils.get(this.STORAGE_KEYS.budgetPlanner, null),
+      budgetRetirement: StorageUtils.get(this.STORAGE_KEYS.budgetRetirement, null),
+      spendingTracker: StorageUtils.get(this.STORAGE_KEYS.spendingTracker, null),
+      transactionRules: StorageUtils.get(this.STORAGE_KEYS.transactionRules, {}),
+      transactionData: StorageUtils.get(this.STORAGE_KEYS.transactionData, []),
+      bankFormat: StorageUtils.get(this.STORAGE_KEYS.bankFormat, 'chase'),
+      aiProvider: StorageUtils.get(this.STORAGE_KEYS.aiProvider, 'gemini'),
+      retirementForecast: StorageUtils.get(this.STORAGE_KEYS.retirementForecast, null),
+      lifeEvents: StorageUtils.get(this.STORAGE_KEYS.lifeEvents, []),
+      ...pageData,
+    };
 
-        return session;
-    },
+    return session;
+  },
 
-    /**
-     * Download session as JSON file
-     * @param {Object} pageData - Additional page-specific data to include
-     */
-    downloadSession(pageData = {}) {
-        const session = this.exportSession(pageData);
-        const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `financial-plan-${timestamp}.json`;
-        DOMUtils.downloadFile(
-            JSON.stringify(session, null, 2),
-            filename,
-            'application/json'
-        );
-        return session;
-    },
+  /**
+   * Download session as JSON file
+   * @param {Object} pageData - Additional page-specific data to include
+   */
+  downloadSession(pageData = {}) {
+    const session = this.exportSession(pageData);
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `financial-plan-${timestamp}.json`;
+    DOMUtils.downloadFile(JSON.stringify(session, null, 2), filename, 'application/json');
+    return session;
+  },
 
-    /**
-     * Import session data from a JSON object
-     * @param {Object} session - The session object to import
-     * @returns {Object} Result with success status, warnings, and session metadata
-     */
-    importSession(session) {
-        const result = { success: false, warnings: [], imported: [], exportedAt: null };
+  /**
+   * Import session data from a JSON object
+   * @param {Object} session - The session object to import
+   * @returns {Object} Result with success status, warnings, and session metadata
+   */
+  importSession(session) {
+    const result = { success: false, warnings: [], imported: [], exportedAt: null };
 
-        // Capture the session export timestamp
-        if (session.exportedAt) {
-            result.exportedAt = session.exportedAt;
+    // Capture the session export timestamp
+    if (session.exportedAt) {
+      result.exportedAt = session.exportedAt;
+    }
+
+    // Validate version
+    if (!session.version) {
+      result.warnings.push('Session file missing version - attempting import anyway');
+    }
+
+    // Import budget planner data
+    if (session.budgetPlanner) {
+      StorageUtils.set(this.STORAGE_KEYS.budgetPlanner, session.budgetPlanner);
+      result.imported.push('Budget Planner settings');
+    }
+
+    // Import budget retirement data
+    if (session.budgetRetirement) {
+      StorageUtils.set(this.STORAGE_KEYS.budgetRetirement, session.budgetRetirement);
+      result.imported.push('Retirement contribution settings');
+    }
+
+    // Import spending tracker data
+    if (session.spendingTracker) {
+      StorageUtils.set(this.STORAGE_KEYS.spendingTracker, session.spendingTracker);
+      result.imported.push('Spending Tracker data');
+    }
+
+    // Import transaction rules
+    if (session.transactionRules && Object.keys(session.transactionRules).length > 0) {
+      StorageUtils.set(this.STORAGE_KEYS.transactionRules, session.transactionRules);
+      result.imported.push('Transaction categorization rules');
+    }
+
+    // Import transaction data (parsed transactions from CSV uploads)
+    if (
+      session.transactionData &&
+      Array.isArray(session.transactionData) &&
+      session.transactionData.length > 0
+    ) {
+      StorageUtils.set(this.STORAGE_KEYS.transactionData, session.transactionData);
+      result.imported.push(`${session.transactionData.length} transactions`);
+    }
+
+    // Import bank format preference
+    if (session.bankFormat) {
+      StorageUtils.set(this.STORAGE_KEYS.bankFormat, session.bankFormat);
+    }
+
+    // Import AI provider preference
+    if (session.aiProvider) {
+      StorageUtils.set(this.STORAGE_KEYS.aiProvider, session.aiProvider);
+      result.imported.push('AI provider preference');
+    }
+
+    // Import retirement forecast data
+    if (session.retirementForecast) {
+      StorageUtils.set(this.STORAGE_KEYS.retirementForecast, session.retirementForecast);
+      result.imported.push('Retirement Forecast settings');
+    }
+
+    // Import life events
+    if (session.lifeEvents && Array.isArray(session.lifeEvents)) {
+      StorageUtils.set(this.STORAGE_KEYS.lifeEvents, session.lifeEvents);
+      result.imported.push('Life events');
+    }
+
+    result.success = result.imported.length > 0;
+    return result;
+  },
+
+  /**
+   * Prompt user to select and import a session file
+   * @param {Function} onComplete - Callback with import result
+   */
+  promptImport(onComplete) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) {
+        onComplete({ success: false, error: 'No file selected' });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const session = JSON.parse(event.target.result);
+          const result = this.importSession(session);
+          onComplete(result);
+        } catch (err) {
+          onComplete({ success: false, error: 'Invalid JSON file: ' + err.message });
         }
+      };
+      reader.onerror = () => {
+        onComplete({ success: false, error: 'Failed to read file' });
+      };
+      reader.readAsText(file);
+    };
 
-        // Validate version
-        if (!session.version) {
-            result.warnings.push('Session file missing version - attempting import anyway');
-        }
+    input.click();
+  },
 
-        // Import budget planner data
-        if (session.budgetPlanner) {
-            StorageUtils.set(this.STORAGE_KEYS.budgetPlanner, session.budgetPlanner);
-            result.imported.push('Budget Planner settings');
-        }
+  /**
+   * Clear all session data from localStorage
+   */
+  clearSession() {
+    for (const key of Object.values(this.STORAGE_KEYS)) {
+      StorageUtils.remove(key);
+    }
+  },
 
-        // Import budget retirement data
-        if (session.budgetRetirement) {
-            StorageUtils.set(this.STORAGE_KEYS.budgetRetirement, session.budgetRetirement);
-            result.imported.push('Retirement contribution settings');
-        }
-
-        // Import spending tracker data
-        if (session.spendingTracker) {
-            StorageUtils.set(this.STORAGE_KEYS.spendingTracker, session.spendingTracker);
-            result.imported.push('Spending Tracker data');
-        }
-
-        // Import transaction rules
-        if (session.transactionRules && Object.keys(session.transactionRules).length > 0) {
-            StorageUtils.set(this.STORAGE_KEYS.transactionRules, session.transactionRules);
-            result.imported.push('Transaction categorization rules');
-        }
-
-        // Import transaction data (parsed transactions from CSV uploads)
-        if (session.transactionData && Array.isArray(session.transactionData) && session.transactionData.length > 0) {
-            StorageUtils.set(this.STORAGE_KEYS.transactionData, session.transactionData);
-            result.imported.push(`${session.transactionData.length} transactions`);
-        }
-
-        // Import bank format preference
-        if (session.bankFormat) {
-            StorageUtils.set(this.STORAGE_KEYS.bankFormat, session.bankFormat);
-        }
-
-        // Import AI provider preference
-        if (session.aiProvider) {
-            StorageUtils.set(this.STORAGE_KEYS.aiProvider, session.aiProvider);
-            result.imported.push('AI provider preference');
-        }
-
-        // Import retirement forecast data
-        if (session.retirementForecast) {
-            StorageUtils.set(this.STORAGE_KEYS.retirementForecast, session.retirementForecast);
-            result.imported.push('Retirement Forecast settings');
-        }
-
-        // Import life events
-        if (session.lifeEvents && Array.isArray(session.lifeEvents)) {
-            StorageUtils.set(this.STORAGE_KEYS.lifeEvents, session.lifeEvents);
-            result.imported.push('Life events');
-        }
-
-        result.success = result.imported.length > 0;
-        return result;
-    },
-
-    /**
-     * Prompt user to select and import a session file
-     * @param {Function} onComplete - Callback with import result
-     */
-    promptImport(onComplete) {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json,application/json';
-
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) {
-                onComplete({ success: false, error: 'No file selected' });
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const session = JSON.parse(event.target.result);
-                    const result = this.importSession(session);
-                    onComplete(result);
-                } catch (err) {
-                    onComplete({ success: false, error: 'Invalid JSON file: ' + err.message });
-                }
-            };
-            reader.onerror = () => {
-                onComplete({ success: false, error: 'Failed to read file' });
-            };
-            reader.readAsText(file);
-        };
-
-        input.click();
-    },
-
-    /**
-     * Clear all session data from localStorage
-     */
-    clearSession() {
-        for (const key of Object.values(this.STORAGE_KEYS)) {
-            StorageUtils.remove(key);
-        }
-    },
-
-    /**
-     * Create the session toolbar HTML
-     * @returns {string} HTML string for the session toolbar
-     */
-    createToolbarHTML() {
-        return `
+  /**
+   * Create the session toolbar HTML
+   * @returns {string} HTML string for the session toolbar
+   */
+  createToolbarHTML() {
+    return `
             <div class="session-toolbar" role="toolbar" aria-label="Session management">
                 <button type="button" class="session-btn session-save-btn" id="saveSessionBtn" aria-label="Save session to file">
                     <span aria-hidden="true">&#128190;</span> Save Session
@@ -396,14 +396,14 @@ const SessionManager = {
                 </button>
             </div>
         `;
-    },
+  },
 
-    /**
-     * Get the CSS styles for the session toolbar
-     * @returns {string} CSS string
-     */
-    getToolbarStyles() {
-        return `
+  /**
+   * Get the CSS styles for the session toolbar
+   * @returns {string} CSS string
+   */
+  getToolbarStyles() {
+    return `
             .session-toolbar {
                 display: flex;
                 gap: 10px;
@@ -514,134 +514,134 @@ const SessionManager = {
                 }
             }
         `;
-    },
+  },
 
-    /**
-     * Show a toast notification
-     * @param {string} message - The message to display
-     * @param {string} type - 'success', 'error', or 'info'
-     * @param {number} duration - How long to show the toast (ms)
-     */
-    showToast(message, type = 'info', duration = 3000) {
-        // Remove any existing toasts
-        const existing = document.querySelector('.session-toast');
-        if (existing) existing.remove();
+  /**
+   * Show a toast notification
+   * @param {string} message - The message to display
+   * @param {string} type - 'success', 'error', or 'info'
+   * @param {number} duration - How long to show the toast (ms)
+   */
+  showToast(message, type = 'info', duration = 3000) {
+    // Remove any existing toasts
+    const existing = document.querySelector('.session-toast');
+    if (existing) existing.remove();
 
-        const toast = document.createElement('div');
-        toast.className = `session-toast ${type}`;
-        toast.textContent = message;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'polite');
-        document.body.appendChild(toast);
+    const toast = document.createElement('div');
+    toast.className = `session-toast ${type}`;
+    toast.textContent = message;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'polite');
+    document.body.appendChild(toast);
 
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
-    },
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  },
 
-    /**
-     * Initialize session toolbar on a page
-     * @param {Function} getPageData - Function to get current page-specific data
-     * @param {Function} onImport - Function to call after successful import to refresh page
-     */
-    initToolbar(getPageData, onImport) {
-        // Inject styles
-        if (!document.getElementById('session-toolbar-styles')) {
-            const style = document.createElement('style');
-            style.id = 'session-toolbar-styles';
-            style.textContent = this.getToolbarStyles();
-            document.head.appendChild(style);
+  /**
+   * Initialize session toolbar on a page
+   * @param {Function} getPageData - Function to get current page-specific data
+   * @param {Function} onImport - Function to call after successful import to refresh page
+   */
+  initToolbar(getPageData, onImport) {
+    // Inject styles
+    if (!document.getElementById('session-toolbar-styles')) {
+      const style = document.createElement('style');
+      style.id = 'session-toolbar-styles';
+      style.textContent = this.getToolbarStyles();
+      document.head.appendChild(style);
+    }
+
+    // Find container and inject toolbar after header
+    const container = document.querySelector('.container');
+    const header = container?.querySelector('header');
+    if (header) {
+      header.insertAdjacentHTML('afterend', this.createToolbarHTML());
+
+      // Bind save button
+      document.getElementById('saveSessionBtn').addEventListener('click', () => {
+        const pageData = getPageData ? getPageData() : {};
+        this.downloadSession(pageData);
+        this.showToast('Session saved! Check your downloads folder.', 'success');
+      });
+
+      // Bind load button
+      document.getElementById('loadSessionBtn').addEventListener('click', () => {
+        this.promptImport((result) => {
+          if (result.success) {
+            // Format the session date/time for display
+            let sessionDateStr = '';
+            if (result.exportedAt) {
+              const sessionDate = new Date(result.exportedAt);
+              sessionDateStr = sessionDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              });
+            }
+
+            // Show confirmation banner
+            this.showSessionLoadedBanner(sessionDateStr, result.imported);
+
+            if (onImport) {
+              onImport(result);
+            } else {
+              // Default: reload page to reflect changes after user sees the banner
+              setTimeout(() => window.location.reload(), 3000);
+            }
+          } else if (result.error) {
+            this.showToast(result.error, 'error');
+          } else {
+            this.showToast('No data found to import', 'info');
+          }
+        });
+      });
+
+      // Bind clear button
+      document.getElementById('clearSessionBtn').addEventListener('click', () => {
+        const confirmed = confirm(
+          'Clear all stored data?\n\n' +
+            'This will permanently delete:\n' +
+            '• Budget planner settings\n' +
+            '• Transaction data and rules\n' +
+            '• Retirement forecast settings\n' +
+            '• API keys for AI categorization\n' +
+            '• All other saved preferences\n\n' +
+            'This cannot be undone. Continue?'
+        );
+        if (confirmed) {
+          this.clearSession();
+          // Also clear API keys (stored separately per provider)
+          ['gemini', 'openai', 'anthropic'].forEach((p) => StorageUtils.remove(`apiKey_${p}`));
+          this.showToast('All stored data cleared.', 'success');
+          setTimeout(() => window.location.reload(), 1500);
         }
+      });
+    }
+  },
 
-        // Find container and inject toolbar after header
-        const container = document.querySelector('.container');
-        const header = container?.querySelector('header');
-        if (header) {
-            header.insertAdjacentHTML('afterend', this.createToolbarHTML());
+  /**
+   * Show a prominent banner when session is loaded
+   * @param {string} sessionDateStr - Formatted date string of the session
+   * @param {Array} imported - List of imported items
+   */
+  showSessionLoadedBanner(sessionDateStr, imported) {
+    // Remove any existing banner
+    const existing = document.querySelector('.session-loaded-banner');
+    if (existing) existing.remove();
 
-            // Bind save button
-            document.getElementById('saveSessionBtn').addEventListener('click', () => {
-                const pageData = getPageData ? getPageData() : {};
-                this.downloadSession(pageData);
-                this.showToast('Session saved! Check your downloads folder.', 'success');
-            });
-
-            // Bind load button
-            document.getElementById('loadSessionBtn').addEventListener('click', () => {
-                this.promptImport((result) => {
-                    if (result.success) {
-                        // Format the session date/time for display
-                        let sessionDateStr = '';
-                        if (result.exportedAt) {
-                            const sessionDate = new Date(result.exportedAt);
-                            sessionDateStr = sessionDate.toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
-                            });
-                        }
-
-                        // Show confirmation banner
-                        this.showSessionLoadedBanner(sessionDateStr, result.imported);
-
-                        if (onImport) {
-                            onImport(result);
-                        } else {
-                            // Default: reload page to reflect changes after user sees the banner
-                            setTimeout(() => window.location.reload(), 3000);
-                        }
-                    } else if (result.error) {
-                        this.showToast(result.error, 'error');
-                    } else {
-                        this.showToast('No data found to import', 'info');
-                    }
-                });
-            });
-
-            // Bind clear button
-            document.getElementById('clearSessionBtn').addEventListener('click', () => {
-                const confirmed = confirm(
-                    'Clear all stored data?\n\n' +
-                    'This will permanently delete:\n' +
-                    '• Budget planner settings\n' +
-                    '• Transaction data and rules\n' +
-                    '• Retirement forecast settings\n' +
-                    '• API keys for AI categorization\n' +
-                    '• All other saved preferences\n\n' +
-                    'This cannot be undone. Continue?'
-                );
-                if (confirmed) {
-                    this.clearSession();
-                    // Also clear API keys (stored separately per provider)
-                    ['gemini', 'openai', 'anthropic'].forEach(p => StorageUtils.remove(`apiKey_${p}`));
-                    this.showToast('All stored data cleared.', 'success');
-                    setTimeout(() => window.location.reload(), 1500);
-                }
-            });
-        }
-    },
-
-    /**
-     * Show a prominent banner when session is loaded
-     * @param {string} sessionDateStr - Formatted date string of the session
-     * @param {Array} imported - List of imported items
-     */
-    showSessionLoadedBanner(sessionDateStr, imported) {
-        // Remove any existing banner
-        const existing = document.querySelector('.session-loaded-banner');
-        if (existing) existing.remove();
-
-        // Inject banner styles if not already present
-        if (!document.getElementById('session-banner-styles')) {
-            const style = document.createElement('style');
-            style.id = 'session-banner-styles';
-            style.textContent = `
+    // Inject banner styles if not already present
+    if (!document.getElementById('session-banner-styles')) {
+      const style = document.createElement('style');
+      style.id = 'session-banner-styles';
+      style.textContent = `
                 .session-loaded-banner {
                     position: fixed;
                     top: 0;
@@ -705,48 +705,49 @@ const SessionManager = {
                     }
                 }
             `;
-            document.head.appendChild(style);
-        }
+      document.head.appendChild(style);
+    }
 
-        // Create banner element
-        const banner = document.createElement('div');
-        banner.className = 'session-loaded-banner';
-        banner.setAttribute('role', 'alert');
-        banner.setAttribute('aria-live', 'assertive');
+    // Create banner element
+    const banner = document.createElement('div');
+    banner.className = 'session-loaded-banner';
+    banner.setAttribute('role', 'alert');
+    banner.setAttribute('aria-live', 'assertive');
 
-        let dateDisplay = sessionDateStr
-            ? `<div class="session-date">Session from: <strong>${sessionDateStr}</strong></div>`
-            : '';
+    let dateDisplay = sessionDateStr
+      ? `<div class="session-date">Session from: <strong>${sessionDateStr}</strong></div>`
+      : '';
 
-        let itemsDisplay = imported && imported.length > 0
-            ? `<div class="session-items">Restored: ${imported.join(', ')}</div>`
-            : '';
+    let itemsDisplay =
+      imported && imported.length > 0
+        ? `<div class="session-items">Restored: ${imported.join(', ')}</div>`
+        : '';
 
-        banner.innerHTML = `
+    banner.innerHTML = `
             <button class="dismiss-btn" aria-label="Dismiss notification">&times;</button>
             <h3><span aria-hidden="true">✓</span> Previous Session Loaded Successfully</h3>
             ${dateDisplay}
             ${itemsDisplay}
         `;
 
-        document.body.appendChild(banner);
+    document.body.appendChild(banner);
 
-        // Bind dismiss button
-        banner.querySelector('.dismiss-btn').addEventListener('click', () => {
-            banner.style.opacity = '0';
-            banner.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => banner.remove(), 300);
-        });
+    // Bind dismiss button
+    banner.querySelector('.dismiss-btn').addEventListener('click', () => {
+      banner.style.opacity = '0';
+      banner.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => banner.remove(), 300);
+    });
 
-        // Auto-dismiss after 8 seconds
-        setTimeout(() => {
-            if (document.body.contains(banner)) {
-                banner.style.opacity = '0';
-                banner.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => banner.remove(), 300);
-            }
-        }, 8000);
-    }
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => {
+      if (document.body.contains(banner)) {
+        banner.style.opacity = '0';
+        banner.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => banner.remove(), 300);
+      }
+    }, 8000);
+  },
 };
 
 /**
@@ -754,105 +755,112 @@ const SessionManager = {
  * Provides unified access to data across all three tools
  */
 const CrossToolState = {
-    /**
-     * Get budget planner state
-     */
-    getBudgetState() {
-        const data = StorageUtils.get('budgetPlannerData');
-        if (!data) return null;
+  /**
+   * Get budget planner state
+   */
+  getBudgetState() {
+    const data = StorageUtils.get('budgetPlannerData');
+    if (!data) return null;
 
-        return {
-            monthlyIncome: data.monthlyIncome || 0,
-            fixedCosts: data.fixedCosts || 0,
-            shortTerm: data.shortTerm || 0,
-            longTerm: data.longTerm || 0,
-            guiltFree: data.guiltFree || 0,
-            lastUpdated: data.lastUpdated
-        };
-    },
+    return {
+      monthlyIncome: data.monthlyIncome || 0,
+      fixedCosts: data.fixedCosts || 0,
+      shortTerm: data.shortTerm || 0,
+      longTerm: data.longTerm || 0,
+      guiltFree: data.guiltFree || 0,
+      lastUpdated: data.lastUpdated,
+    };
+  },
 
-    /**
-     * Get spending tracker state
-     */
-    getSpendingState() {
-        const data = StorageUtils.get('spendingTrackerData');
-        if (!data) return null;
+  /**
+   * Get spending tracker state
+   */
+  getSpendingState() {
+    const data = StorageUtils.get('spendingTrackerData');
+    if (!data) return null;
 
-        return {
-            monthlySpending: data.monthlySpending || 0,
-            monthlySavings: data.monthlySavings || 0,
-            categoryBreakdown: data.categoryBreakdown || {},
-            transactionCount: data.transactionCount || 0,
-            lastUpdated: data.lastUpdated,
-            period: data.period || 'Unknown'
-        };
-    },
+    return {
+      monthlySpending: data.monthlySpending || 0,
+      monthlySavings: data.monthlySavings || 0,
+      categoryBreakdown: data.categoryBreakdown || {},
+      transactionCount: data.transactionCount || 0,
+      lastUpdated: data.lastUpdated,
+      period: data.period || 'Unknown',
+    };
+  },
 
-    /**
-     * Get retirement forecast state
-     */
-    getRetirementState() {
-        const data = StorageUtils.get('retirementForecastData');
-        if (!data) return null;
+  /**
+   * Get retirement forecast state
+   */
+  getRetirementState() {
+    const data = StorageUtils.get('retirementForecastData');
+    if (!data) return null;
 
-        return {
-            successRate: data.successRate || 0,
-            medianEndingBalance: data.medianEndingBalance || 0,
-            lastRunAt: data.lastRunAt,
-            currentAge: data.currentAge,
-            retirementAge: data.retirementAge
-        };
-    },
+    return {
+      successRate: data.successRate || 0,
+      medianEndingBalance: data.medianEndingBalance || 0,
+      lastRunAt: data.lastRunAt,
+      currentAge: data.currentAge,
+      retirementAge: data.retirementAge,
+    };
+  },
 
-    /**
-     * Get complete state across all tools
-     */
-    getAllState() {
-        return {
-            budget: this.getBudgetState(),
-            spending: this.getSpendingState(),
-            retirement: this.getRetirementState()
-        };
-    },
+  /**
+   * Get complete state across all tools
+   */
+  getAllState() {
+    return {
+      budget: this.getBudgetState(),
+      spending: this.getSpendingState(),
+      retirement: this.getRetirementState(),
+    };
+  },
 
-    /**
-     * Calculate quick retirement estimate without full simulation
-     * @param {number} currentAge
-     * @param {number} retirementAge
-     * @param {number} currentSavings
-     * @param {number} annualContribution
-     * @param {number} annualSpending
-     * @returns {Object} Quick estimate
-     */
-    quickRetirementEstimate(currentAge, retirementAge, currentSavings, annualContribution, annualSpending) {
-        const yearsToRetirement = retirementAge - currentAge;
-        const assumedReturn = 0.07; // 7% annual return
-        const inflationRate = 0.03;
+  /**
+   * Calculate quick retirement estimate without full simulation
+   * @param {number} currentAge
+   * @param {number} retirementAge
+   * @param {number} currentSavings
+   * @param {number} annualContribution
+   * @param {number} annualSpending
+   * @returns {Object} Quick estimate
+   */
+  quickRetirementEstimate(
+    currentAge,
+    retirementAge,
+    currentSavings,
+    annualContribution,
+    annualSpending
+  ) {
+    const yearsToRetirement = retirementAge - currentAge;
+    const assumedReturn = 0.07; // 7% annual return
+    const inflationRate = 0.03;
 
-        // Calculate future value of current savings
-        const futureCurrentSavings = currentSavings * Math.pow(1 + assumedReturn, yearsToRetirement);
+    // Calculate future value of current savings
+    const futureCurrentSavings = currentSavings * Math.pow(1 + assumedReturn, yearsToRetirement);
 
-        // Calculate future value of annuity (annual contributions)
-        const futureContributions = annualContribution *
-            ((Math.pow(1 + assumedReturn, yearsToRetirement) - 1) / assumedReturn);
+    // Calculate future value of annuity (annual contributions)
+    const futureContributions =
+      annualContribution * ((Math.pow(1 + assumedReturn, yearsToRetirement) - 1) / assumedReturn);
 
-        const totalAtRetirement = futureCurrentSavings + futureContributions;
+    const totalAtRetirement = futureCurrentSavings + futureContributions;
 
-        // Estimate years of retirement funding (simple calculation)
-        const retirementYears = 90 - retirementAge; // Assume living to 90
-        const inflationAdjustedSpending = annualSpending * Math.pow(1 + inflationRate, yearsToRetirement);
-        const requiredSavings = inflationAdjustedSpending * retirementYears * 0.8; // Rough estimate
+    // Estimate years of retirement funding (simple calculation)
+    const retirementYears = 90 - retirementAge; // Assume living to 90
+    const inflationAdjustedSpending =
+      annualSpending * Math.pow(1 + inflationRate, yearsToRetirement);
+    const requiredSavings = inflationAdjustedSpending * retirementYears * 0.8; // Rough estimate
 
-        const successRate = Math.min(100, Math.max(0, (totalAtRetirement / requiredSavings) * 100));
+    const successRate = Math.min(100, Math.max(0, (totalAtRetirement / requiredSavings) * 100));
 
-        return {
-            totalAtRetirement,
-            requiredSavings,
-            successRate: Math.round(successRate),
-            yearsToRetirement,
-            shortfall: Math.max(0, requiredSavings - totalAtRetirement)
-        };
-    }
+    return {
+      totalAtRetirement,
+      requiredSavings,
+      successRate: Math.round(successRate),
+      yearsToRetirement,
+      shortfall: Math.max(0, requiredSavings - totalAtRetirement),
+    };
+  },
 };
 
 /**
@@ -860,50 +868,50 @@ const CrossToolState = {
  * Shows data flow and connections across tools
  */
 const StatusBar = {
-    /**
-     * Create status bar HTML
-     */
-    createHTML() {
-        const state = CrossToolState.getAllState();
-        const budget = state.budget;
-        const spending = state.spending;
-        const retirement = state.retirement;
+  /**
+   * Create status bar HTML
+   */
+  createHTML() {
+    const state = CrossToolState.getAllState();
+    const budget = state.budget;
+    const spending = state.spending;
+    const retirement = state.retirement;
 
-        // Detect current page
-        const currentPage = window.location.pathname.split('/').pop();
-        const isBudgetPage = currentPage === 'income-allocation.html';
-        const isSpendingPage = currentPage === 'transaction-analyzer.html';
-        const isRetirementPage = currentPage === 'retirement-simulator.html';
+    // Detect current page
+    const currentPage = window.location.pathname.split('/').pop();
+    const isBudgetPage = currentPage === 'income-allocation.html';
+    const isSpendingPage = currentPage === 'transaction-analyzer.html';
+    const isRetirementPage = currentPage === 'retirement-simulator.html';
 
-        let budgetStatus = '💰 Budget: Not set';
-        let spendingStatus = '📊 Spending: No data';
-        let retirementStatus = '🎯 Retirement: Not simulated';
+    let budgetStatus = '💰 Budget: Not set';
+    let spendingStatus = '📊 Spending: No data';
+    let retirementStatus = '🎯 Retirement: Not simulated';
 
-        if (budget) {
-            budgetStatus = `💰 Budget: ${FinanceUtils.formatCurrency(budget.monthlyIncome)}/mo`;
-        }
+    if (budget) {
+      budgetStatus = `💰 Budget: ${FinanceUtils.formatCurrency(budget.monthlyIncome)}/mo`;
+    }
 
-        if (spending) {
-            spendingStatus = `📊 Tracked: ${spending.period}`;
-        }
+    if (spending) {
+      spendingStatus = `📊 Tracked: ${spending.period}`;
+    }
 
-        if (retirement && retirement.successRate > 0) {
-            retirementStatus = `🎯 Success: ${retirement.successRate}%`;
-        }
+    if (retirement && retirement.successRate > 0) {
+      retirementStatus = `🎯 Success: ${retirement.successRate}%`;
+    }
 
-        // Helper to create item (clickable link or current page indicator)
-        const createItem = (href, status, hasData, isCurrent, title) => {
-            if (isCurrent) {
-                return `<span class="status-item status-item-current ${hasData ? 'has-data' : ''}" title="${title} (Current Page)">
+    // Helper to create item (clickable link or current page indicator)
+    const createItem = (href, status, hasData, isCurrent, title) => {
+      if (isCurrent) {
+        return `<span class="status-item status-item-current ${hasData ? 'has-data' : ''}" title="${title} (Current Page)">
                     📍 ${status}
                 </span>`;
-            }
-            return `<a href="${href}" class="status-item ${hasData ? 'has-data' : ''}" title="Go to ${title}">
+      }
+      return `<a href="${href}" class="status-item ${hasData ? 'has-data' : ''}" title="Go to ${title}">
                 ${status}
             </a>`;
-        };
+    };
 
-        return `
+    return `
             <div class="status-bar" role="status" aria-label="Data flow status">
                 <div class="status-items">
                     ${createItem('income-allocation.html', budgetStatus, budget, isBudgetPage, 'Budget Planner')}
@@ -917,13 +925,13 @@ const StatusBar = {
                 </button>
             </div>
         `;
-    },
+  },
 
-    /**
-     * Get CSS styles for status bar
-     */
-    getStyles() {
-        return `
+  /**
+   * Get CSS styles for status bar
+   */
+  getStyles() {
+    return `
             .status-bar {
                 background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
                 padding: 12px 20px;
@@ -1028,50 +1036,50 @@ const StatusBar = {
                 }
             }
         `;
-    },
+  },
 
-    /**
-     * Initialize status bar on page
-     */
-    init() {
-        // Inject styles
-        if (!document.getElementById('status-bar-styles')) {
-            const style = document.createElement('style');
-            style.id = 'status-bar-styles';
-            style.textContent = this.getStyles();
-            document.head.appendChild(style);
-        }
-
-        // Find container and inject after session toolbar (or header if no toolbar)
-        const container = document.querySelector('.container');
-        const sessionToolbar = container?.querySelector('.session-toolbar');
-        const header = container?.querySelector('header');
-
-        if (sessionToolbar) {
-            sessionToolbar.insertAdjacentHTML('afterend', this.createHTML());
-        } else if (header) {
-            header.insertAdjacentHTML('afterend', this.createHTML());
-        }
-    },
-
-    /**
-     * Update status bar content
-     */
-    update() {
-        const statusBar = document.querySelector('.status-bar');
-        if (statusBar) {
-            const temp = document.createElement('div');
-            temp.innerHTML = this.createHTML();
-            statusBar.replaceWith(temp.firstElementChild);
-        }
-    },
-
-    /**
-     * Open refinement modal
-     */
-    openRefinementModal() {
-        RefinementModal.open();
+  /**
+   * Initialize status bar on page
+   */
+  init() {
+    // Inject styles
+    if (!document.getElementById('status-bar-styles')) {
+      const style = document.createElement('style');
+      style.id = 'status-bar-styles';
+      style.textContent = this.getStyles();
+      document.head.appendChild(style);
     }
+
+    // Find container and inject after session toolbar (or header if no toolbar)
+    const container = document.querySelector('.container');
+    const sessionToolbar = container?.querySelector('.session-toolbar');
+    const header = container?.querySelector('header');
+
+    if (sessionToolbar) {
+      sessionToolbar.insertAdjacentHTML('afterend', this.createHTML());
+    } else if (header) {
+      header.insertAdjacentHTML('afterend', this.createHTML());
+    }
+  },
+
+  /**
+   * Update status bar content
+   */
+  update() {
+    const statusBar = document.querySelector('.status-bar');
+    if (statusBar) {
+      const temp = document.createElement('div');
+      temp.innerHTML = this.createHTML();
+      statusBar.replaceWith(temp.firstElementChild);
+    }
+  },
+
+  /**
+   * Open refinement modal
+   */
+  openRefinementModal() {
+    RefinementModal.open();
+  },
 };
 
 /**
@@ -1079,21 +1087,24 @@ const StatusBar = {
  * Shows all three views side-by-side for iterative refinement
  */
 const RefinementModal = {
-    /**
-     * Create modal HTML
-     */
-    createHTML() {
-        const state = CrossToolState.getAllState();
-        const budget = state.budget;
-        const spending = state.spending;
-        const retirement = state.retirement;
+  /**
+   * Create modal HTML
+   */
+  createHTML() {
+    const state = CrossToolState.getAllState();
+    const budget = state.budget;
+    const spending = state.spending;
+    const retirement = state.retirement;
 
-        let budgetContent = '<p style="color: #94a3b8;">No budget set yet. <a href="income-allocation.html" style="color: #667eea;">Set up your budget →</a></p>';
-        let spendingContent = '<p style="color: #94a3b8;">No spending data. <a href="transaction-analyzer.html" style="color: #667eea;">Upload transactions →</a></p>';
-        let retirementContent = '<p style="color: #94a3b8;">No retirement projection. <a href="retirement-simulator.html" style="color: #667eea;">Run simulation →</a></p>';
+    let budgetContent =
+      '<p style="color: #94a3b8;">No budget set yet. <a href="income-allocation.html" style="color: #667eea;">Set up your budget →</a></p>';
+    let spendingContent =
+      '<p style="color: #94a3b8;">No spending data. <a href="transaction-analyzer.html" style="color: #667eea;">Upload transactions →</a></p>';
+    let retirementContent =
+      '<p style="color: #94a3b8;">No retirement projection. <a href="retirement-simulator.html" style="color: #667eea;">Run simulation →</a></p>';
 
-        if (budget) {
-            budgetContent = `
+    if (budget) {
+      budgetContent = `
                 <div class="refine-metric">
                     <div class="refine-label">Monthly Income</div>
                     <div class="refine-value">${FinanceUtils.formatCurrency(budget.monthlyIncome)}</div>
@@ -1115,11 +1126,11 @@ const RefinementModal = {
                     <div class="refine-value">${budget.guiltFree}%</div>
                 </div>
             `;
-        }
+    }
 
-        if (spending) {
-            const breakdown = spending.categoryBreakdown;
-            spendingContent = `
+    if (spending) {
+      const breakdown = spending.categoryBreakdown;
+      spendingContent = `
                 <div class="refine-metric">
                     <div class="refine-label">Period</div>
                     <div class="refine-value">${spending.period}</div>
@@ -1132,17 +1143,26 @@ const RefinementModal = {
                     <div class="refine-label">Monthly Savings</div>
                     <div class="refine-value">${FinanceUtils.formatCurrency(spending.monthlySavings)}</div>
                 </div>
-                ${breakdown && breakdown['fixed-costs'] ? `
+                ${
+                  breakdown && breakdown['fixed-costs']
+                    ? `
                 <div class="refine-metric">
                     <div class="refine-label">Actual Fixed Costs</div>
                     <div class="refine-value">${Math.round((breakdown['fixed-costs'] / (spending.monthlySpending + spending.monthlySavings)) * 100)}%</div>
-                </div>` : ''}
+                </div>`
+                    : ''
+                }
             `;
-        }
+    }
 
-        if (retirement && retirement.successRate > 0) {
-            const successColor = retirement.successRate >= 90 ? '#10b981' : retirement.successRate >= 70 ? '#f59e0b' : '#ef4444';
-            retirementContent = `
+    if (retirement && retirement.successRate > 0) {
+      const successColor =
+        retirement.successRate >= 90
+          ? '#10b981'
+          : retirement.successRate >= 70
+            ? '#f59e0b'
+            : '#ef4444';
+      retirementContent = `
                 <div class="refine-metric">
                     <div class="refine-label">Success Rate</div>
                     <div class="refine-value" style="color: ${successColor}; font-size: 2em;">${retirement.successRate}%</div>
@@ -1156,9 +1176,9 @@ const RefinementModal = {
                     <div class="refine-value">${retirement.retirementAge}</div>
                 </div>
             `;
-        }
+    }
 
-        return `
+    return `
             <div class="refinement-modal" role="dialog" aria-labelledby="refinement-title" aria-modal="true">
                 <div class="refinement-overlay" onclick="RefinementModal.close()"></div>
                 <div class="refinement-content">
@@ -1187,87 +1207,92 @@ const RefinementModal = {
                 </div>
             </div>
         `;
-    },
+  },
 
-    /**
-     * Generate insights based on current state
-     */
-    generateInsights(state) {
-        const insights = [];
-        const { budget, spending, retirement } = state;
+  /**
+   * Generate insights based on current state
+   */
+  generateInsights(state) {
+    const insights = [];
+    const { budget, spending, retirement } = state;
 
-        if (budget && spending) {
-            const actualIncome = spending.monthlySpending + spending.monthlySavings;
-            const incomeDiff = actualIncome - budget.monthlyIncome;
+    if (budget && spending) {
+      const actualIncome = spending.monthlySpending + spending.monthlySavings;
+      const incomeDiff = actualIncome - budget.monthlyIncome;
 
-            if (Math.abs(incomeDiff) > budget.monthlyIncome * 0.1) {
-                insights.push({
-                    type: 'warning',
-                    message: `Your actual income (${FinanceUtils.formatCurrency(actualIncome)}) differs from planned (${FinanceUtils.formatCurrency(budget.monthlyIncome)}) by ${FinanceUtils.formatCurrency(Math.abs(incomeDiff))}.`,
-                    action: 'Update your budget to match reality'
-                });
-            }
+      if (Math.abs(incomeDiff) > budget.monthlyIncome * 0.1) {
+        insights.push({
+          type: 'warning',
+          message: `Your actual income (${FinanceUtils.formatCurrency(actualIncome)}) differs from planned (${FinanceUtils.formatCurrency(budget.monthlyIncome)}) by ${FinanceUtils.formatCurrency(Math.abs(incomeDiff))}.`,
+          action: 'Update your budget to match reality',
+        });
+      }
 
-            const breakdown = spending.categoryBreakdown || {};
-            const totalSpendingPlusSavings = spending.monthlySpending + spending.monthlySavings;
-            const actualFixed = breakdown['fixed-costs'] || 0;
-            const actualFixedPct = totalSpendingPlusSavings > 0 ? (actualFixed / totalSpendingPlusSavings) * 100 : 0;
-            const plannedFixedPct = budget.fixedCosts;
+      const breakdown = spending.categoryBreakdown || {};
+      const totalSpendingPlusSavings = spending.monthlySpending + spending.monthlySavings;
+      const actualFixed = breakdown['fixed-costs'] || 0;
+      const actualFixedPct =
+        totalSpendingPlusSavings > 0 ? (actualFixed / totalSpendingPlusSavings) * 100 : 0;
+      const plannedFixedPct = budget.fixedCosts;
 
-            if (actualFixedPct > plannedFixedPct + 5) {
-                insights.push({
-                    type: 'alert',
-                    message: `Fixed costs are ${Math.round(actualFixedPct)}% (planned: ${plannedFixedPct}%). You're overspending by ${FinanceUtils.formatCurrency((actualFixedPct - plannedFixedPct) * totalSpendingPlusSavings / 100)}/month.`,
-                    action: 'Look for ways to reduce housing/transportation costs'
-                });
-            }
-        }
+      if (actualFixedPct > plannedFixedPct + 5) {
+        insights.push({
+          type: 'alert',
+          message: `Fixed costs are ${Math.round(actualFixedPct)}% (planned: ${plannedFixedPct}%). You're overspending by ${FinanceUtils.formatCurrency(((actualFixedPct - plannedFixedPct) * totalSpendingPlusSavings) / 100)}/month.`,
+          action: 'Look for ways to reduce housing/transportation costs',
+        });
+      }
+    }
 
-        if (retirement && retirement.successRate < 90) {
-            const gap = 90 - retirement.successRate;
-            insights.push({
-                type: retirement.successRate < 70 ? 'alert' : 'warning',
-                message: `Retirement success rate is ${retirement.successRate}% (goal: 90%). You're ${gap}% below target.`,
-                action: 'Increase savings rate or adjust retirement plans'
-            });
-        }
+    if (retirement && retirement.successRate < 90) {
+      const gap = 90 - retirement.successRate;
+      insights.push({
+        type: retirement.successRate < 70 ? 'alert' : 'warning',
+        message: `Retirement success rate is ${retirement.successRate}% (goal: 90%). You're ${gap}% below target.`,
+        action: 'Increase savings rate or adjust retirement plans',
+      });
+    }
 
-        if (!budget || !spending || !retirement) {
-            insights.push({
-                type: 'info',
-                message: 'Complete all three steps to see personalized insights and recommendations.',
-                action: 'Set budget → Track spending → Run retirement simulation'
-            });
-        }
+    if (!budget || !spending || !retirement) {
+      insights.push({
+        type: 'info',
+        message: 'Complete all three steps to see personalized insights and recommendations.',
+        action: 'Set budget → Track spending → Run retirement simulation',
+      });
+    }
 
-        if (insights.length === 0) {
-            insights.push({
-                type: 'success',
-                message: '🎉 Your plan looks balanced! Keep tracking your progress monthly.',
-                action: ''
-            });
-        }
+    if (insights.length === 0) {
+      insights.push({
+        type: 'success',
+        message: '🎉 Your plan looks balanced! Keep tracking your progress monthly.',
+        action: '',
+      });
+    }
 
-        const insightsHTML = insights.map(insight => `
+    const insightsHTML = insights
+      .map(
+        (insight) => `
             <div class="insight-card insight-${insight.type}">
                 <div class="insight-message">${insight.message}</div>
                 ${insight.action ? `<div class="insight-action">💡 ${insight.action}</div>` : ''}
             </div>
-        `).join('');
+        `
+      )
+      .join('');
 
-        return `
+    return `
             <div class="refinement-insights">
                 <h3>💡 Insights & Recommendations</h3>
                 ${insightsHTML}
             </div>
         `;
-    },
+  },
 
-    /**
-     * Get CSS styles for modal
-     */
-    getStyles() {
-        return `
+  /**
+   * Get CSS styles for modal
+   */
+  getStyles() {
+    return `
             .refinement-modal {
                 position: fixed;
                 top: 0;
@@ -1480,53 +1505,53 @@ const RefinementModal = {
                 }
             }
         `;
-    },
+  },
 
-    /**
-     * Open the modal
-     */
-    open() {
-        // Inject styles if not already present
-        if (!document.getElementById('refinement-modal-styles')) {
-            const style = document.createElement('style');
-            style.id = 'refinement-modal-styles';
-            style.textContent = this.getStyles();
-            document.head.appendChild(style);
-        }
-
-        // Remove existing modal if any
-        const existing = document.querySelector('.refinement-modal');
-        if (existing) existing.remove();
-
-        // Create and inject modal
-        document.body.insertAdjacentHTML('beforeend', this.createHTML());
-        const modal = document.querySelector('.refinement-modal');
-
-        // Trigger animation
-        setTimeout(() => modal.classList.add('show'), 10);
-
-        // Prevent body scroll
-        document.body.style.overflow = 'hidden';
-
-        // Handle ESC key
-        const handleEsc = (e) => {
-            if (e.key === 'Escape') {
-                this.close();
-                document.removeEventListener('keydown', handleEsc);
-            }
-        };
-        document.addEventListener('keydown', handleEsc);
-    },
-
-    /**
-     * Close the modal
-     */
-    close() {
-        const modal = document.querySelector('.refinement-modal');
-        if (modal) {
-            modal.classList.remove('show');
-            setTimeout(() => modal.remove(), 300);
-        }
-        document.body.style.overflow = '';
+  /**
+   * Open the modal
+   */
+  open() {
+    // Inject styles if not already present
+    if (!document.getElementById('refinement-modal-styles')) {
+      const style = document.createElement('style');
+      style.id = 'refinement-modal-styles';
+      style.textContent = this.getStyles();
+      document.head.appendChild(style);
     }
+
+    // Remove existing modal if any
+    const existing = document.querySelector('.refinement-modal');
+    if (existing) existing.remove();
+
+    // Create and inject modal
+    document.body.insertAdjacentHTML('beforeend', this.createHTML());
+    const modal = document.querySelector('.refinement-modal');
+
+    // Trigger animation
+    setTimeout(() => modal.classList.add('show'), 10);
+
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+
+    // Handle ESC key
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        this.close();
+        document.removeEventListener('keydown', handleEsc);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+  },
+
+  /**
+   * Close the modal
+   */
+  close() {
+    const modal = document.querySelector('.refinement-modal');
+    if (modal) {
+      modal.classList.remove('show');
+      setTimeout(() => modal.remove(), 300);
+    }
+    document.body.style.overflow = '';
+  },
 };

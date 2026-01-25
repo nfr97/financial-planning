@@ -20,9 +20,11 @@ Open `test.html` in your browser to run automated tests. Tests run automatically
 Test CSV files are in the `test-data/` folder:
 
 ### test-basic.csv
+
 Basic happy-path transactions with common merchants.
 
 **Expected Results:**
+
 - All 8 transactions should parse successfully
 - PAYROLL DEPOSIT: income category
 - WALMART, AMAZON, CHIPOTLE: guilt-free category
@@ -31,9 +33,11 @@ Basic happy-path transactions with common merchants.
 - CHEVRON: uncategorized (gas stations not in default patterns)
 
 ### test-edge-cases.csv
+
 Edge cases and special characters.
 
 **Expected Results:**
+
 - Empty description: Should display without errors
 - Quoted description: Should show `DESCRIPTION WITH "QUOTES"`
 - Ampersand: Should show `MERCHANT & SONS` (not &amp;)
@@ -42,18 +46,22 @@ Edge cases and special characters.
 - Comma in description: Should parse as single field
 
 ### test-transfers.csv
+
 Transfer detection scenarios.
 
 **Expected Results:**
+
 - Transfers 1-2: Should be marked as transfers (TRANSFER TO/FROM keywords)
 - Transfers 3-4: Should be marked as transfers (CREDIT CARD PAYMENT + PAYMENT THANK YOU)
 - Transactions 5-6: Should NOT be marked as transfers (PAYROLL and RENT are different purposes)
 - Transfers 7-8: Should be marked as transfers (ONLINE TRANSFER with account numbers)
 
 ### test-errors.csv
+
 Error handling verification.
 
 **Expected Results:**
+
 - Invalid date row: May be skipped or show parsing error
 - Missing amount row: Should be skipped
 - Missing date row: Should be skipped
@@ -62,6 +70,7 @@ Error handling verification.
 ## Manual Test Checklist
 
 ### File Upload
+
 - [ ] Drag and drop single CSV file
 - [ ] Drag and drop multiple CSV files
 - [ ] Use file picker to select file
@@ -70,6 +79,7 @@ Error handling verification.
 - [ ] Upload non-CSV file (should show error)
 
 ### Transaction Display
+
 - [ ] Transactions sorted by date (newest first)
 - [ ] Amounts display with correct sign (+/-)
 - [ ] Descriptions display correctly (no HTML injection)
@@ -77,24 +87,28 @@ Error handling verification.
 - [ ] Transfer badge appears for detected transfers
 
 ### Filtering & Sorting
+
 - [ ] Filter by category works
 - [ ] Filter shows "Transfers" option
 - [ ] Sort by date/amount works
 - [ ] Pagination resets when filter changes (mobile)
 
 ### Categorization
+
 - [ ] Change category via dropdown
 - [ ] Bulk categorize via merchant name
 - [ ] Undo button reverts last bulk action
 - [ ] Custom rules persist after page reload
 
 ### Transfer Detection
+
 - [ ] Matching transfers are detected
 - [ ] "Not a Transfer" button works
 - [ ] Manual override persists after reload
 - [ ] Transfer summary shows correct count
 
 ### Data Persistence
+
 - [ ] Page reload preserves transactions
 - [ ] Page reload preserves custom rules
 - [ ] Session export downloads valid JSON
@@ -102,6 +116,7 @@ Error handling verification.
 - [ ] Clear Data removes everything
 
 ### Responsive Design
+
 - [ ] Mobile view shows card layout
 - [ ] Mobile pagination works
 - [ ] Filter/sort controls accessible on mobile
@@ -119,6 +134,7 @@ These are design decisions, not bugs:
 ## Reporting Bugs
 
 When reporting bugs, please include:
+
 1. Browser name and version
 2. Steps to reproduce
 3. Expected vs actual behavior

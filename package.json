@@ -1,0 +1,32 @@
+{
+  "name": "financial-planning",
+  "version": "1.0.0",
+  "description": "Client-side financial planning suite with Monte Carlo simulations, budget tracking, and transaction analysis",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint lib/",
+    "lint:fix": "eslint lib/ --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "finance",
+    "retirement",
+    "monte-carlo",
+    "budgeting"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.0",
+    "@vitest/ui": "^2.1.0",
+    "eslint": "^9.15.0",
+    "globals": "^15.12.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.4.0",
+    "vitest": "^2.1.0"
+  }
+}
