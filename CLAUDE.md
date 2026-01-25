@@ -13,9 +13,15 @@ A client-side financial planning suite with a landing page and three main tools:
 
 ## Development
 
-This is a static HTML/JS application with no build step. To develop:
+This is a static HTML/JS application. To develop:
 
-1. Open any HTML file directly in a browser, or use a local server:
+1. Install dependencies (first time only):
+
+   ```bash
+   npm install
+   ```
+
+2. Open any HTML file directly in a browser, or use a local server:
 
    ```bash
    python -m http.server 8000
@@ -23,7 +29,15 @@ This is a static HTML/JS application with no build step. To develop:
    npx serve .
    ```
 
-2. Deployment is automatic via GitHub Pages on push to `main`
+3. Run tests and checks before committing:
+
+   ```bash
+   npm test          # Run 228 automated tests
+   npm run lint      # Check for code issues
+   npm run format    # Auto-format all files
+   ```
+
+4. Deployment is automatic via GitHub Pages on push to `main`, but only after tests and linting pass in CI
 
 ## Workflow Preferences
 
@@ -40,6 +54,25 @@ Each tool is a standalone HTML file containing embedded CSS and JavaScript. This
 - Direct browser opening without a server
 - Simple GitHub Pages deployment
 - Independent tool updates
+
+### Testable Business Logic (`lib/`)
+
+Core logic is extracted into ES modules for testing:
+
+| Module                  | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `csv-utils.js`          | RFC 4180 CSV parsing                               |
+| `parsing-utils.js`      | Amount/date parsing (Unicode, European format)     |
+| `categorization.js`     | Transaction categorization with confidence scoring |
+| `transfer-detection.js` | Inter-account transfer matching                    |
+| `column-detection.js`   | Bank CSV column auto-detection                     |
+| `social-security.js`    | FRA, PIA, and benefit calculations                 |
+| `simulation.js`         | Monte Carlo simulation utilities                   |
+| `statistics.js`         | Percentiles, histograms, mean/std dev              |
+
+### Test Suite (`tests/`)
+
+228 automated tests using Vitest. Run with `npm test`. Tests cover all lib/ modules plus shared.js utilities (StorageUtils, DOMUtils).
 
 ### Shared Utilities (`shared.js`)
 
