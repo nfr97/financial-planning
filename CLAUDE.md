@@ -45,6 +45,16 @@ This is a static HTML/JS application. To develop:
 - When making changes, commit to `main` directly for small fixes, or create a branch + PR for larger features
 - Use descriptive commit messages that explain the "why"
 
+## Before Making Changes
+
+Always read relevant context first:
+
+1. **If modifying business logic** - Check if it exists in `lib/` first. If so, modify there and update tests in `tests/`
+2. **If adding new features** - Check `shared.js` for existing utilities before creating new ones
+3. **If touching CSV/transaction code** - Read `lib/categorization.js`, `lib/parsing-utils.js`, and `lib/transfer-detection.js`
+4. **If touching retirement simulation** - Read `lib/simulation.js`, `lib/social-security.js`, and `lib/statistics.js`
+5. **After any code changes** - Run `npm test` to make sure nothing broke
+
 ## Architecture
 
 ### Single-File Structure
