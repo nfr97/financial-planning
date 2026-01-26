@@ -94,7 +94,8 @@ describe('SocialSecurityCalculator', () => {
       const result = calculator.estimatePIA(30000, 35);
       expect(result).toBeGreaterThan(0);
       // AIME = 30000 * 35 / 420 = 2500
-      // PIA = 2500 * 0.90 = 2250 (but capped at bend point)
+      // PIA = 1174 * 0.90 + (2500 - 1174) * 0.32 = 1056.6 + 424.32 = 1481 (rounded)
+      expect(result).toBe(1481);
     });
 
     it('calculates PIA for middle income', () => {
@@ -130,6 +131,66 @@ describe('SocialSecurityCalculator', () => {
     it('returns a rounded integer', () => {
       const result = calculator.estimatePIA(75000, 30);
       expect(Number.isInteger(result)).toBe(true);
+    });
+
+    // Exact boundary value tests
+    it('calculates correctly at exactly first bend point AIME ($1,174)', () => {
+      // Need income that gives AIME of exactly $1174 with 35 years
+      // AIME = (income * 35) / 420 = 1174
+      // income = 1174 * 420 / 35 = 14088
+      const income = 1174 * 12; // $14,088 annual = $1,174 monthly AIME
+      const result = calculator.estimatePIA(income, 35);
+      // PIA = 1174 * 0.90 = 1056.6, rounded to 1057
+      expect(result).toBe(1057);
+    });
+
+    it('calculates correctly at exactly second bend point AIME ($7,078)', () => {
+      // Need income that gives AIME of exactly $7078 with 35 years
+      // AIME = (income * 35) / 420 = 7078
+      // income = 7078 * 12 = 84936
+      const income = 7078 * 12;
+      const result = calculator.estimatePIA(income, 35);
+      // PIA = 1174 * 0.90 + (7078 - 1174) * 0.32 = 1056.6 + 1889.28 = 2946 (rounded)
+      expect(result).toBe(2946);
+    });
+
+    it('calculates correctly with income above second bend point', () => {
+      // Max taxable earnings ($168,600) gives AIME = 168600 / 12 = 14050
+      const result = calculator.estimatePIA(168600, 35);
+      // AIME = 168600 * 35 / 420 = 14050
+      // PIA = 1174 * 0.90 + (7078 - 1174) * 0.32 + (14050 - 7078) * 0.15
+      // PIA = 1056.6 + 1889.28 + 1045.8 = 3991.68, rounded to 3992
+      expect(result).toBe(3992);
+    });
+
+    it('handles zero years worked', () => {
+      const result = calculator.estimatePIA(75000, 0);
+      // AIME = (75000 * 0) / 420 = 0
+      // PIA = 0 * 0.90 = 0
+      expect(result).toBe(0);
+    });
+
+    it('handles zero income', () => {
+      const result = calculator.estimatePIA(0, 35);
+      expect(result).toBe(0);
+    });
+
+    it('correctly reduces benefit for fewer than 35 years', () => {
+      // With 20 years at $100,000:
+      // AIME = (100000 * 20) / 420 = 4762
+      const result20 = calculator.estimatePIA(100000, 20);
+      // PIA = 1174 * 0.90 + (4762 - 1174) * 0.32 = 1056.6 + 1148.16 = 2205 (rounded)
+      expect(result20).toBe(2205);
+
+      // With 35 years at $100,000:
+      // AIME = (100000 * 35) / 420 = 8333
+      const result35 = calculator.estimatePIA(100000, 35);
+      // PIA = 1174 * 0.90 + (7078 - 1174) * 0.32 + (8333 - 7078) * 0.15
+      // = 1056.6 + 1889.28 + 188.25 = 3134 (rounded)
+      expect(result35).toBe(3134);
+
+      // 20 years should be about 57% of 35 years
+      expect(result20 / result35).toBeCloseTo(0.7, 1);
     });
   });
 

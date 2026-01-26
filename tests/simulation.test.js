@@ -20,13 +20,36 @@ describe('generateNormalRandom', () => {
   });
 
   it('respects standard deviation', () => {
+    // Use seeded random for deterministic test
+    let seed = 12345;
+    const seededRandom = () => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    };
+
     // Run many iterations to check distribution
     const results = [];
-    for (let i = 0; i < 1000; i++) {
-      results.push(generateNormalRandom(100, 10));
+    for (let i = 0; i < 10000; i++) {
+      results.push(generateNormalRandom(100, 10, seededRandom));
     }
     const mean = results.reduce((a, b) => a + b, 0) / results.length;
-    expect(mean).toBeCloseTo(100, 0);
+    const variance = results.reduce((sum, x) => sum + Math.pow(x - mean, 2), 0) / results.length;
+    const stdDev = Math.sqrt(variance);
+
+    // Allow 2 standard errors of tolerance
+    const standardError = 10 / Math.sqrt(10000);
+    expect(mean).toBeGreaterThan(100 - 2 * standardError);
+    expect(mean).toBeLessThan(100 + 2 * standardError);
+    expect(stdDev).toBeGreaterThan(8); // Within 20% of target std dev
+    expect(stdDev).toBeLessThan(12);
+  });
+
+  it('handles edge case where random returns exactly 0', () => {
+    // u1=0 would cause Math.log(0)=-Infinity, but should be clamped to Number.EPSILON
+    const mockRandom = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(0.5);
+    const result = generateNormalRandom(100, 10, mockRandom);
+    expect(Number.isFinite(result)).toBe(true);
+    expect(typeof result).toBe('number');
   });
 
   it('uses Math.random by default', () => {
@@ -327,5 +350,190 @@ describe('withdrawFromAccounts', () => {
 
     expect(remaining).toBe(50000);
     expect(getTotalBalance(balances)).toBe(0);
+  });
+
+  it('handles withdrawal of exactly total balance', () => {
+    const balances = {
+      traditional401k: 10000,
+      roth401k: 10000,
+      traditionalIRA: 10000,
+      rothIRA: 10000,
+      taxable: 10000,
+    };
+    const remaining = withdrawFromAccounts(balances, 50000);
+
+    expect(remaining).toBe(0);
+    expect(getTotalBalance(balances)).toBe(0);
+  });
+
+  it('handles withdrawal of zero', () => {
+    const balances = {
+      traditional401k: 100000,
+      roth401k: 50000,
+      traditionalIRA: 30000,
+      rothIRA: 20000,
+      taxable: 10000,
+    };
+    const remaining = withdrawFromAccounts(balances, 0);
+
+    expect(remaining).toBe(0);
+    expect(getTotalBalance(balances)).toBe(210000);
+  });
+});
+
+describe('Edge Cases', () => {
+  describe('generateNormalRandom edge cases', () => {
+    it('handles zero standard deviation (constant returns)', () => {
+      const result = generateNormalRandom(0.07, 0);
+      expect(result).toBe(0.07);
+    });
+
+    it('handles negative mean (bear market)', () => {
+      const mockRandom = vi.fn().mockReturnValueOnce(0.5).mockReturnValueOnce(0.25);
+      const result = generateNormalRandom(-0.05, 0.1, mockRandom);
+      // z0 = 0 when u2 = 0.25
+      expect(result).toBeCloseTo(-0.05, 5);
+    });
+
+    it('handles extreme standard deviation', () => {
+      const mockRandom = vi.fn().mockReturnValueOnce(0.5).mockReturnValueOnce(0.25);
+      const result = generateNormalRandom(0, 1, mockRandom);
+      // Should still return a finite number
+      expect(Number.isFinite(result)).toBe(true);
+    });
+  });
+
+  describe('applyMarketReturns edge cases', () => {
+    it('handles negative returns (-50%)', () => {
+      const balances = {
+        traditional401k: 1000000,
+        roth401k: 0,
+        traditionalIRA: 0,
+        rothIRA: 0,
+        taxable: 0,
+      };
+      applyMarketReturns(balances, -0.5);
+      expect(balances.traditional401k).toBe(500000);
+    });
+
+    it('handles zero return', () => {
+      const balances = {
+        traditional401k: 1000000,
+        roth401k: 500000,
+        traditionalIRA: 0,
+        rothIRA: 0,
+        taxable: 0,
+      };
+      applyMarketReturns(balances, 0);
+      expect(balances.traditional401k).toBe(1000000);
+      expect(balances.roth401k).toBe(500000);
+    });
+
+    it('handles very large positive return (100%)', () => {
+      const balances = {
+        traditional401k: 1000000,
+        roth401k: 0,
+        traditionalIRA: 0,
+        rothIRA: 0,
+        taxable: 0,
+      };
+      applyMarketReturns(balances, 1.0);
+      expect(balances.traditional401k).toBe(2000000);
+    });
+
+    it('handles accounts with zero balance', () => {
+      const balances = {
+        traditional401k: 0,
+        roth401k: 0,
+        traditionalIRA: 0,
+        rothIRA: 0,
+        taxable: 0,
+      };
+      applyMarketReturns(balances, 0.1);
+      expect(getTotalBalance(balances)).toBe(0);
+    });
+  });
+
+  describe('calculateTaxRate edge cases', () => {
+    it('handles exact bracket boundaries', () => {
+      // Exact boundary at $11,600
+      expect(calculateTaxRate(11600, 0)).toBe(0.1);
+      expect(calculateTaxRate(11601, 0)).toBe(0.12);
+
+      // Exact boundary at $47,150
+      expect(calculateTaxRate(47150, 0)).toBe(0.12);
+      expect(calculateTaxRate(47151, 0)).toBe(0.22);
+    });
+
+    it('handles zero withdrawal with SS income', () => {
+      const result = calculateTaxRate(0, 30000);
+      // Total income = 30000 * 0.85 = 25500
+      expect(result).toBe(0.12);
+    });
+
+    it('handles very high income', () => {
+      expect(calculateTaxRate(1000000, 0)).toBe(0.37);
+      expect(calculateTaxRate(10000000, 0)).toBe(0.37);
+    });
+  });
+
+  describe('getLifeEventImpact edge cases', () => {
+    it('handles very long duration event', () => {
+      const events = [{ type: 'expense', amount: 5000, startAge: 30, duration: 100 }];
+      expect(getLifeEventImpact(50, events).expense).toBe(5000);
+      expect(getLifeEventImpact(100, events).expense).toBe(5000);
+      expect(getLifeEventImpact(130, events).expense).toBe(0); // Past end
+    });
+
+    it('handles single-year event (duration=1)', () => {
+      const events = [{ type: 'expense', amount: 50000, startAge: 65, duration: 1 }];
+      expect(getLifeEventImpact(64, events).expense).toBe(0);
+      expect(getLifeEventImpact(65, events).expense).toBe(50000);
+      expect(getLifeEventImpact(66, events).expense).toBe(0);
+    });
+
+    it('handles large number of concurrent events', () => {
+      const events = Array.from({ length: 20 }, (_, i) => ({
+        type: 'expense',
+        amount: 1000,
+        startAge: 40,
+        duration: 10,
+      }));
+      expect(getLifeEventImpact(45, events).expense).toBe(20000);
+    });
+
+    it('handles mixed income and expense offsetting', () => {
+      const events = [
+        { type: 'expense', amount: 10000, startAge: 40, duration: 10 },
+        { type: 'income', amount: 10000, startAge: 40, duration: 10 },
+      ];
+      const impact = getLifeEventImpact(45, events);
+      expect(impact.expense).toBe(10000);
+      expect(impact.income).toBe(10000);
+      // Net impact would be zero if caller subtracts
+    });
+  });
+
+  describe('initializeAccounts edge cases', () => {
+    it('handles very large balances ($1B)', () => {
+      const params = {
+        advancedMode: false,
+        currentSavings: 1000000000,
+        annualContribution: 100000000,
+      };
+      const result = initializeAccounts(params);
+      expect(result.balances.traditional401k).toBe(1000000000);
+      expect(result.contributions.traditional401k).toBe(100000000);
+    });
+
+    it('handles zero savings and contributions', () => {
+      const params = {
+        advancedMode: false,
+        currentSavings: 0,
+        annualContribution: 0,
+      };
+      const result = initializeAccounts(params);
+      expect(getTotalBalance(result.balances)).toBe(0);
+    });
   });
 });

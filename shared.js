@@ -58,6 +58,33 @@ const FinanceUtils = {
 
 const StorageUtils = {
   /**
+   * Internal error handler for storage failures
+   * @param {Error} error - The error that occurred
+   * @param {string} operation - Description of the operation
+   */
+  _handleError(error, operation) {
+    console.warn(`Storage ${operation} failed:`, error);
+
+    // Check if this is a quota exceeded error
+    const isQuotaError =
+      error.name === 'QuotaExceededError' ||
+      (error.name === 'NS_ERROR_DOM_QUOTA_REACHED' && error.code === 22);
+
+    // Show user-friendly notification if SessionManager is available
+    if (typeof SessionManager !== 'undefined' && SessionManager.showToast) {
+      if (isQuotaError) {
+        SessionManager.showToast(
+          'Storage full. Consider exporting your data to a file.',
+          'error',
+          5000
+        );
+      } else {
+        SessionManager.showToast('Unable to save data locally.', 'error', 3000);
+      }
+    }
+  },
+
+  /**
    * Get a value from localStorage with optional default
    * @param {string} key - The storage key
    * @param {*} defaultValue - Default value if key doesn't exist
@@ -79,6 +106,7 @@ const StorageUtils = {
    * Set a value in localStorage
    * @param {string} key - The storage key
    * @param {*} value - The value to store (will be JSON stringified if object)
+   * @returns {boolean} True if successful, false if failed
    */
   set(key, value) {
     try {
@@ -87,8 +115,10 @@ const StorageUtils = {
       } else {
         localStorage.setItem(key, value);
       }
+      return true;
     } catch (e) {
-      console.warn('Failed to save to localStorage:', e);
+      this._handleError(e, 'save');
+      return false;
     }
   },
 
@@ -97,7 +127,26 @@ const StorageUtils = {
    * @param {string} key - The storage key to remove
    */
   remove(key) {
-    localStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      this._handleError(e, 'remove');
+    }
+  },
+
+  /**
+   * Check if localStorage is available
+   * @returns {boolean} True if localStorage is available
+   */
+  isAvailable() {
+    try {
+      const testKey = '__storage_test__';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
+    }
   },
 };
 
@@ -256,48 +305,112 @@ const SessionManager = {
   },
 
   /**
+   * Validate session data schema before import
+   * @param {Object} session - The session object to validate
+   * @returns {Object} Validation result with errors and warnings
+   */
+  _validateSessionSchema(session) {
+    const errors = [];
+    const warnings = [];
+
+    // Check version
+    if (!session.version) {
+      warnings.push('Session file missing version - attempting import anyway');
+    } else if (session.version !== '1.0') {
+      warnings.push(`Session version ${session.version} may not be fully compatible`);
+    }
+
+    // Validate exportedAt
+    if (session.exportedAt) {
+      const date = new Date(session.exportedAt);
+      if (isNaN(date.getTime())) {
+        warnings.push('Invalid export date - ignoring');
+      }
+    }
+
+    // Validate budget planner data
+    if (session.budgetPlanner && typeof session.budgetPlanner !== 'object') {
+      errors.push('Invalid budget planner data format');
+    }
+
+    // Validate spending tracker data
+    if (session.spendingTracker && typeof session.spendingTracker !== 'object') {
+      errors.push('Invalid spending tracker data format');
+    }
+
+    // Validate life events
+    if (session.lifeEvents && !Array.isArray(session.lifeEvents)) {
+      errors.push('Life events must be an array');
+    }
+
+    // Validate transaction rules
+    if (
+      session.transactionRules &&
+      (typeof session.transactionRules !== 'object' || Array.isArray(session.transactionRules))
+    ) {
+      errors.push('Transaction rules must be an object');
+    }
+
+    // Validate transaction data
+    if (session.transactionData && !Array.isArray(session.transactionData)) {
+      errors.push('Transaction data must be an array');
+    }
+
+    return { valid: errors.length === 0, errors, warnings };
+  },
+
+  /**
    * Import session data from a JSON object
    * @param {Object} session - The session object to import
-   * @returns {Object} Result with success status, warnings, and session metadata
+   * @returns {Object} Result with success status, warnings, errors, and session metadata
    */
   importSession(session) {
-    const result = { success: false, warnings: [], imported: [], exportedAt: null };
+    const result = { success: false, warnings: [], errors: [], imported: [], exportedAt: null };
+
+    // Validate session schema
+    const validation = this._validateSessionSchema(session);
+    result.warnings = validation.warnings;
+
+    if (!validation.valid) {
+      result.errors = validation.errors;
+      return result;
+    }
 
     // Capture the session export timestamp
     if (session.exportedAt) {
       result.exportedAt = session.exportedAt;
     }
 
-    // Validate version
-    if (!session.version) {
-      result.warnings.push('Session file missing version - attempting import anyway');
-    }
-
     // Import budget planner data
-    if (session.budgetPlanner) {
+    if (session.budgetPlanner && typeof session.budgetPlanner === 'object') {
       StorageUtils.set(this.STORAGE_KEYS.budgetPlanner, session.budgetPlanner);
       result.imported.push('Budget Planner settings');
     }
 
     // Import budget retirement data
-    if (session.budgetRetirement) {
+    if (session.budgetRetirement && typeof session.budgetRetirement === 'object') {
       StorageUtils.set(this.STORAGE_KEYS.budgetRetirement, session.budgetRetirement);
       result.imported.push('Retirement contribution settings');
     }
 
     // Import spending tracker data
-    if (session.spendingTracker) {
+    if (session.spendingTracker && typeof session.spendingTracker === 'object') {
       StorageUtils.set(this.STORAGE_KEYS.spendingTracker, session.spendingTracker);
       result.imported.push('Spending Tracker data');
     }
 
-    // Import transaction rules
-    if (session.transactionRules && Object.keys(session.transactionRules).length > 0) {
+    // Import transaction rules (with type validation)
+    if (
+      session.transactionRules &&
+      typeof session.transactionRules === 'object' &&
+      !Array.isArray(session.transactionRules) &&
+      Object.keys(session.transactionRules).length > 0
+    ) {
       StorageUtils.set(this.STORAGE_KEYS.transactionRules, session.transactionRules);
       result.imported.push('Transaction categorization rules');
     }
 
-    // Import transaction data (parsed transactions from CSV uploads)
+    // Import transaction data (with array validation)
     if (
       session.transactionData &&
       Array.isArray(session.transactionData) &&
@@ -308,26 +421,45 @@ const SessionManager = {
     }
 
     // Import bank format preference
-    if (session.bankFormat) {
+    if (session.bankFormat && typeof session.bankFormat === 'string') {
       StorageUtils.set(this.STORAGE_KEYS.bankFormat, session.bankFormat);
     }
 
     // Import AI provider preference
-    if (session.aiProvider) {
+    if (session.aiProvider && typeof session.aiProvider === 'string') {
       StorageUtils.set(this.STORAGE_KEYS.aiProvider, session.aiProvider);
       result.imported.push('AI provider preference');
     }
 
-    // Import retirement forecast data
-    if (session.retirementForecast) {
+    // Import retirement forecast data (with type validation)
+    if (session.retirementForecast && typeof session.retirementForecast === 'object') {
       StorageUtils.set(this.STORAGE_KEYS.retirementForecast, session.retirementForecast);
       result.imported.push('Retirement Forecast settings');
     }
 
-    // Import life events
+    // Import life events (with validation of required fields)
     if (session.lifeEvents && Array.isArray(session.lifeEvents)) {
-      StorageUtils.set(this.STORAGE_KEYS.lifeEvents, session.lifeEvents);
-      result.imported.push('Life events');
+      // Filter to only valid life events
+      const validEvents = session.lifeEvents.filter((event) => {
+        return (
+          event &&
+          typeof event === 'object' &&
+          typeof event.amount === 'number' &&
+          typeof event.startAge === 'number' &&
+          (event.type === 'expense' || event.type === 'income')
+        );
+      });
+
+      if (validEvents.length !== session.lifeEvents.length) {
+        result.warnings.push(
+          `${session.lifeEvents.length - validEvents.length} invalid life events were skipped`
+        );
+      }
+
+      if (validEvents.length > 0) {
+        StorageUtils.set(this.STORAGE_KEYS.lifeEvents, validEvents);
+        result.imported.push(`${validEvents.length} life events`);
+      }
     }
 
     result.success = result.imported.length > 0;

@@ -1061,6 +1061,122 @@
           flex-direction: column;
         }
       }
+
+      /* Tooltip styles for help icons */
+      .help-tooltip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        background: #e0e7ff;
+        border-radius: 50%;
+        font-size: 12px;
+        color: #4f46e5;
+        cursor: help;
+        margin-left: 6px;
+        position: relative;
+        font-weight: bold;
+        vertical-align: middle;
+      }
+
+      .help-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: normal;
+        white-space: normal;
+        width: max-content;
+        max-width: 300px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        line-height: 1.4;
+      }
+
+      .help-tooltip:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 115%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: #1e293b;
+        z-index: 1001;
+      }
+
+      /* Input validation warning styles */
+      .input-warning {
+        border-color: #f59e0b !important;
+        background-color: #fffbeb !important;
+      }
+
+      .input-warning-message {
+        color: #d97706;
+        font-size: 0.85em;
+        margin-top: 4px;
+        padding: 4px 8px;
+        background: #fffbeb;
+        border-radius: 4px;
+        display: block;
+      }
+
+      .input-error {
+        border-color: #ef4444 !important;
+        background-color: #fef2f2 !important;
+      }
+
+      .input-error-message {
+        color: #dc2626;
+        font-size: 0.85em;
+        margin-top: 4px;
+        padding: 4px 8px;
+        background: #fef2f2;
+        border-radius: 4px;
+        display: block;
+      }
+
+      /* Assumptions section */
+      .assumptions-note {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 0 6px 6px 0;
+        font-size: 0.9em;
+      }
+
+      .assumptions-note h4 {
+        color: #334155;
+        margin-bottom: 8px;
+        font-size: 1em;
+      }
+
+      .assumptions-note ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #64748b;
+      }
+
+      .assumptions-note li {
+        margin: 4px 0;
+      }
+
+      .assumptions-note a {
+        color: #667eea;
+        text-decoration: none;
+      }
+
+      .assumptions-note a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
@@ -1209,13 +1325,27 @@
           </div>
 
           <div class="input-group">
-            <label for="expectedReturn">Expected Annual Growth (%)</label>
+            <label for="expectedReturn"
+              >Expected Annual Growth (%)
+              <span
+                class="help-tooltip"
+                data-tooltip="Historical S&P 500: ~10% nominal, ~7% real (inflation-adjusted). Bond-heavy portfolios: 4-6%. This is before inflation."
+                >?</span
+              >
+            </label>
             <input type="number" id="expectedReturn" value="7" min="-20" max="30" step="0.1" />
             <small>Stock market historically averages 7-10% per year</small>
           </div>
 
           <div class="input-group">
-            <label for="returnVolatility">Return Volatility (%)</label>
+            <label for="returnVolatility"
+              >Return Volatility (%)
+              <span
+                class="help-tooltip"
+                data-tooltip="Standard deviation of annual returns. S&P 500: ~15%. Balanced (60/40): ~10%. Bonds only: ~5%. Higher volatility = more uncertain outcomes."
+                >?</span
+              >
+            </label>
             <input type="number" id="returnVolatility" value="12" min="0" max="50" step="0.1" />
             <small>How much returns swing year-to-year (12% is typical for stocks)</small>
           </div>
@@ -1224,6 +1354,65 @@
             <label for="inflationRate">Inflation Rate (%)</label>
             <input type="number" id="inflationRate" value="3" min="0" max="20" step="0.1" />
             <small>How fast prices rise each year (3% is historically normal)</small>
+          </div>
+
+          <div class="input-group">
+            <label for="stateSelect">State (for state income tax)</label>
+            <select id="stateSelect">
+              <option value="">-- No State Tax --</option>
+              <option value="AL">Alabama (5.0%)</option>
+              <option value="AK">Alaska (No tax)</option>
+              <option value="AZ">Arizona (2.5%)</option>
+              <option value="AR">Arkansas (4.4%)</option>
+              <option value="CA">California (13.3%)</option>
+              <option value="CO">Colorado (4.4%)</option>
+              <option value="CT">Connecticut (7.0%)</option>
+              <option value="DE">Delaware (6.6%)</option>
+              <option value="FL" selected>Florida (No tax)</option>
+              <option value="GA">Georgia (5.5%)</option>
+              <option value="HI">Hawaii (11.0%)</option>
+              <option value="ID">Idaho (5.8%)</option>
+              <option value="IL">Illinois (5.0%)</option>
+              <option value="IN">Indiana (3.1%)</option>
+              <option value="IA">Iowa (5.8%)</option>
+              <option value="KS">Kansas (5.7%)</option>
+              <option value="KY">Kentucky (4.0%)</option>
+              <option value="LA">Louisiana (4.3%)</option>
+              <option value="ME">Maine (7.2%)</option>
+              <option value="MD">Maryland (5.8%)</option>
+              <option value="MA">Massachusetts (5.0%)</option>
+              <option value="MI">Michigan (4.3%)</option>
+              <option value="MN">Minnesota (9.9%)</option>
+              <option value="MS">Mississippi (5.0%)</option>
+              <option value="MO">Missouri (4.8%)</option>
+              <option value="MT">Montana (5.9%)</option>
+              <option value="NE">Nebraska (5.8%)</option>
+              <option value="NV">Nevada (No tax)</option>
+              <option value="NH">New Hampshire (No tax)</option>
+              <option value="NJ">New Jersey (10.8%)</option>
+              <option value="NM">New Mexico (5.9%)</option>
+              <option value="NY">New York (10.9%)</option>
+              <option value="NC">North Carolina (4.8%)</option>
+              <option value="ND">North Dakota (2.5%)</option>
+              <option value="OH">Ohio (3.5%)</option>
+              <option value="OK">Oklahoma (4.8%)</option>
+              <option value="OR">Oregon (9.9%)</option>
+              <option value="PA">Pennsylvania (3.1%)</option>
+              <option value="RI">Rhode Island (6.0%)</option>
+              <option value="SC">South Carolina (6.4%)</option>
+              <option value="SD">South Dakota (No tax)</option>
+              <option value="TN">Tennessee (No tax)</option>
+              <option value="TX">Texas (No tax)</option>
+              <option value="UT">Utah (4.7%)</option>
+              <option value="VT">Vermont (8.8%)</option>
+              <option value="VA">Virginia (5.8%)</option>
+              <option value="WA">Washington (No tax)</option>
+              <option value="WV">West Virginia (5.1%)</option>
+              <option value="WI">Wisconsin (7.7%)</option>
+              <option value="WY">Wyoming (No tax)</option>
+              <option value="DC">DC (10.8%)</option>
+            </select>
+            <small>State tax is applied to traditional account withdrawals</small>
           </div>
 
           <div
@@ -1257,7 +1446,14 @@
           </div>
 
           <div class="input-group">
-            <label for="yearsInRetirement">Years in Retirement</label>
+            <label for="yearsInRetirement"
+              >Years in Retirement
+              <span
+                class="help-tooltip"
+                data-tooltip="Average US life expectancy at 65 is 84 (men) to 87 (women). For planning, add 5+ years to account for longevity risk."
+                >?</span
+              >
+            </label>
             <input type="number" id="yearsInRetirement" value="30" min="1" max="60" />
             <small>Life expectancy minus retirement age</small>
           </div>
@@ -1588,7 +1784,8 @@
                   <label for="ssWorkYears">Career Length (Years)</label>
                   <input type="number" id="ssWorkYears" value="35" min="0" max="50" />
                   <small
-                    >Total years you'll have worked by collection age (35 for full benefit)</small
+                    >SSA uses your highest 35 years of earnings. If you have fewer than 35 years,
+                    zeros are averaged in, reducing your benefit.</small
                   >
                 </div>
                 <div class="input-group">
@@ -1632,6 +1829,44 @@
 
             <div id="eventsList" class="events-list" role="list"></div>
           </div>
+        </div>
+
+        <!-- Assumptions Documentation -->
+        <div class="assumptions-note">
+          <h4>Key Assumptions in This Simulation</h4>
+          <ul>
+            <li>
+              <strong>Tax Rates:</strong> Uses 2024 federal brackets. State tax applied to
+              traditional withdrawals only.
+            </li>
+            <li>
+              <strong>RMDs:</strong> Required Minimum Distributions enforced at age 73+ per SECURE
+              2.0 Act.
+            </li>
+            <li>
+              <strong>Social Security:</strong> Uses 2024 bend points and adjusts benefits for
+              early/delayed claiming per SSA rules.
+            </li>
+            <li>
+              <strong>Inflation:</strong> Spending and Social Security COLA increase at the
+              specified rate annually.
+            </li>
+            <li>
+              <strong>Withdrawal Order:</strong> Taxable accounts first, then traditional (pre-tax),
+              then Roth (tax-free).
+            </li>
+            <li>
+              <strong>Monte Carlo:</strong> Returns are randomly generated using a normal
+              distribution with your specified mean and volatility.
+            </li>
+          </ul>
+          <small style="display: block; margin-top: 10px; color: #94a3b8">
+            Sources: <a href="https://www.ssa.gov" target="_blank" rel="noopener">SSA.gov</a> |
+            <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"
+              >IRS Pub 590-B</a
+            >
+            | Tax Foundation
+          </small>
         </div>
 
         <div class="button-container">
@@ -2151,14 +2386,47 @@
 
             // Apply life events
             const lifeEventImpact = this.getLifeEventImpact(currentAgeInLoop);
-            // Distribute life event impacts to taxable account
-            balances.taxable += lifeEventImpact.income;
-            balances.taxable -= lifeEventImpact.expense;
-            if (balances.taxable < 0) {
-              // Pull from traditional if taxable goes negative
-              const deficit = Math.abs(balances.taxable);
-              balances.taxable = 0;
-              balances.traditional401k -= deficit;
+            // Calculate net impact (income minus expense)
+            const netLifeEventImpact = lifeEventImpact.income - lifeEventImpact.expense;
+
+            if (netLifeEventImpact >= 0) {
+              // Net income - add to taxable account
+              balances.taxable += netLifeEventImpact;
+            } else {
+              // Net expense - need to withdraw from accounts
+              let deficit = Math.abs(netLifeEventImpact);
+
+              // Cascade through accounts: taxable → traditional401k → traditionalIRA → roth401k → rothIRA
+              if (deficit > 0 && balances.taxable > 0) {
+                const withdraw = Math.min(balances.taxable, deficit);
+                balances.taxable -= withdraw;
+                deficit -= withdraw;
+              }
+              if (deficit > 0 && balances.traditional401k > 0) {
+                const withdraw = Math.min(balances.traditional401k, deficit);
+                balances.traditional401k -= withdraw;
+                deficit -= withdraw;
+              }
+              if (deficit > 0 && balances.traditionalIRA > 0) {
+                const withdraw = Math.min(balances.traditionalIRA, deficit);
+                balances.traditionalIRA -= withdraw;
+                deficit -= withdraw;
+              }
+              if (deficit > 0 && balances.roth401k > 0) {
+                const withdraw = Math.min(balances.roth401k, deficit);
+                balances.roth401k -= withdraw;
+                deficit -= withdraw;
+              }
+              if (deficit > 0 && balances.rothIRA > 0) {
+                const withdraw = Math.min(balances.rothIRA, deficit);
+                balances.rothIRA -= withdraw;
+                deficit -= withdraw;
+              }
+
+              // If still in deficit after all accounts depleted, simulation fails early
+              if (deficit > 0) {
+                return { finalBalance: 0, path };
+              }
             }
 
             if (savePath) {
@@ -2197,7 +2465,71 @@
             netSpendingNeeded -= lifeEventImpact.income;
             netSpendingNeeded += lifeEventImpact.expense;
 
-            // Withdrawal strategy: Taxable first, then Traditional, then Roth
+            // Calculate Required Minimum Distribution (RMD) for ages 73+
+            const RMD_START_AGE = 73;
+            let rmdAmount = 0;
+            if (currentAgeInLoop >= RMD_START_AGE) {
+              // RMD Uniform Lifetime Table (simplified)
+              const rmdTable = {
+                73: 26.5,
+                74: 25.5,
+                75: 24.6,
+                76: 23.7,
+                77: 22.9,
+                78: 22.0,
+                79: 21.1,
+                80: 20.2,
+                81: 19.4,
+                82: 18.5,
+                83: 17.7,
+                84: 16.8,
+                85: 16.0,
+                86: 15.2,
+                87: 14.4,
+                88: 13.7,
+                89: 12.9,
+                90: 12.2,
+                91: 11.5,
+                92: 10.8,
+                93: 10.1,
+                94: 9.5,
+                95: 8.9,
+                96: 8.4,
+                97: 7.8,
+                98: 7.3,
+                99: 6.8,
+                100: 6.4,
+              };
+              const lookupAge = Math.min(currentAgeInLoop, 100);
+              const period = rmdTable[lookupAge] || 6.4;
+              const traditionalBalance = balances.traditional401k + balances.traditionalIRA;
+              rmdAmount = traditionalBalance / period;
+            }
+
+            // Withdrawal strategy: RMD first, then Taxable, then additional Traditional, then Roth
+            // RMD from traditional accounts is mandatory and counts toward spending
+            let traditionalWithdrawn = 0;
+
+            if (rmdAmount > 0) {
+              // Apply RMD from traditional 401k first
+              if (balances.traditional401k > 0) {
+                const withdraw401k = Math.min(balances.traditional401k, rmdAmount);
+                balances.traditional401k -= withdraw401k;
+                traditionalWithdrawn += withdraw401k;
+              }
+              // Then from traditional IRA
+              const remainingRmd = rmdAmount - traditionalWithdrawn;
+              if (remainingRmd > 0 && balances.traditionalIRA > 0) {
+                const withdrawIRA = Math.min(balances.traditionalIRA, remainingRmd);
+                balances.traditionalIRA -= withdrawIRA;
+                traditionalWithdrawn += withdrawIRA;
+              }
+            }
+
+            // RMD counts toward spending needs
+            netSpendingNeeded -= traditionalWithdrawn;
+
+            // Continue with normal withdrawal strategy for remaining spending needs
             if (netSpendingNeeded > 0) {
               // 1. Withdraw from taxable first (most tax-efficient)
               if (balances.taxable > 0) {
@@ -2206,7 +2538,7 @@
                 netSpendingNeeded -= taxableWithdraw;
               }
 
-              // 2. Withdraw from traditional accounts (tax at ordinary rates)
+              // 2. Withdraw more from traditional accounts if needed (beyond RMD)
               if (netSpendingNeeded > 0 && balances.traditional401k > 0) {
                 const tradWithdraw = Math.min(balances.traditional401k, netSpendingNeeded);
                 balances.traditional401k -= tradWithdraw;
@@ -2767,6 +3099,64 @@
         }
 
         getInputValues() {
+          // Get state tax rate from dropdown
+          const stateSelect = document.getElementById('stateSelect');
+          const stateCode = stateSelect?.value || '';
+          const stateTaxRates = {
+            AL: 0.05,
+            AK: 0,
+            AZ: 0.025,
+            AR: 0.044,
+            CA: 0.133,
+            CO: 0.044,
+            CT: 0.0699,
+            DE: 0.066,
+            FL: 0,
+            GA: 0.0549,
+            HI: 0.11,
+            ID: 0.058,
+            IL: 0.0495,
+            IN: 0.0305,
+            IA: 0.0575,
+            KS: 0.057,
+            KY: 0.04,
+            LA: 0.0425,
+            ME: 0.0715,
+            MD: 0.0575,
+            MA: 0.05,
+            MI: 0.0425,
+            MN: 0.0985,
+            MS: 0.05,
+            MO: 0.048,
+            MT: 0.059,
+            NE: 0.0584,
+            NV: 0,
+            NH: 0,
+            NJ: 0.1075,
+            NM: 0.059,
+            NY: 0.109,
+            NC: 0.0475,
+            ND: 0.025,
+            OH: 0.035,
+            OK: 0.0475,
+            OR: 0.099,
+            PA: 0.0307,
+            RI: 0.0599,
+            SC: 0.064,
+            SD: 0,
+            TN: 0,
+            TX: 0,
+            UT: 0.0465,
+            VT: 0.0875,
+            VA: 0.0575,
+            WA: 0,
+            WV: 0.0512,
+            WI: 0.0765,
+            WY: 0,
+            DC: 0.1075,
+          };
+          const stateTaxRate = stateTaxRates[stateCode] || 0;
+
           const baseParams = {
             currentAge: parseInt(document.getElementById('currentAge').value),
             retirementAge: parseInt(document.getElementById('retirementAge').value),
@@ -2779,6 +3169,8 @@
             yearsInRetirement: parseInt(document.getElementById('yearsInRetirement').value),
             numSimulations: parseInt(document.getElementById('numSimulations').value),
             advancedMode: this.advancedMode,
+            stateCode: stateCode,
+            stateTaxRate: stateTaxRate,
             ...this.getSSParams(),
           };
 
