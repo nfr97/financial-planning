@@ -32,7 +32,7 @@ This is a static HTML/JS application. To develop:
 3. Run tests and checks before committing:
 
    ```bash
-   npm test          # Run 228 automated tests
+   npm test          # Run 390 automated tests
    npm run lint      # Check for code issues
    npm run format    # Auto-format all files
    ```
@@ -52,8 +52,10 @@ Always read relevant context first:
 1. **If modifying business logic** - Check if it exists in `lib/` first. If so, modify there and update tests in `tests/`
 2. **If adding new features** - Check `shared.js` for existing utilities before creating new ones
 3. **If touching CSV/transaction code** - Read `lib/categorization.js`, `lib/parsing-utils.js`, and `lib/transfer-detection.js`
-4. **If touching retirement simulation** - Read `lib/simulation.js`, `lib/social-security.js`, and `lib/statistics.js`
-5. **After any code changes** - Run `npm test` to make sure nothing broke
+4. **If touching retirement simulation** - Read `lib/simulation.js`, `lib/social-security.js`, `lib/tax-parameters.js`, and `lib/statistics.js`
+5. **If adding input validation** - Use `lib/validation.js` utilities (validateField, validateRetirementParams, etc.)
+6. **If updating tax rules** - Modify `lib/tax-parameters.js` (brackets, SS params, state rates, IRS limits)
+7. **After any code changes** - Run `npm test` to make sure nothing broke
 
 ## Architecture
 
@@ -77,12 +79,21 @@ Core logic is extracted into ES modules for testing:
 | `transfer-detection.js` | Inter-account transfer matching                    |
 | `column-detection.js`   | Bank CSV column auto-detection                     |
 | `social-security.js`    | FRA, PIA, and benefit calculations                 |
-| `simulation.js`         | Monte Carlo simulation utilities                   |
+| `simulation.js`         | Monte Carlo simulation, RMD calculations, withdrawals |
 | `statistics.js`         | Percentiles, histograms, mean/std dev              |
+| `validation.js`         | Input validation, cross-field validation, schema validation |
+| `tax-parameters.js`     | 2024 tax brackets, SS params, state taxes, IRS limits |
 
 ### Test Suite (`tests/`)
 
-228 automated tests using Vitest. Run with `npm test`. Tests cover all lib/ modules plus shared.js utilities (StorageUtils, DOMUtils).
+390 automated tests using Vitest. Run with `npm test`. Tests cover all lib/ modules plus shared.js utilities. Key test files:
+
+- `simulation.test.js` - Monte Carlo, withdrawals, RMDs, edge cases
+- `social-security.test.js` - FRA, PIA calculations, bend points
+- `validation.test.js` - Input validation, cross-field rules
+- `tax-parameters.test.js` - Tax brackets, RMD tables, state taxes
+- `integration.test.js` - Cross-tool data flow via localStorage
+- `shared-utils.test.js` - FinanceUtils, DateUtils, SessionManager
 
 ### Shared Utilities (`shared.js`)
 
@@ -109,6 +120,8 @@ Tools share data via localStorage:
 - Monte Carlo simulation using Box-Muller transform for normal distribution
 - Supports both simple mode (single account) and advanced mode (multiple account types: 401k, IRA, Roth, taxable)
 - Implements tax-efficient withdrawal ordering: taxable → traditional → Roth
+- Required Minimum Distributions (RMDs) enforced at age 73+ per SECURE 2.0
+- State income tax applied to traditional account withdrawals (50 states + DC)
 - Life events modify annual income/expenses during simulation years
 
 **`SocialSecurityCalculator`**
