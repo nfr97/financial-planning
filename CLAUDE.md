@@ -71,18 +71,18 @@ Each tool is a standalone HTML file containing embedded CSS and JavaScript. This
 
 Core logic is extracted into ES modules for testing:
 
-| Module                  | Purpose                                            |
-| ----------------------- | -------------------------------------------------- |
-| `csv-utils.js`          | RFC 4180 CSV parsing                               |
-| `parsing-utils.js`      | Amount/date parsing (Unicode, European format)     |
-| `categorization.js`     | Transaction categorization with confidence scoring |
-| `transfer-detection.js` | Inter-account transfer matching                    |
-| `column-detection.js`   | Bank CSV column auto-detection                     |
-| `social-security.js`    | FRA, PIA, and benefit calculations                 |
-| `simulation.js`         | Monte Carlo simulation, RMD calculations, withdrawals |
-| `statistics.js`         | Percentiles, histograms, mean/std dev              |
+| Module                  | Purpose                                                     |
+| ----------------------- | ----------------------------------------------------------- |
+| `csv-utils.js`          | RFC 4180 CSV parsing                                        |
+| `parsing-utils.js`      | Amount/date parsing (Unicode, European format)              |
+| `categorization.js`     | Transaction categorization with confidence scoring          |
+| `transfer-detection.js` | Inter-account transfer matching                             |
+| `column-detection.js`   | Bank CSV column auto-detection                              |
+| `social-security.js`    | FRA, PIA, and benefit calculations                          |
+| `simulation.js`         | Monte Carlo simulation, RMD calculations, withdrawals       |
+| `statistics.js`         | Percentiles, histograms, mean/std dev                       |
 | `validation.js`         | Input validation, cross-field validation, schema validation |
-| `tax-parameters.js`     | 2024 tax brackets, SS params, state taxes, IRS limits |
+| `tax-parameters.js`     | 2024 tax brackets, SS params, state taxes, IRS limits       |
 
 ### Test Suite (`tests/`)
 
