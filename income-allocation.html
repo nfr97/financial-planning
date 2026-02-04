@@ -1029,7 +1029,7 @@
               type="button"
               class="tax-toggle-option active"
               id="postTaxOption"
-              onclick="allocator.setTaxType('post-tax')"
+              data-tax-type="post-tax"
               aria-pressed="true"
             >
               Post-Tax Income
@@ -1038,7 +1038,7 @@
               type="button"
               class="tax-toggle-option"
               id="preTaxOption"
-              onclick="allocator.setTaxType('pre-tax')"
+              data-tax-type="pre-tax"
               aria-pressed="false"
             >
               Pre-Tax Income
@@ -2444,17 +2444,25 @@
         }
       }
 
-      let allocator;
-
       // Initialize the application
       DOMUtils.ready(() => {
-        allocator = new IncomeAllocator();
+        // Use window.allocator so inline onclick handlers can access it
+        window.allocator = new IncomeAllocator();
+        const allocator = window.allocator; // Local reference for convenience
 
         // Add event listeners for preset buttons
         document.querySelectorAll('.preset-btn[data-preset]').forEach((btn) => {
           btn.addEventListener('click', () => {
             const presetName = btn.dataset.preset;
             allocator.setPreset(presetName);
+          });
+        });
+
+        // Add event listeners for tax toggle buttons
+        document.querySelectorAll('.tax-toggle-option[data-tax-type]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const taxType = btn.dataset.taxType;
+            allocator.setTaxType(taxType);
           });
         });
 
