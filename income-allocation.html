@@ -2450,20 +2450,23 @@
         window.allocator = new IncomeAllocator();
         const allocator = window.allocator; // Local reference for convenience
 
-        // Add event listeners for preset buttons
-        document.querySelectorAll('.preset-btn[data-preset]').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const presetName = btn.dataset.preset;
+        // Add event listeners using event delegation for more robust handling
+        document.addEventListener('click', (e) => {
+          // Handle preset button clicks
+          const presetBtn = e.target.closest('.preset-btn[data-preset]');
+          if (presetBtn) {
+            const presetName = presetBtn.dataset.preset;
             allocator.setPreset(presetName);
-          });
-        });
+            return;
+          }
 
-        // Add event listeners for tax toggle buttons
-        document.querySelectorAll('.tax-toggle-option[data-tax-type]').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const taxType = btn.dataset.taxType;
+          // Handle tax toggle button clicks
+          const taxToggleBtn = e.target.closest('.tax-toggle-option[data-tax-type]');
+          if (taxToggleBtn) {
+            const taxType = taxToggleBtn.dataset.taxType;
             allocator.setTaxType(taxType);
-          });
+            return;
+          }
         });
 
         // Load saved budget planner data
