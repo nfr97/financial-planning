@@ -1050,15 +1050,15 @@
             <div class="income-input-wrapper">
               <label for="incomeFrequency" class="sr-only">Income frequency</label>
               <select id="incomeFrequency" aria-label="Income frequency">
-                <option value="monthly">Monthly</option>
                 <option value="annual">Annual</option>
+                <option value="monthly">Monthly</option>
               </select>
               <input
                 type="text"
                 id="income"
                 name="income"
                 autocomplete="transaction-amount"
-                value="5000.00"
+                value="60000.00"
                 placeholder="Enter amount"
                 aria-describedby="income-help"
               />
@@ -2414,7 +2414,7 @@
               return `
                         <div class="scenario-card ${isCurrent ? 'current' : ''}">
                             <div class="scenario-header">
-                                <div class="scenario-name">${DOMUtils.escapeHTML(scenario.name)}</div>
+                                <div class="scenario-name">${DOMUtils.escapeHtml(scenario.name)}</div>
                                 ${isCurrent ? '<span class="scenario-badge">CURRENT</span>' : ''}
                             </div>
                             <div class="scenario-allocations">
