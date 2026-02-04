@@ -1102,7 +1102,7 @@
           <button
             type="button"
             class="preset-btn"
-            onclick="applyPreset('balanced')"
+            data-preset="balanced"
             aria-describedby="balanced-desc"
             title="Good for most people"
           >
@@ -1115,7 +1115,7 @@
           <button
             type="button"
             class="preset-btn"
-            onclick="applyPreset('aggressive-saver')"
+            data-preset="aggressive-saver"
             aria-describedby="aggressive-desc"
             title="Maximize retirement savings"
           >
@@ -1128,7 +1128,7 @@
           <button
             type="button"
             class="preset-btn"
-            onclick="applyPreset('debt-crusher')"
+            data-preset="debt-crusher"
             aria-describedby="debt-desc"
             title="Pay off debt faster"
           >
@@ -2282,7 +2282,7 @@
             // Highlight active preset button
             document.querySelectorAll('.preset-btn').forEach((btn) => {
               btn.classList.remove('active');
-              if (btn.getAttribute('onclick')?.includes(preset)) {
+              if (btn.dataset.preset === preset) {
                 btn.classList.add('active');
               }
             });
@@ -2444,16 +2444,19 @@
         }
       }
 
-      // Global function for preset buttons
       let allocator;
-
-      function applyPreset(presetName) {
-        allocator.setPreset(presetName);
-      }
 
       // Initialize the application
       DOMUtils.ready(() => {
         allocator = new IncomeAllocator();
+
+        // Add event listeners for preset buttons
+        document.querySelectorAll('.preset-btn[data-preset]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const presetName = btn.dataset.preset;
+            allocator.setPreset(presetName);
+          });
+        });
 
         // Load saved budget planner data
         const savedData = StorageUtils.get('budgetPlannerData');
