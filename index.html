@@ -677,16 +677,6 @@
             nextStep = 'Review Your Plan';
             nextStepUrl = '#';
             message = `Your retirement success rate is ${retirement.successRate}%. Click to see recommendations.`;
-            // Override click to open refinement modal
-            setTimeout(() => {
-              const btn = suggestionDiv.querySelector('.continue-btn');
-              if (btn) {
-                btn.addEventListener('click', (e) => {
-                  e.preventDefault();
-                  RefinementModal.open();
-                });
-              }
-            }, 100);
           } else {
             suggestionDiv.style.display = 'none';
             return;
@@ -699,6 +689,19 @@
                 <a href="${nextStepUrl}" class="continue-btn">Go to ${nextStep} →</a>
             `;
         suggestionDiv.style.display = 'block';
+
+        // Override click to open refinement modal when success rate is low
+        if (nextStepUrl === '#') {
+          const btn = suggestionDiv.querySelector('.continue-btn');
+          if (btn) {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              if (typeof RefinementModal !== 'undefined') {
+                RefinementModal.open();
+              }
+            });
+          }
+        }
       }
     </script>
   </body>

@@ -1666,13 +1666,12 @@ const RefinementModal = {
     document.body.style.overflow = 'hidden';
 
     // Handle ESC key
-    const handleEsc = (e) => {
+    this._handleEsc = (e) => {
       if (e.key === 'Escape') {
         this.close();
-        document.removeEventListener('keydown', handleEsc);
       }
     };
-    document.addEventListener('keydown', handleEsc);
+    document.addEventListener('keydown', this._handleEsc);
   },
 
   /**
@@ -1685,5 +1684,9 @@ const RefinementModal = {
       setTimeout(() => modal.remove(), 300);
     }
     document.body.style.overflow = '';
+    if (this._handleEsc) {
+      document.removeEventListener('keydown', this._handleEsc);
+      this._handleEsc = null;
+    }
   },
 };

@@ -1157,7 +1157,7 @@
               type="button"
               class="scenario-btn"
               id="saveScenarioBtn"
-              onclick="allocator.saveScenario()"
+              onclick="window.allocator.saveScenario()"
             >
               💾 Save Current as Scenario
             </button>
@@ -1165,7 +1165,7 @@
               type="button"
               class="scenario-btn"
               id="clearScenariosBtn"
-              onclick="allocator.clearScenarios()"
+              onclick="window.allocator.clearScenarios()"
             >
               🗑️ Clear All Scenarios
             </button>
@@ -2434,8 +2434,8 @@
                                 : ''
                             }
                             <div class="scenario-actions-bottom">
-                                ${!isCurrent ? `<button class="scenario-apply-btn" onclick="allocator.applyScenario(${scenario.id})">Apply</button>` : ''}
-                                <button class="scenario-delete-btn" onclick="allocator.deleteScenario(${scenario.id})">Delete</button>
+                                ${!isCurrent ? `<button class="scenario-apply-btn" onclick="window.allocator.applyScenario(${scenario.id})">Apply</button>` : ''}
+                                <button class="scenario-delete-btn" onclick="window.allocator.deleteScenario(${scenario.id})">Delete</button>
                             </div>
                         </div>
                     `;
