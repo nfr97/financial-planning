@@ -95,7 +95,7 @@ const StorageUtils = {
       const item = localStorage.getItem(key);
       if (item === null) return defaultValue;
       return JSON.parse(item);
-    } catch (e) {
+    } catch {
       // If JSON parsing fails, return raw string or default
       const item = localStorage.getItem(key);
       return item !== null ? item : defaultValue;
@@ -846,11 +846,11 @@ const SessionManager = {
     banner.setAttribute('role', 'alert');
     banner.setAttribute('aria-live', 'assertive');
 
-    let dateDisplay = sessionDateStr
+    const dateDisplay = sessionDateStr
       ? `<div class="session-date">Session from: <strong>${sessionDateStr}</strong></div>`
       : '';
 
-    let itemsDisplay =
+    const itemsDisplay =
       imported && imported.length > 0
         ? `<div class="session-items">Restored: ${imported.join(', ')}</div>`
         : '';

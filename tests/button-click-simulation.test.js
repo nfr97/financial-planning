@@ -315,8 +315,12 @@ describe('Click Simulation: Window-Scoped Object Pattern', () => {
 
     // Assign to window exactly as the real code does
     window.allocator = {
-      saveScenario: () => { saveCalled = true; },
-      clearScenarios: () => { clearCalled = true; },
+      saveScenario: () => {
+        saveCalled = true;
+      },
+      clearScenarios: () => {
+        clearCalled = true;
+      },
     };
 
     const saveBtn = document.getElementById('saveBtn');
@@ -415,9 +419,15 @@ describe('Click Simulation: Preset Buttons with Market Parameters', () => {
       returnVolatility.value = preset.volatility;
     };
 
-    document.getElementById('presetConservative').addEventListener('click', () => applyPreset('conservative'));
-    document.getElementById('presetBalanced').addEventListener('click', () => applyPreset('balanced'));
-    document.getElementById('presetAggressive').addEventListener('click', () => applyPreset('aggressive'));
+    document
+      .getElementById('presetConservative')
+      .addEventListener('click', () => applyPreset('conservative'));
+    document
+      .getElementById('presetBalanced')
+      .addEventListener('click', () => applyPreset('balanced'));
+    document
+      .getElementById('presetAggressive')
+      .addEventListener('click', () => applyPreset('aggressive'));
   });
 
   it('Conservative preset sets low growth and volatility', () => {

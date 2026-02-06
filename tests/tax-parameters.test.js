@@ -15,6 +15,8 @@ import {
   RMD_PARAMETERS,
   STATE_TAX_RATES,
   CONTRIBUTION_LIMITS_2024,
+  TAX_YEAR,
+  isTaxDataStale,
 } from '../lib/tax-parameters.js';
 
 describe('Federal Tax Calculations', () => {
@@ -252,6 +254,27 @@ describe('Tax Bracket Data', () => {
       expect(FEDERAL_TAX_BRACKETS_2024[i].rate).toBeGreaterThan(
         FEDERAL_TAX_BRACKETS_2024[i - 1].rate
       );
+    }
+  });
+});
+
+describe('Tax Year Versioning', () => {
+  it('TAX_YEAR is a valid 4-digit year', () => {
+    expect(TAX_YEAR).toBeGreaterThanOrEqual(2024);
+    expect(TAX_YEAR).toBeLessThanOrEqual(2100);
+  });
+
+  it('isTaxDataStale returns a boolean', () => {
+    expect(typeof isTaxDataStale()).toBe('boolean');
+  });
+
+  it('isTaxDataStale returns true when current year exceeds TAX_YEAR', () => {
+    // Since TAX_YEAR is 2024 and current year is >= 2025, this should be true
+    const currentYear = new Date().getFullYear();
+    if (currentYear > TAX_YEAR) {
+      expect(isTaxDataStale()).toBe(true);
+    } else {
+      expect(isTaxDataStale()).toBe(false);
     }
   });
 });
