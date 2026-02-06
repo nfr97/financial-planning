@@ -303,45 +303,43 @@ describe('Button Wiring: Income Allocation', () => {
     ).toEqual([]);
   });
 
-  it('allocator is assigned to window for inline onclick access', () => {
-    // This was a real bug: allocator was local-scoped, making onclick="window.allocator.X()" fail
-    expect(page.scriptContent).toMatch(/window\.allocator\s*=\s*new\s+IncomeAllocator/);
+  it('budgetPlanner is assigned to window for global access', () => {
+    // BudgetPlanner is assigned to window.budgetPlanner for cross-tool access
+    expect(page.scriptContent).toMatch(/window\.budgetPlanner\s*=\s*new\s+BudgetPlanner/);
   });
 
-  it('onclick handlers use window.allocator (not bare allocator)', () => {
+  it('onclick handlers use window.budgetPlanner (not bare budgetPlanner)', () => {
     const onclickHandlers = page.onclicks;
 
     for (const handler of onclickHandlers) {
-      // If it references allocator, it MUST go through window.allocator
-      if (handler.onclick.includes('allocator.') && !handler.onclick.includes('window.allocator')) {
-        // Check in dynamically generated HTML too
+      // If it references budgetPlanner, it MUST go through window.budgetPlanner
+      if (
+        handler.onclick.includes('budgetPlanner.') &&
+        !handler.onclick.includes('window.budgetPlanner')
+      ) {
         expect.fail(
-          `onclick="${handler.onclick}" uses bare 'allocator' instead of 'window.allocator'`
+          `onclick="${handler.onclick}" uses bare 'budgetPlanner' instead of 'window.budgetPlanner'`
         );
       }
     }
   });
 
-  it('dynamically generated scenario buttons use window.allocator', () => {
-    // Check that template literals for scenario buttons use window.allocator
-    expect(page.scriptContent).toContain('window.allocator.applyScenario');
-    expect(page.scriptContent).toContain('window.allocator.deleteScenario');
-
-    // Should NOT have bare allocator in onclick within template strings
-    // Look for onclick="allocator. (without window.) in template strings
-    const bareAllocatorOnclick = /onclick="allocator\./;
-    expect(page.scriptContent).not.toMatch(bareAllocatorOnclick);
+  it('preset buttons use addEventListener (not event delegation)', () => {
+    // BudgetPlanner wires presets via direct getElementById + addEventListener
+    expect(page.scriptContent).toContain("getElementById('preset-balanced').addEventListener");
+    expect(page.scriptContent).toContain("getElementById('preset-aggressive').addEventListener");
+    expect(page.scriptContent).toContain("getElementById('preset-debt').addEventListener");
   });
 
-  it('all critical buttons exist in the DOM', () => {
+  it('all critical elements exist in the DOM', () => {
     const criticalIds = [
-      'postTaxOption',
-      'preTaxOption',
       'income',
-      'incomeFrequency',
-      'downloadAllocationChart',
-      'scenarioSection',
-      'scenarioGrid',
+      'zipCode',
+      'preset-balanced',
+      'preset-aggressive',
+      'preset-debt',
+      'downloadChartBtn',
+      'budgetChart',
     ];
 
     for (const id of criticalIds) {
@@ -349,13 +347,11 @@ describe('Button Wiring: Income Allocation', () => {
     }
   });
 
-  it('event delegation is set up for preset buttons', () => {
-    // Preset buttons use event delegation - verify the pattern exists
-    expect(page.scriptContent).toContain("e.target.closest('.preset-btn[data-preset]')");
-  });
-
-  it('event delegation is set up for tax toggle buttons', () => {
-    expect(page.scriptContent).toContain("e.target.closest('.tax-toggle-option[data-tax-type]')");
+  it('income input has event listeners for input, blur, and focus', () => {
+    // BudgetPlanner attaches input/blur/focus listeners on the income field
+    expect(page.scriptContent).toContain("this.incomeInput.addEventListener('input'");
+    expect(page.scriptContent).toContain("this.incomeInput.addEventListener('blur'");
+    expect(page.scriptContent).toContain("this.incomeInput.addEventListener('focus'");
   });
 
   it('slider elements referenced in JS exist in DOM', () => {
@@ -546,12 +542,12 @@ describe('Cross-File Button Wiring Consistency', () => {
     }
   });
 
-  it('pages with inline onclick using window.X have matching window assignments', () => {
-    // income-allocation uses onclick="window.allocator.X()" so it MUST assign to window
+  it('pages with window-scoped objects have matching window assignments', () => {
+    // income-allocation assigns window.budgetPlanner for cross-tool access
     expect(
       pages.income.scriptContent,
-      'income-allocation should assign allocator to window for onclick access'
-    ).toMatch(/window\.allocator\s*=\s*new\s+\w+/);
+      'income-allocation should assign budgetPlanner to window'
+    ).toMatch(/window\.budgetPlanner\s*=\s*new\s+\w+/);
   });
 
   it('transaction analyzer has top-level let for onclick access', () => {
