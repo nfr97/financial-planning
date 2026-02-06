@@ -8,8 +8,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
-    "lint": "eslint lib/",
-    "lint:fix": "eslint lib/ --fix",
+    "lint": "eslint lib/ shared.js",
+    "lint:fix": "eslint lib/ shared.js --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

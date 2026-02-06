@@ -122,7 +122,9 @@
         border: 2px solid #e2e8f0;
         border-radius: 8px;
         font-size: 1em;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
       }
 
       .input-group input:focus,
@@ -1054,7 +1056,8 @@
 
             document.getElementById(`${key}Pct`).textContent = `${Math.round(pct)}%`;
             document.getElementById(`${key}Monthly`).textContent = this.formatCurrency(monthlyAmt);
-            document.getElementById(`${key}Annual`).textContent = `${this.formatCurrency(annualAmt)}/year`;
+            document.getElementById(`${key}Annual`).textContent =
+              `${this.formatCurrency(annualAmt)}/year`;
 
             // Update slider position
             this.sliders[key].value = Math.round(pct);

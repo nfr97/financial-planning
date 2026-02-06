@@ -142,7 +142,10 @@ describe('Button Wiring: Retirement Simulator', () => {
       }
     }
 
-    expect(missing, `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 
   it('all querySelector ID targets exist in the DOM', () => {
@@ -156,7 +159,10 @@ describe('Button Wiring: Retirement Simulator', () => {
       }
     }
 
-    expect(missing, `Missing DOM elements referenced by querySelector: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `Missing DOM elements referenced by querySelector: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 
   it('Social Security button IDs are consistent between HTML and JS', () => {
@@ -223,14 +229,15 @@ describe('Button Wiring: Retirement Simulator', () => {
 
       // Or variable assignment pattern: const x = getElementById('id'); ... x.addEventListener
       const varPattern = new RegExp(
-        `(const|let|var)\\s+(\\w+)\\s*=\\s*document\\.getElementById\\(['"]${id}['"]\\)`,
+        `(const|let|var)\\s+(\\w+)\\s*=\\s*document\\.getElementById\\(['"]${id}['"]\\)`
       );
       const varMatch = page.scriptContent.match(varPattern);
-      const hasVarListener = varMatch && page.scriptContent.includes(`${varMatch[2]}.addEventListener`);
+      const hasVarListener =
+        varMatch && page.scriptContent.includes(`${varMatch[2]}.addEventListener`);
 
       expect(
         hasListener || hasVarListener,
-        `Button #${id} has no addEventListener wiring in the script`,
+        `Button #${id} has no addEventListener wiring in the script`
       ).toBe(true);
     }
   });
@@ -247,7 +254,12 @@ describe('Button Wiring: Retirement Simulator', () => {
       // - window (explicit global)
       // - this (DOM element context)
       // - applyWorkLongerRecommendation, applySpendLessRecommendation (global functions)
-      const validRoots = ['window', 'this', 'applyWorkLongerRecommendation', 'applySpendLessRecommendation'];
+      const validRoots = [
+        'window',
+        'this',
+        'applyWorkLongerRecommendation',
+        'applySpendLessRecommendation',
+      ];
 
       if (!validRoots.includes(root)) {
         invalidHandlers.push(`onclick="${handler.onclick}" (root: ${root})`);
@@ -256,14 +268,14 @@ describe('Button Wiring: Retirement Simulator', () => {
 
     expect(
       invalidHandlers,
-      `onclick handlers reference non-global objects: ${invalidHandlers.join(', ')}`,
+      `onclick handlers reference non-global objects: ${invalidHandlers.join(', ')}`
     ).toEqual([]);
   });
 
   it('recommendation functions are defined in script scope', () => {
-    // These are called from onclick and must be globally accessible
-    expect(page.scriptContent).toContain('function applyWorkLongerRecommendation');
-    expect(page.scriptContent).toContain('function applySpendLessRecommendation');
+    // These are called from onclick and must be globally accessible via window (module scope)
+    expect(page.scriptContent).toContain('window.applyWorkLongerRecommendation');
+    expect(page.scriptContent).toContain('window.applySpendLessRecommendation');
   });
 });
 
@@ -285,48 +297,49 @@ describe('Button Wiring: Income Allocation', () => {
       }
     }
 
-    expect(missing, `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 
-  it('allocator is assigned to window for inline onclick access', () => {
-    // This was a real bug: allocator was local-scoped, making onclick="window.allocator.X()" fail
-    expect(page.scriptContent).toMatch(/window\.allocator\s*=\s*new\s+IncomeAllocator/);
+  it('budgetPlanner is assigned to window for global access', () => {
+    // BudgetPlanner is assigned to window.budgetPlanner for cross-tool access
+    expect(page.scriptContent).toMatch(/window\.budgetPlanner\s*=\s*new\s+BudgetPlanner/);
   });
 
-  it('onclick handlers use window.allocator (not bare allocator)', () => {
+  it('onclick handlers use window.budgetPlanner (not bare budgetPlanner)', () => {
     const onclickHandlers = page.onclicks;
 
     for (const handler of onclickHandlers) {
-      // If it references allocator, it MUST go through window.allocator
-      if (handler.onclick.includes('allocator.') && !handler.onclick.includes('window.allocator')) {
-        // Check in dynamically generated HTML too
+      // If it references budgetPlanner, it MUST go through window.budgetPlanner
+      if (
+        handler.onclick.includes('budgetPlanner.') &&
+        !handler.onclick.includes('window.budgetPlanner')
+      ) {
         expect.fail(
-          `onclick="${handler.onclick}" uses bare 'allocator' instead of 'window.allocator'`,
+          `onclick="${handler.onclick}" uses bare 'budgetPlanner' instead of 'window.budgetPlanner'`
         );
       }
     }
   });
 
-  it('dynamically generated scenario buttons use window.allocator', () => {
-    // Check that template literals for scenario buttons use window.allocator
-    expect(page.scriptContent).toContain('window.allocator.applyScenario');
-    expect(page.scriptContent).toContain('window.allocator.deleteScenario');
-
-    // Should NOT have bare allocator in onclick within template strings
-    // Look for onclick="allocator. (without window.) in template strings
-    const bareAllocatorOnclick = /onclick="allocator\./;
-    expect(page.scriptContent).not.toMatch(bareAllocatorOnclick);
+  it('preset buttons use addEventListener (not event delegation)', () => {
+    // BudgetPlanner wires presets via direct getElementById + addEventListener
+    expect(page.scriptContent).toContain("getElementById('preset-balanced').addEventListener");
+    expect(page.scriptContent).toContain("getElementById('preset-aggressive').addEventListener");
+    expect(page.scriptContent).toContain("getElementById('preset-debt').addEventListener");
   });
 
-  it('all critical buttons exist in the DOM', () => {
+  it('all critical elements exist in the DOM', () => {
     const criticalIds = [
-      'postTaxOption',
-      'preTaxOption',
       'income',
-      'incomeFrequency',
-      'downloadAllocationChart',
-      'scenarioSection',
-      'scenarioGrid',
+      'zipCode',
+      'preset-balanced',
+      'preset-aggressive',
+      'preset-debt',
+      'downloadChartBtn',
+      'budgetChart',
     ];
 
     for (const id of criticalIds) {
@@ -334,13 +347,11 @@ describe('Button Wiring: Income Allocation', () => {
     }
   });
 
-  it('event delegation is set up for preset buttons', () => {
-    // Preset buttons use event delegation - verify the pattern exists
-    expect(page.scriptContent).toContain("e.target.closest('.preset-btn[data-preset]')");
-  });
-
-  it('event delegation is set up for tax toggle buttons', () => {
-    expect(page.scriptContent).toContain("e.target.closest('.tax-toggle-option[data-tax-type]')");
+  it('income input has event listeners for input, blur, and focus', () => {
+    // BudgetPlanner attaches input/blur/focus listeners on the income field
+    expect(page.scriptContent).toContain("this.incomeInput.addEventListener('input'");
+    expect(page.scriptContent).toContain("this.incomeInput.addEventListener('blur'");
+    expect(page.scriptContent).toContain("this.incomeInput.addEventListener('focus'");
   });
 
   it('slider elements referenced in JS exist in DOM', () => {
@@ -370,7 +381,10 @@ describe('Button Wiring: Transaction Analyzer', () => {
       }
     }
 
-    expect(missing, `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 
   it('API key input uses correct element ID', () => {
@@ -404,8 +418,8 @@ describe('Button Wiring: Transaction Analyzer', () => {
       const validRoots = [
         'window',
         'this',
-        'analyzer',       // Must be on window (checked above)
-        'StatusBar',       // Global from shared.js
+        'analyzer', // Must be on window (checked above)
+        'StatusBar', // Global from shared.js
       ];
 
       if (!validRoots.includes(root)) {
@@ -415,7 +429,7 @@ describe('Button Wiring: Transaction Analyzer', () => {
 
     expect(
       invalidHandlers,
-      `onclick handlers reference non-global objects: ${invalidHandlers.join(', ')}`,
+      `onclick handlers reference non-global objects: ${invalidHandlers.join(', ')}`
     ).toEqual([]);
   });
 
@@ -442,7 +456,7 @@ describe('Button Wiring: Transaction Analyzer', () => {
     for (const id of toggleButtons) {
       expect(
         page.scriptContent.includes(`getElementById('${id}').addEventListener`),
-        `Toggle button #${id} has no addEventListener`,
+        `Toggle button #${id} has no addEventListener`
       ).toBe(true);
     }
   });
@@ -466,13 +480,17 @@ describe('Button Wiring: Landing Page', () => {
       }
     }
 
-    expect(missing, `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `Missing DOM elements referenced by getElementById: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 
   it('does not use setTimeout for event listener attachment', () => {
     // Real bug: setTimeout(() => { btn.addEventListener(...) }, 100) was a race condition
     // Event listeners should be attached synchronously after DOM manipulation
-    const timeoutListenerPattern = /setTimeout\s*\(\s*(?:\(\)|function)\s*(?:=>)?\s*\{[^}]*addEventListener/;
+    const timeoutListenerPattern =
+      /setTimeout\s*\(\s*(?:\(\)|function)\s*(?:=>)?\s*\{[^}]*addEventListener/;
     expect(page.scriptContent).not.toMatch(timeoutListenerPattern);
   });
 });
@@ -517,19 +535,19 @@ describe('Cross-File Button Wiring Consistency', () => {
         // Flag any other use of bare 'event' that isn't passed as a parameter
         if (onclick.includes('event.target') && !onclick.includes('(event)')) {
           expect.fail(
-            `${name}: onclick="${onclick}" uses event.target without explicit event parameter`,
+            `${name}: onclick="${onclick}" uses event.target without explicit event parameter`
           );
         }
       }
     }
   });
 
-  it('pages with inline onclick using window.X have matching window assignments', () => {
-    // income-allocation uses onclick="window.allocator.X()" so it MUST assign to window
+  it('pages with window-scoped objects have matching window assignments', () => {
+    // income-allocation assigns window.budgetPlanner for cross-tool access
     expect(
       pages.income.scriptContent,
-      'income-allocation should assign allocator to window for onclick access',
-    ).toMatch(/window\.allocator\s*=\s*new\s+\w+/);
+      'income-allocation should assign budgetPlanner to window'
+    ).toMatch(/window\.budgetPlanner\s*=\s*new\s+\w+/);
   });
 
   it('transaction analyzer has top-level let for onclick access', () => {
@@ -555,7 +573,7 @@ describe('Cross-File Button Wiring Consistency', () => {
 
       expect(
         brokenChains,
-        `${name}: addEventListener chained on missing elements: ${brokenChains.join(', ')}`,
+        `${name}: addEventListener chained on missing elements: ${brokenChains.join(', ')}`
       ).toEqual([]);
     }
   });
@@ -570,7 +588,7 @@ describe('Cross-File Button Wiring Consistency', () => {
       const hasEventListeners = page.scriptContent.includes('addEventListener');
       expect(
         hasStaticButtons || hasDynamicButtons || hasClickableLinks || hasEventListeners,
-        `${name} has no interactive elements at all`,
+        `${name} has no interactive elements at all`
       ).toBe(true);
     }
   });
@@ -618,7 +636,7 @@ describe('Dynamic Button Generation Safety', () => {
           // Must use window.allocator
           expect(
             onclick.includes('window.allocator'),
-            `${name}: template onclick="${onclick}" should use window.allocator`,
+            `${name}: template onclick="${onclick}" should use window.allocator`
           ).toBe(true);
         }
 
@@ -627,7 +645,7 @@ describe('Dynamic Button Generation Safety', () => {
           // (in the global lexical environment, accessible from inline handlers)
           expect(
             page.scriptContent,
-            `${name}: analyzer must be declared at top-level for onclick to work`,
+            `${name}: analyzer must be declared at top-level for onclick to work`
           ).toMatch(/^\s*let\s+analyzer\s*;/m);
         }
       }
@@ -639,7 +657,7 @@ describe('Dynamic Button Generation Safety', () => {
     for (const [name, page] of Object.entries(pages)) {
       // Check for delete buttons that use this.parentElement traversal
       const deletePatterns = page.scriptContent.match(
-        /onclick="this\.parentElement[^"]*\.remove\(\)"/g,
+        /onclick="this\.parentElement[^"]*\.remove\(\)"/g
       );
       if (deletePatterns) {
         // These are valid - 'this' in onclick refers to the button element
