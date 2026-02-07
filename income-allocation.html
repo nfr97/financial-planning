@@ -447,32 +447,6 @@
         color: white;
       }
 
-      .save-session-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        margin: 16px 0 0;
-        padding: 12px 24px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        color: white;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 1em;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .save-session-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      }
-
-      .save-session-btn.saved {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      }
-
       /* Footer */
       footer {
         background: #f8fafc;
@@ -827,22 +801,6 @@
               </div>
             </div>
           </div>
-
-          <button type="button" class="save-session-btn" id="saveSessionBtn">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            Save Session
-          </button>
         </section>
 
         <!-- Budget at a Glance -->
@@ -952,30 +910,6 @@
           // Download button
           document.getElementById('downloadChartBtn').addEventListener('click', () => {
             this.downloadChart();
-          });
-
-          // Save session button
-          document.getElementById('saveSessionBtn').addEventListener('click', () => {
-            this.saveData();
-            const btn = document.getElementById('saveSessionBtn');
-            btn.classList.add('saved');
-            btn.innerHTML = `
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              Saved! Available to other tools
-            `;
-            setTimeout(() => {
-              btn.classList.remove('saved');
-              btn.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Save Session
-              `;
-            }, 2000);
           });
 
           // Load saved data or use defaults
