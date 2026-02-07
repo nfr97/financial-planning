@@ -116,19 +116,15 @@ const StorageUtils = {
       const item = localStorage.getItem(key);
       if (item === null) return defaultValue;
       return JSON.parse(item);
-    } catch {
-      const item = localStorage.getItem(key);
-      return item !== null ? item : defaultValue;
+    } catch (e) {
+      console.warn(`StorageUtils: failed to parse key "${key}", returning default`, e);
+      return defaultValue;
     }
   },
 
   set(key, value) {
     try {
-      if (typeof value === 'object') {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        localStorage.setItem(key, value);
-      }
+      localStorage.setItem(key, JSON.stringify(value));
     } catch {
       // Silent fail for tests
     }
@@ -311,9 +307,10 @@ describe('StorageUtils', () => {
       expect(StorageUtils.get('arr')).toEqual([1, 2, 3]);
     });
 
-    it('handles non-JSON strings gracefully', () => {
+    it('returns default for corrupted non-JSON strings', () => {
       localStorage.setItem('plain', 'just a string');
-      expect(StorageUtils.get('plain')).toBe('just a string');
+      expect(StorageUtils.get('plain')).toBeNull();
+      expect(StorageUtils.get('plain', 'fallback')).toBe('fallback');
     });
   });
 
@@ -328,9 +325,9 @@ describe('StorageUtils', () => {
       expect(localStorage.getItem('arr')).toBe('[1,2,3]');
     });
 
-    it('stores primitives directly', () => {
+    it('stores primitives as JSON', () => {
       StorageUtils.set('str', 'hello');
-      expect(localStorage.getItem('str')).toBe('hello');
+      expect(localStorage.getItem('str')).toBe('"hello"');
     });
   });
 

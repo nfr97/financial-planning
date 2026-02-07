@@ -105,16 +105,12 @@ const StorageUtils = {
   /**
    * Set a value in localStorage
    * @param {string} key - The storage key
-   * @param {*} value - The value to store (will be JSON stringified if object)
+   * @param {*} value - The value to store (will be JSON stringified)
    * @returns {boolean} True if successful, false if failed
    */
   set(key, value) {
     try {
-      if (typeof value === 'object') {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        localStorage.setItem(key, value);
-      }
+      localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (e) {
       this._handleError(e, 'save');

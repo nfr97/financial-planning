@@ -13,19 +13,15 @@ const StorageUtils = {
       if (item === null) return defaultValue;
       return JSON.parse(item);
     } catch (e) {
-      // If JSON parsing fails, return raw string or default
-      const item = localStorage.getItem(key);
-      return item !== null ? item : defaultValue;
+      // JSON parsing failed - data is corrupted. Log and return default.
+      console.warn(`StorageUtils: failed to parse key "${key}", returning default`, e);
+      return defaultValue;
     }
   },
 
   set(key, value) {
     try {
-      if (typeof value === 'object') {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        localStorage.setItem(key, value);
-      }
+      localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
       console.warn('Failed to save to localStorage:', e);
     }
@@ -172,6 +168,17 @@ describe('StorageUtils', () => {
       StorageUtils.set('overwrite', 'first');
       StorageUtils.set('overwrite', 'second');
       expect(StorageUtils.get('overwrite')).toBe('second');
+    });
+
+    it('returns defaultValue when stored data is corrupted JSON', () => {
+      // Directly write invalid JSON to localStorage (simulating corruption)
+      localStorage.setItem('corrupted', '{bad json');
+      expect(StorageUtils.get('corrupted', 'fallback')).toBe('fallback');
+    });
+
+    it('returns null when corrupted and no default provided', () => {
+      localStorage.setItem('corrupted2', 'not-valid-json{');
+      expect(StorageUtils.get('corrupted2')).toBeNull();
     });
   });
 });
