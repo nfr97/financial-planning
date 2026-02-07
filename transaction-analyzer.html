@@ -6,6 +6,10 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
     <title>Transaction Analyzer - See Your Spending Reality</title>
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
@@ -2203,6 +2207,23 @@
             guiltFree: 10,
           };
 
+          // Event delegation for unmark-transfer buttons (avoids inline onclick with user data)
+          for (const containerId of [
+            'transactionsBody',
+            'transactionCards',
+            'transfersTableBody',
+          ]) {
+            const el = document.getElementById(containerId);
+            if (el) {
+              el.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-unmark-transfer]');
+                if (btn) {
+                  this.unmarkTransfer(btn.dataset.unmarkTransfer);
+                }
+              });
+            }
+          }
+
           // Category patterns for auto-categorization
           this.categoryPatterns = {
             'fixed-costs': [
@@ -3095,10 +3116,13 @@ Return ONLY a JSON object (no markdown, no explanation):
 
           if (provider === 'gemini' && apiKey) {
             const response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
               {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-goog-api-key': apiKey,
+                },
                 body: JSON.stringify({
                   contents: [{ parts: [{ text: prompt }] }],
                   generationConfig: { temperature: 0.1, maxOutputTokens: 500 },
@@ -3454,7 +3478,7 @@ Return ONLY a JSON object (no markdown, no explanation):
                             <td class="amount-cell ${t.amount < 0 ? 'expense' : 'income'}">${this.formatCurrency(Math.abs(t.amount))}</td>
                             <td style="font-size: 0.85em; color: #666;">${matchDesc}</td>
                             <td>
-                                <button onclick="analyzer.unmarkTransfer('${t.id}')"
+                                <button data-unmark-transfer="${this.escapeHtml(t.id)}"
                                     style="padding: 4px 10px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; font-size: 0.8em;"
                                     title="Include this in spending/income totals">
                                     Not a transfer
@@ -4331,7 +4355,7 @@ Return ONLY a JSON object (no markdown, no explanation):
               ? `
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="color: #6b7280; font-style: italic;">Transfer</span>
-                            <button onclick="analyzer.unmarkTransfer('${t.id}')"
+                            <button data-unmark-transfer="${this.escapeHtml(t.id)}"
                                 style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; border-radius: 4px; padding: 2px 8px; font-size: 0.8em; cursor: pointer;"
                                 title="This was incorrectly detected as a transfer. Click to categorize it.">
                                 Not a transfer
@@ -4908,11 +4932,12 @@ Respond with ONLY a JSON array in this exact format, no other text:
           for (const model of modelsToTry) {
             try {
               const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
                 {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
+                    'x-goog-api-key': apiKey,
                   },
                   body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
@@ -5084,7 +5109,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
         const savedProvider = StorageUtils.get('aiProvider', 'gemini');
         providerSelect.value = savedProvider;
 
-        const savedKey = StorageUtils.get(`apiKey_${savedProvider}`);
+        const savedKey = sessionStorage.getItem(`apiKey_${savedProvider}`);
         if (savedKey) {
           apiKeyInput.value = savedKey;
           aiCategorizeBtn.disabled = false;
@@ -5104,7 +5129,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
           apiKeyInput.placeholder = placeholders[provider] || 'Enter API key...';
 
           // Load saved key for this provider
-          const savedProviderKey = StorageUtils.get(`apiKey_${provider}`);
+          const savedProviderKey = sessionStorage.getItem(`apiKey_${provider}`);
           apiKeyInput.value = savedProviderKey || '';
           aiCategorizeBtn.disabled = !savedProviderKey;
         });
@@ -5116,7 +5141,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
         apiKeyInput.addEventListener('change', (e) => {
           if (e.target.value.trim()) {
             const provider = providerSelect.value;
-            StorageUtils.set(`apiKey_${provider}`, e.target.value.trim());
+            sessionStorage.setItem(`apiKey_${provider}`, e.target.value.trim());
           }
         });
 
