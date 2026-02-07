@@ -95,26 +95,22 @@ const StorageUtils = {
       const item = localStorage.getItem(key);
       if (item === null) return defaultValue;
       return JSON.parse(item);
-    } catch {
-      // If JSON parsing fails, return raw string or default
-      const item = localStorage.getItem(key);
-      return item !== null ? item : defaultValue;
+    } catch (e) {
+      // JSON parsing failed - data is corrupted. Log and return default.
+      console.warn(`StorageUtils: failed to parse key "${key}", returning default`, e);
+      return defaultValue;
     }
   },
 
   /**
    * Set a value in localStorage
    * @param {string} key - The storage key
-   * @param {*} value - The value to store (will be JSON stringified if object)
+   * @param {*} value - The value to store (will be JSON stringified)
    * @returns {boolean} True if successful, false if failed
    */
   set(key, value) {
     try {
-      if (typeof value === 'object') {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        localStorage.setItem(key, value);
-      }
+      localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (e) {
       this._handleError(e, 'save');
@@ -750,8 +746,10 @@ const SessionManager = {
         );
         if (confirmed) {
           this.clearSession();
-          // Also clear API keys (stored separately per provider)
-          ['gemini', 'openai', 'anthropic'].forEach((p) => StorageUtils.remove(`apiKey_${p}`));
+          // Also clear API keys from sessionStorage
+          ['gemini', 'openai', 'anthropic'].forEach((p) =>
+            sessionStorage.removeItem(`apiKey_${p}`)
+          );
           this.showToast('All stored data cleared.', 'success');
           setTimeout(() => window.location.reload(), 1500);
         }

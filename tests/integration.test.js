@@ -31,18 +31,14 @@ const StorageUtils = {
       const item = localStorage.getItem(key);
       if (item === null) return defaultValue;
       return JSON.parse(item);
-    } catch {
-      const item = localStorage.getItem(key);
-      return item !== null ? item : defaultValue;
+    } catch (e) {
+      console.warn(`StorageUtils: failed to parse key "${key}", returning default`, e);
+      return defaultValue;
     }
   },
   set(key, value) {
     try {
-      if (typeof value === 'object') {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        localStorage.setItem(key, value);
-      }
+      localStorage.setItem(key, JSON.stringify(value));
     } catch {
       // Silent fail
     }
