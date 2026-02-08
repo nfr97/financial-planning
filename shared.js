@@ -1129,7 +1129,7 @@ const StatusBar = {
 
             .status-refine-btn {
                 padding: 8px 16px;
-                background: #667eea;
+                background: #f59e0b;
                 color: white;
                 border: none;
                 border-radius: 6px;
@@ -1141,7 +1141,7 @@ const StatusBar = {
             }
 
             .status-refine-btn:hover {
-                background: #5568d3;
+                background: #d97706;
             }
 
             @media (max-width: 768px) {
@@ -1152,13 +1152,22 @@ const StatusBar = {
                 }
 
                 .status-items {
-                    flex-direction: column;
+                    flex-direction: row;
                     align-items: stretch;
+                    gap: 6px;
+                }
+
+                .status-item, .status-item-current {
+                    white-space: normal;
+                    text-align: center;
+                    flex: 1;
+                    min-width: 0;
+                    font-size: 0.8em;
+                    padding: 6px 6px;
                 }
 
                 .status-arrow {
-                    transform: rotate(90deg);
-                    align-self: center;
+                    display: none;
                 }
 
                 .status-refine-btn {
