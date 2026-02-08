@@ -13,7 +13,7 @@
     <title>Transaction Analyzer - See Your Spending Reality</title>
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
-      integrity="sha384-6eeJb4gOKqaZxKTaVh4k0VR9RnpBPLmqvxmSRoXHgNQNz3bMNqPYLNq/MDpwzi0B"
+      integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
       crossorigin="anonymous"
     ></script>
     <script src="shared.js?v=20251229"></script>
@@ -4082,7 +4082,7 @@ Return ONLY a JSON object (no markdown, no explanation):
           const ctx = document.getElementById('spendingPieChart');
           const legendContainer = document.getElementById('spendingChartLegend');
 
-          if (!ctx || totalSpending === 0) {
+          if (!ctx || totalSpending === 0 || typeof Chart === 'undefined') {
             chartSection.style.display = 'none';
             return;
           }
