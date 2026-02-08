@@ -30,7 +30,7 @@
       }
 
       .container {
-        max-width: 900px;
+        max-width: 1200px;
         margin: 0 auto;
         background: white;
         border-radius: 12px;
@@ -41,22 +41,22 @@
       header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 24px 30px;
+        padding: 30px;
         text-align: center;
       }
 
       header h1 {
-        font-size: 1.8em;
-        margin-bottom: 6px;
+        font-size: 2em;
+        margin-bottom: 10px;
       }
 
       header p {
-        font-size: 1em;
+        font-size: 1.1em;
         opacity: 0.95;
       }
 
       .content {
-        padding: 24px 30px;
+        padding: 30px;
       }
 
       /* Step sections */
@@ -421,29 +421,66 @@
         text-decoration: none;
       }
 
+      /* Development Warning Banner */
+      .dev-warning {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        border-bottom: 3px solid #d97706;
+        padding: 16px 20px;
+        text-align: center;
+        color: #92400e;
+        font-weight: 600;
+        font-size: 0.95em;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        position: relative;
+        z-index: 1000;
+      }
+
+      .dev-warning-icon {
+        font-size: 1.3em;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      .dev-warning-text {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .dev-warning a {
+        color: #78350f;
+        text-decoration: underline;
+        font-weight: 700;
+      }
+
+      .dev-warning a:hover {
+        color: #451a03;
+      }
+
       /* Navigation Tabs */
       .nav-tabs {
-        max-width: 900px;
+        max-width: 1200px;
         margin: 0 auto;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        background: transparent;
         gap: 8px;
         padding: 0 20px;
       }
 
       .nav-tab {
-        padding: 12px 16px;
+        padding: 14px 16px;
         text-align: center;
         text-decoration: none;
         color: rgba(255, 255, 255, 0.7);
         font-weight: 500;
-        font-size: 0.9em;
+        font-size: 0.95em;
         border-bottom: 2px solid transparent;
         transition: all 0.2s;
+        background: transparent;
       }
 
       .nav-tab:hover {
-        color: white;
+        color: rgba(255, 255, 255, 0.95);
       }
 
       .nav-tab.active {
@@ -488,6 +525,36 @@
 
       /* Responsive */
       @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .nav-tabs {
+          padding: 0 10px;
+          gap: 4px;
+        }
+
+        .nav-tab {
+          padding: 12px 8px;
+          font-size: 0.85em;
+        }
+
+        header {
+          padding: 20px;
+        }
+
+        header h1 {
+          font-size: 1.5em;
+        }
+
+        header p {
+          font-size: 0.95em;
+        }
+
+        .content {
+          padding: 15px;
+        }
+
         .income-row {
           grid-template-columns: 1fr;
         }
@@ -520,7 +587,23 @@
   <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
+    <!-- Development Warning Banner -->
+    <div class="dev-warning" role="alert">
+      <span class="dev-warning-icon">⚠️</span>
+      <span class="dev-warning-text">
+        <strong>BETA VERSION</strong> - This tool is under active development. Features may change
+        and bugs may exist.
+        <a
+          href="https://github.com/marble-stack/financial-planning/issues"
+          target="_blank"
+          rel="noopener"
+          >Report issues on GitHub</a
+        >
+      </span>
+    </div>
+
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
+      <a href="index.html" class="nav-tab">Home</a>
       <a href="income-allocation.html" class="nav-tab active" aria-current="page">Budget Planner</a>
       <a href="transaction-analyzer.html" class="nav-tab">Spending Tracker</a>
       <a href="retirement-simulator.html" class="nav-tab">Retirement Forecast</a>
