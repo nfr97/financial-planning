@@ -338,8 +338,6 @@ describe('Button Wiring: Income Allocation', () => {
       'preset-balanced',
       'preset-aggressive',
       'preset-debt',
-      'downloadChartBtn',
-      'budgetChart',
     ];
 
     for (const id of criticalIds) {

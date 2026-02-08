@@ -13,7 +13,7 @@
     <title>Transaction Analyzer - See Your Spending Reality</title>
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
-      integrity="sha384-6eeJb4gOKqaZxKTaVh4k0VR9RnpBPLmqvxmSRoXHgNQNz3bMNqPYLNq/MDpwzi0B"
+      integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
       crossorigin="anonymous"
     ></script>
     <script src="shared.js?v=20251229"></script>
@@ -4082,7 +4082,7 @@ Return ONLY a JSON object (no markdown, no explanation):
           const ctx = document.getElementById('spendingPieChart');
           const legendContainer = document.getElementById('spendingChartLegend');
 
-          if (!ctx || totalSpending === 0) {
+          if (!ctx || totalSpending === 0 || typeof Chart === 'undefined') {
             chartSection.style.display = 'none';
             return;
           }
@@ -5104,12 +5104,12 @@ Return ONLY a JSON object (no markdown, no explanation):
 - guilt-free: Discretionary spending (restaurants, entertainment, shopping, subscriptions, travel, hobbies)
 - income: Salary, refunds, reimbursements, interest earned
 ${verificationNote}
-Here are the transactions to categorize (negative amounts are expenses, positive are income):
+Transactions (negative amounts are expenses, positive are income):
 
-${JSON.stringify(transactionList, null, 2)}
+${JSON.stringify(transactionList)}
 
-Respond with ONLY a JSON array in this exact format, no other text:
-[{"id": "transaction-id-here", "category": "category-name-here"}, ...]`;
+Respond with ONLY a JSON array, no other text:
+[{"id":"...","category":"..."},...]`;
         }
 
         async aiCategorize() {
@@ -5165,19 +5165,20 @@ Respond with ONLY a JSON array in this exact format, no other text:
               `Optimized: ${totalToProcess} transactions grouped into ${uniqueDescriptions.length} unique descriptions`
             );
 
-            // Process grouped transactions in batches
-            const batchSize = 40;
+            // Process grouped transactions in batches with concurrency
+            const batchSize = 80;
+            const concurrency = 3;
             const failedGroups = [];
 
+            // Create all batches upfront
+            const allBatches = [];
             for (let i = 0; i < uniqueDescriptions.length; i += batchSize) {
-              const batchDescs = uniqueDescriptions.slice(i, i + batchSize);
-              const batchEnd = Math.min(i + batchSize, uniqueDescriptions.length);
-              this.showAiStatus(
-                `Processing groups ${i + 1}-${batchEnd} of ${uniqueDescriptions.length} with AI...`,
-                'processing'
-              );
+              allBatches.push(uniqueDescriptions.slice(i, i + batchSize));
+            }
 
-              // Build batch with representative transactions
+            let completedBatches = 0;
+
+            const processBatch = async (batchDescs) => {
               const batch = batchDescs.map((desc) => {
                 const representative = grouped[desc][0];
                 const isVerification = lowConfidence.includes(representative);
@@ -5198,7 +5199,6 @@ Respond with ONLY a JSON array in this exact format, no other text:
                   if (!groupKey || !result.category || !this.isValidCategory(result.category))
                     return;
 
-                  // Apply to all transactions with this description
                   grouped[groupKey].forEach((t) => {
                     const transaction = this.transactions.find((tx) => tx.id === t.id);
                     if (transaction) {
@@ -5210,22 +5210,29 @@ Respond with ONLY a JSON array in this exact format, no other text:
                     }
                   });
 
-                  // Save rule for the description pattern
-                  this.saveRule(groupKey, result.category);
+                  // Save rule using the representative's original description
+                  this.saveRule(grouped[groupKey][0].description, result.category);
                 });
-
-                this.updateDisplay();
               } catch (batchError) {
                 lastError = batchError.message;
                 console.error(`Batch error:`, batchError);
                 failedGroups.push(...batchDescs);
               }
 
-              // Brief delay between batches to avoid rate limits
-              if (i + batchSize < uniqueDescriptions.length) {
-                await new Promise((resolve) => setTimeout(resolve, 200));
-              }
+              completedBatches++;
+              this.showAiStatus(
+                `Processing with AI... ${completedBatches}/${allBatches.length} batches complete`,
+                'processing'
+              );
+            };
+
+            // Execute batches with limited concurrency
+            for (let i = 0; i < allBatches.length; i += concurrency) {
+              const chunk = allBatches.slice(i, i + concurrency);
+              await Promise.all(chunk.map((batch) => processBatch(batch)));
             }
+
+            this.updateDisplay();
 
             // One retry pass for any failures
             if (failedGroups.length > 0 && failedGroups.length < uniqueDescriptions.length) {
@@ -5235,28 +5242,42 @@ Respond with ONLY a JSON array in this exact format, no other text:
               );
               await new Promise((resolve) => setTimeout(resolve, 1000));
 
-              const retryBatch = failedGroups.map((desc) => grouped[desc][0]);
-
-              try {
-                const categorizations = await this.callAI(provider, apiKey, retryBatch, false);
-                categorizations.forEach((result) => {
-                  const groupKey = retryBatch.find((t) => t.id === result.id)?.description;
-                  if (!groupKey || !result.category || !this.isValidCategory(result.category))
-                    return;
-
-                  grouped[groupKey]?.forEach((t) => {
-                    const transaction = this.transactions.find((tx) => tx.id === t.id);
-                    if (transaction) {
-                      transaction.category = result.category;
-                      successCount++;
-                    }
-                  });
-                  this.saveRule(groupKey, result.category);
-                });
-                this.updateDisplay();
-              } catch (retryError) {
-                lastError = retryError.message;
+              const retryBatches = [];
+              for (let i = 0; i < failedGroups.length; i += batchSize) {
+                retryBatches.push(failedGroups.slice(i, i + batchSize));
               }
+
+              for (let i = 0; i < retryBatches.length; i += concurrency) {
+                const chunk = retryBatches.slice(i, i + concurrency);
+                await Promise.all(
+                  chunk.map(async (batchDescs) => {
+                    const batch = batchDescs.map((desc) => ({
+                      ...grouped[desc][0],
+                      _groupKey: desc,
+                    }));
+                    try {
+                      const categorizations = await this.callAI(provider, apiKey, batch, false);
+                      categorizations.forEach((result) => {
+                        const groupKey = batch.find((t) => t.id === result.id)?._groupKey;
+                        if (!groupKey || !result.category || !this.isValidCategory(result.category))
+                          return;
+
+                        grouped[groupKey]?.forEach((t) => {
+                          const transaction = this.transactions.find((tx) => tx.id === t.id);
+                          if (transaction) {
+                            transaction.category = result.category;
+                            successCount++;
+                          }
+                        });
+                        this.saveRule(grouped[groupKey][0].description, result.category);
+                      });
+                    } catch (retryError) {
+                      lastError = retryError.message;
+                    }
+                  })
+                );
+              }
+              this.updateDisplay();
             }
 
             // Build status message
@@ -5313,8 +5334,7 @@ Respond with ONLY a JSON array in this exact format, no other text:
               .replace(/\s+/g, ' ')
               .trim();
 
-            // Use original description as key for better rule matching
-            const key = t.description;
+            const key = normalized;
 
             if (!grouped[key]) {
               grouped[key] = [];

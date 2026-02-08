@@ -11,11 +11,6 @@
       content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
     <title>Budget Planner - I Will Teach You to Be Rich</title>
-    <script
-      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
-      integrity="sha384-6eeJb4gOKqaZxKTaVh4k0VR9RnpBPLmqvxmSRoXHgNQNz3bMNqPYLNq/MDpwzi0B"
-      crossorigin="anonymous"
-    ></script>
     <script src="shared.js?v=20260204"></script>
     <style>
       * {
@@ -227,7 +222,7 @@
 
       .preset-btn .preset-name {
         font-weight: 600;
-        font-size: 0.95em;
+        font-size: 1.1em;
         display: block;
         margin-bottom: 4px;
       }
@@ -339,6 +334,12 @@
         font-weight: 700;
         color: #1e293b;
         font-size: 1.05em;
+        cursor: pointer;
+      }
+
+      .amount-monthly:hover {
+        background: #f1f5f9;
+        border-radius: 4px;
       }
 
       .amount-annual {
@@ -352,99 +353,26 @@
         font-style: italic;
       }
 
-      /* Chart section */
-      .chart-section {
-        margin-top: 24px;
-        padding: 20px;
-        background: #f8fafc;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-      }
-
-      .chart-section h3 {
-        font-size: 1.1em;
-        color: #1e293b;
-        margin-bottom: 16px;
-        text-align: center;
-      }
-
-      .chart-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 24px;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .chart-wrapper {
-        width: 200px;
-        height: 200px;
-      }
-
-      .chart-legend {
-        flex: 1;
-        min-width: 200px;
-        max-width: 300px;
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 0;
-        border-bottom: 1px solid #e2e8f0;
-      }
-
-      .legend-item:last-child {
-        border-bottom: none;
-      }
-
-      .legend-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        flex-shrink: 0;
-      }
-
-      .legend-label {
-        flex: 1;
-        font-size: 0.9em;
-        color: #475569;
-      }
-
-      .legend-value {
-        font-weight: 600;
-        color: #1e293b;
-        font-size: 0.9em;
-      }
-
-      .legend-pct {
-        color: #667eea;
-        font-weight: 600;
-        font-size: 0.85em;
-        min-width: 35px;
-        text-align: right;
-      }
-
-      .download-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        margin: 16px auto 0;
-        padding: 10px 20px;
-        background: white;
-        border: 2px solid #667eea;
-        color: #667eea;
+      .allocation-warning {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 10px 14px;
         border-radius: 8px;
+        font-size: 0.9em;
         font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
+        margin-top: 12px;
       }
 
-      .download-btn:hover {
-        background: #667eea;
-        color: white;
+      .dollar-edit-input {
+        width: 100px;
+        padding: 4px 8px;
+        border: 2px solid #667eea;
+        border-radius: 6px;
+        font-size: 1.05em;
+        font-weight: 700;
+        text-align: right;
+        outline: none;
       }
 
       /* Footer */
@@ -576,23 +504,6 @@
         .category-amounts {
           flex-direction: row;
           justify-content: space-between;
-          width: 100%;
-        }
-
-        .chart-container {
-          flex-direction: column;
-        }
-
-        .chart-wrapper {
-          width: 100%;
-          max-width: 250px;
-          height: auto;
-          aspect-ratio: 1;
-        }
-
-        .chart-legend {
-          min-width: 0;
-          max-width: none;
           width: 100%;
         }
 
@@ -801,32 +712,15 @@
               </div>
             </div>
           </div>
-        </section>
-
-        <!-- Budget at a Glance -->
-        <section class="chart-section" aria-labelledby="chart-title">
-          <h3 id="chart-title">Your Budget at a Glance</h3>
-          <div class="chart-container">
-            <div class="chart-wrapper">
-              <canvas id="budgetChart"></canvas>
-            </div>
-            <div class="chart-legend" id="chartLegend"></div>
+          <div
+            class="allocation-warning"
+            id="allocationWarning"
+            role="alert"
+            aria-live="polite"
+            style="display: none"
+          >
+            Total allocation exceeds 100%. Please adjust your categories.
           </div>
-          <button type="button" class="download-btn" id="downloadChartBtn">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download as PNG
-          </button>
         </section>
       </main>
 
@@ -859,7 +753,7 @@
           };
           this.categoryOrder = ['fixedCosts', 'shortTerm', 'longTerm', 'guiltFree'];
           this.monthlyNetIncome = 0;
-          this.chart = null;
+          this.activeEdit = null;
 
           this.init();
         }
@@ -907,24 +801,24 @@
             this.highlightPreset('preset-debt');
           });
 
-          // Download button
-          document.getElementById('downloadChartBtn').addEventListener('click', () => {
-            this.downloadChart();
-          });
-
           // Load saved data or use defaults
           this.loadSavedData();
 
           // Initial calculation
           this.formatIncomeDisplay();
           this.calculate();
+
+          // Setup click-to-edit dollar amounts
+          this.setupDollarEditing();
         }
 
         loadSavedData() {
           const saved = StorageUtils.get('budgetPlannerData');
           if (saved) {
-            if (saved.monthlyIncome) {
-              // Convert monthly back to annual for display
+            if (saved.annualGrossIncome) {
+              this.incomeInput.value = saved.annualGrossIncome.toLocaleString();
+            } else if (saved.monthlyIncome) {
+              // Legacy fallback: convert monthly net back to annual
               this.incomeInput.value = (saved.monthlyIncome * 12).toLocaleString();
             }
             if (saved.fixedCosts !== undefined) this.categories.fixedCosts.value = saved.fixedCosts;
@@ -1064,9 +958,6 @@
           // Update category amounts
           this.updateCategoryDisplays();
 
-          // Update chart
-          this.updateChart();
-
           // Save data
           this.saveData();
         }
@@ -1080,12 +971,30 @@
             const annualAmt = monthlyAmt * 12;
 
             document.getElementById(`${key}Pct`).textContent = `${Math.round(pct)}%`;
-            document.getElementById(`${key}Monthly`).textContent = this.formatCurrency(monthlyAmt);
+
+            // Skip updating the monthly amount if it's being edited
+            if (!this.activeEdit || this.activeEdit.key !== key) {
+              document.getElementById(`${key}Monthly`).textContent =
+                this.formatCurrency(monthlyAmt);
+            }
             document.getElementById(`${key}Annual`).textContent =
               `${this.formatCurrency(annualAmt)}/year`;
 
             // Update slider position
             this.sliders[key].value = Math.round(pct);
+          }
+
+          // Check total allocation
+          const total = this.categoryOrder.reduce(
+            (sum, key) => sum + this.categories[key].value,
+            0
+          );
+          const warningEl = document.getElementById('allocationWarning');
+          if (total > 100) {
+            warningEl.textContent = `Total allocation is ${Math.round(total)}% \u2014 exceeds 100% by ${Math.round(total - 100)}%. Please adjust your categories.`;
+            warningEl.style.display = 'block';
+          } else {
+            warningEl.style.display = 'none';
           }
         }
 
@@ -1164,97 +1073,97 @@
           document.getElementById(id).classList.add('active');
         }
 
-        updateChart() {
-          const ctx = document.getElementById('budgetChart');
-          if (!ctx) return;
-
-          const data = this.categoryOrder.map((key) => this.categories[key].value);
-          const colors = ['#ef4444', '#f59e0b', '#10b981', '#8b5cf6'];
-          const labels = ['Fixed Costs', 'Short-Term', 'Long-Term', 'Guilt-Free'];
-
-          if (this.chart) {
-            this.chart.data.datasets[0].data = data;
-            this.chart.update();
-          } else {
-            this.chart = new Chart(ctx, {
-              type: 'doughnut',
-              data: {
-                labels: labels,
-                datasets: [
-                  {
-                    data: data,
-                    backgroundColor: colors,
-                    borderColor: '#ffffff',
-                    borderWidth: 3,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                  legend: { display: false },
-                  tooltip: {
-                    callbacks: {
-                      label: (ctx) => {
-                        const pct = ctx.raw;
-                        const amt = (this.monthlyNetIncome * pct) / 100;
-                        return `${ctx.label}: ${pct}% (${this.formatCurrency(amt)}/mo)`;
-                      },
-                    },
-                  },
-                },
-                cutout: '55%',
-              },
+        setupDollarEditing() {
+          for (const key of this.categoryOrder) {
+            const monthlyEl = document.getElementById(`${key}Monthly`);
+            monthlyEl.title = 'Click to edit dollar amount';
+            monthlyEl.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.startDollarEdit(key);
             });
           }
 
-          // Update legend
-          const legendEl = document.getElementById('chartLegend');
-          legendEl.innerHTML = this.categoryOrder
-            .map((key, i) => {
-              const pct = this.categories[key].value;
-              const amt = (this.monthlyNetIncome * pct) / 100;
-              return `
-              <div class="legend-item">
-                <div class="legend-color" style="background: ${colors[i]}"></div>
-                <span class="legend-label">${labels[i]}</span>
-                <span class="legend-value">${this.formatCurrency(amt)}/mo</span>
-                <span class="legend-pct">${Math.round(pct)}%</span>
-              </div>
-            `;
-            })
-            .join('');
+          // Close edit when clicking outside
+          document.addEventListener('click', () => {
+            if (this.activeEdit) {
+              this.finishDollarEdit();
+            }
+          });
         }
 
-        downloadChart() {
-          const canvas = document.getElementById('budgetChart');
-          if (!canvas || !this.chart) return;
+        startDollarEdit(key) {
+          // If tapping the same category that's being edited, finish editing
+          if (this.activeEdit && this.activeEdit.key === key) {
+            this.finishDollarEdit();
+            return;
+          }
 
-          // Create a temporary canvas with white background
-          const tempCanvas = document.createElement('canvas');
-          const size = 400;
-          tempCanvas.width = size;
-          tempCanvas.height = size;
-          const tempCtx = tempCanvas.getContext('2d');
+          // Close any existing edit first
+          if (this.activeEdit) {
+            this.finishDollarEdit();
+          }
 
-          // White background
-          tempCtx.fillStyle = '#ffffff';
-          tempCtx.fillRect(0, 0, size, size);
+          if (this.monthlyNetIncome <= 0) return;
 
-          // Draw the chart
-          tempCtx.drawImage(canvas, 0, 0, size, size);
+          const monthlyEl = document.getElementById(`${key}Monthly`);
+          const currentValue = (this.monthlyNetIncome * this.categories[key].value) / 100;
 
-          // Download
-          const link = document.createElement('a');
-          link.download = 'budget-allocation.png';
-          link.href = tempCanvas.toDataURL('image/png');
-          link.click();
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'dollar-edit-input';
+          input.value = Math.round(currentValue);
+          input.setAttribute('inputmode', 'numeric');
+
+          monthlyEl.textContent = '';
+          monthlyEl.appendChild(input);
+          input.focus();
+          input.select();
+
+          this.activeEdit = { key, element: monthlyEl, input };
+
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'Tab') {
+              e.preventDefault();
+              this.finishDollarEdit();
+            } else if (e.key === 'Escape') {
+              this.cancelDollarEdit();
+            }
+          });
+
+          input.addEventListener('click', (e) => e.stopPropagation());
+        }
+
+        finishDollarEdit() {
+          if (!this.activeEdit) return;
+
+          const { key, input } = this.activeEdit;
+          const dollarValue = this.parseNumber(input.value);
+
+          if (this.monthlyNetIncome > 0 && dollarValue >= 0) {
+            const newPct = Math.round((dollarValue / this.monthlyNetIncome) * 100);
+            const clampedPct = Math.min(100, Math.max(0, newPct));
+            this.categories[key].value = clampedPct;
+            this.sliders[key].value = clampedPct;
+
+            // Clear preset highlight
+            document
+              .querySelectorAll('.preset-btn')
+              .forEach((btn) => btn.classList.remove('active'));
+          }
+
+          this.activeEdit = null;
+          this.calculate();
+        }
+
+        cancelDollarEdit() {
+          this.activeEdit = null;
+          this.updateCategoryDisplays();
         }
 
         saveData() {
           const data = {
             monthlyIncome: this.monthlyNetIncome,
+            annualGrossIncome: this.getAnnualGrossIncome(),
             fixedCosts: this.categories.fixedCosts.value,
             shortTerm: this.categories.shortTerm.value,
             longTerm: this.categories.longTerm.value,
@@ -1290,8 +1199,19 @@
             SessionManager.initToolbar(
               () => ({
                 budgetPlanner: StorageUtils.get('budgetPlannerData'),
+                budgetRetirement: StorageUtils.get('budgetRetirementData'),
               }),
-              () => window.location.reload()
+              (result) => {
+                const saved = StorageUtils.get('budgetPlannerData');
+                if (saved) {
+                  window.budgetPlanner.loadSavedData();
+                  window.budgetPlanner.formatIncomeDisplay();
+                  window.budgetPlanner.calculate();
+                  SessionManager.showToast('Budget settings restored!', 'success');
+                } else {
+                  window.location.reload();
+                }
+              }
             );
           }
         });
