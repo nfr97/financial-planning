@@ -5166,8 +5166,9 @@ Respond with ONLY a JSON array, no other text:
             );
 
             // Process grouped transactions in batches with concurrency
+            // Use lower concurrency for Gemini free tier to reduce rate limiting
             const batchSize = 80;
-            const concurrency = 3;
+            const concurrency = provider === 'gemini' ? 1 : 3;
             const failedGroups = [];
 
             // Create all batches upfront
@@ -5224,6 +5225,11 @@ Respond with ONLY a JSON array, no other text:
                 `Processing with AI... ${completedBatches}/${allBatches.length} batches complete`,
                 'processing'
               );
+
+              // Save progress after each batch so work isn't lost on rate limit or error
+              if (this.transactions.length > 0) {
+                StorageUtils.set('transactionData', this.transactions);
+              }
             };
 
             // Execute batches with limited concurrency
@@ -5421,7 +5427,9 @@ Respond with ONLY a JSON array, no other text:
           }
         }
 
-        async callGemini(apiKey, prompt) {
+        async callGemini(apiKey, prompt, retryCount = 0) {
+          const MAX_RATE_LIMIT_RETRIES = 3;
+
           // Try models from newest to oldest - cache working model for speed
           const models = [
             'gemini-2.5-flash', // Stable 2.5 (fast)
@@ -5471,6 +5479,36 @@ Respond with ONLY a JSON array, no other text:
                 if (response.status === 400 && errorMsg.includes('API key')) {
                   throw new Error('Invalid Gemini API key. Get one at aistudio.google.com/apikey');
                 }
+
+                // Handle rate limiting (429) or quota exceeded with auto-retry
+                if (
+                  response.status === 429 ||
+                  errorMsg.includes('Quota exceeded') ||
+                  errorMsg.includes('rate-limit') ||
+                  errorMsg.includes('RESOURCE_EXHAUSTED')
+                ) {
+                  if (retryCount < MAX_RATE_LIMIT_RETRIES) {
+                    // Extract retry delay from error message (e.g. "Please retry in 6.476802325s")
+                    const retryMatch = errorMsg.match(/retry in ([\d.]+)s/i);
+                    const waitSeconds = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 10;
+                    const waitMs = Math.max(waitSeconds, 2) * 1000;
+
+                    console.log(
+                      `Rate limited. Waiting ${waitSeconds}s before retry ${retryCount + 1}/${MAX_RATE_LIMIT_RETRIES}...`
+                    );
+                    this.showAiStatus(
+                      `Rate limited. Waiting ${waitSeconds}s before retry (${retryCount + 1}/${MAX_RATE_LIMIT_RETRIES})...`,
+                      'processing'
+                    );
+
+                    await new Promise((resolve) => setTimeout(resolve, waitMs));
+                    return this.callGemini(apiKey, prompt, retryCount + 1);
+                  }
+                  throw new Error(
+                    `Rate limit exceeded after ${MAX_RATE_LIMIT_RETRIES} retries. ${errorMsg}`
+                  );
+                }
+
                 throw new Error(errorMsg);
               }
 
@@ -5495,8 +5533,8 @@ Respond with ONLY a JSON array, no other text:
                   'Network error connecting to Gemini. Check your internet connection.'
                 );
               }
-              // If it's an API key error, don't try other models
-              if (error.message.includes('API key')) {
+              // If it's an API key or rate limit error, don't try other models
+              if (error.message.includes('API key') || error.message.includes('Rate limit')) {
                 throw error;
               }
               lastError = error;
