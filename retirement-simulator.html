@@ -15,11 +15,7 @@
       content="Monte Carlo retirement planning simulator with life events modeling. Calculate your retirement success rate using probabilistic simulations."
     />
     <title>Monte Carlo Retirement Projection Simulator</title>
-    <script
-      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
-      integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="shared.js?v=20251229"></script>
     <style>
       * {
@@ -507,6 +503,30 @@
 
       .events-controls {
         margin-bottom: 20px;
+      }
+
+      .event-presets {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .event-preset-btn {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        padding: 6px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.85em;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .event-preset-btn:hover {
+        background: #667eea;
+        color: white;
       }
 
       .add-event-btn {
@@ -1376,7 +1396,7 @@
               <option value="CO">Colorado (4.4%)</option>
               <option value="CT">Connecticut (7.0%)</option>
               <option value="DE">Delaware (6.6%)</option>
-              <option value="FL" selected>Florida (No tax)</option>
+              <option value="FL">Florida (No tax)</option>
               <option value="GA">Georgia (5.5%)</option>
               <option value="HI">Hawaii (11.0%)</option>
               <option value="ID">Idaho (5.8%)</option>
@@ -1833,6 +1853,30 @@
               <button class="add-event-btn" id="addEvent" aria-label="Add a new life event">
                 + Add Event
               </button>
+              <div class="event-presets">
+                <span style="font-size: 0.85em; color: #666; align-self: center">Quick add:</span>
+                <button
+                  class="event-preset-btn"
+                  id="presetChild"
+                  aria-label="Add child expense preset"
+                >
+                  Child ($500K over 18yr)
+                </button>
+                <button
+                  class="event-preset-btn"
+                  id="presetHouse"
+                  aria-label="Add house purchase preset"
+                >
+                  Buy a House ($1M)
+                </button>
+                <button
+                  class="event-preset-btn"
+                  id="presetPartTime"
+                  aria-label="Add part-time work income preset"
+                >
+                  Part-Time in Retirement ($30K/yr)
+                </button>
+              </div>
             </div>
 
             <div id="eventsList" class="events-list" role="list"></div>
@@ -2264,6 +2308,43 @@
           document.getElementById('addEvent').addEventListener('click', () => {
             this.addLifeEvent();
           });
+
+          // Life event preset buttons
+          document.getElementById('presetChild').addEventListener('click', () => {
+            const currentAge = parseInt(document.getElementById('currentAge').value) || 35;
+            this.addLifeEvent({
+              name: 'Raising a Child',
+              type: 'expense',
+              amount: 28000,
+              startAge: currentAge + 1,
+              duration: 18,
+            });
+            this.ensureEventsPanelOpen();
+          });
+
+          document.getElementById('presetHouse').addEventListener('click', () => {
+            const currentAge = parseInt(document.getElementById('currentAge').value) || 35;
+            this.addLifeEvent({
+              name: 'House Purchase',
+              type: 'expense',
+              amount: 1000000,
+              startAge: currentAge + 2,
+              duration: 1,
+            });
+            this.ensureEventsPanelOpen();
+          });
+
+          document.getElementById('presetPartTime').addEventListener('click', () => {
+            const retirementAge = parseInt(document.getElementById('retirementAge').value) || 65;
+            this.addLifeEvent({
+              name: 'Part-Time Work',
+              type: 'income',
+              amount: 30000,
+              startAge: retirementAge,
+              duration: 5,
+            });
+            this.ensureEventsPanelOpen();
+          });
         }
 
         setupModeToggle() {
@@ -2474,6 +2555,13 @@
           const isExpanded = panel.classList.toggle('show');
           button.classList.toggle('active');
           button.setAttribute('aria-expanded', isExpanded);
+        }
+
+        ensureEventsPanelOpen() {
+          const panel = document.getElementById('eventsPanel');
+          if (!panel.classList.contains('show')) {
+            this.toggleEventsPanel();
+          }
         }
 
         addLifeEvent(eventData = {}) {
@@ -2986,6 +3074,10 @@
         }
 
         updateHistogram(histogramData) {
+          if (typeof Chart === 'undefined') {
+            console.error('Chart.js failed to load. Charts will not be displayed.');
+            return;
+          }
           const ctx = document.getElementById('histogramChart').getContext('2d');
 
           if (this.histogramChart) {
@@ -3058,6 +3150,10 @@
         }
 
         updatePathsChart(paths, params) {
+          if (typeof Chart === 'undefined') {
+            console.error('Chart.js failed to load. Charts will not be displayed.');
+            return;
+          }
           const ctx = document.getElementById('pathsChart').getContext('2d');
 
           if (this.pathsChart) {
@@ -3305,6 +3401,73 @@
         }
       }
 
+      // Map ZIP code to two-letter state code
+      function zipToStateCode(zipCode) {
+        if (!zipCode || zipCode.length !== 5) return '';
+        const zip = parseInt(zipCode);
+        if (isNaN(zip)) return '';
+
+        const ranges = [
+          [35000, 36999, 'AL'],
+          [99500, 99950, 'AK'],
+          [85000, 86599, 'AZ'],
+          [71600, 72999, 'AR'],
+          [90000, 96199, 'CA'],
+          [80000, 81699, 'CO'],
+          [6000, 6999, 'CT'],
+          [19700, 19999, 'DE'],
+          [32000, 34999, 'FL'],
+          [30000, 31999, 'GA'],
+          [96700, 96899, 'HI'],
+          [83200, 83899, 'ID'],
+          [60000, 62999, 'IL'],
+          [46000, 47999, 'IN'],
+          [50000, 52899, 'IA'],
+          [66000, 67999, 'KS'],
+          [40000, 42799, 'KY'],
+          [70000, 71499, 'LA'],
+          [3900, 4999, 'ME'],
+          [20600, 21999, 'MD'],
+          [1000, 2799, 'MA'],
+          [48000, 49999, 'MI'],
+          [55000, 56799, 'MN'],
+          [38600, 39799, 'MS'],
+          [63000, 65899, 'MO'],
+          [59000, 59999, 'MT'],
+          [68000, 69399, 'NE'],
+          [89000, 89899, 'NV'],
+          [3000, 3899, 'NH'],
+          [7000, 8999, 'NJ'],
+          [87000, 88499, 'NM'],
+          [10000, 14999, 'NY'],
+          [27000, 28999, 'NC'],
+          [58000, 58899, 'ND'],
+          [43000, 45999, 'OH'],
+          [73000, 74999, 'OK'],
+          [97000, 97999, 'OR'],
+          [15000, 19699, 'PA'],
+          [2800, 2999, 'RI'],
+          [29000, 29999, 'SC'],
+          [57000, 57799, 'SD'],
+          [37000, 38599, 'TN'],
+          [75000, 79999, 'TX'],
+          [88500, 88599, 'TX'],
+          [84000, 84799, 'UT'],
+          [5000, 5999, 'VT'],
+          [22000, 24699, 'VA'],
+          [98000, 99499, 'WA'],
+          [24700, 26899, 'WV'],
+          [53000, 54999, 'WI'],
+          [82000, 83199, 'WY'],
+          [20000, 20599, 'DC'],
+        ];
+
+        for (const [lo, hi, code] of ranges) {
+          if (zip >= lo && zip <= hi) return code;
+        }
+        return '';
+      }
+
       // Initialize the application
       const ui = new SimulatorUI();
 
@@ -3340,6 +3503,22 @@
             document.getElementById('yearsInRetirement').value = savedForecast.yearsInRetirement;
           if (savedForecast.numSimulations)
             document.getElementById('numSimulations').value = savedForecast.numSimulations;
+          if (savedForecast.stateCode) {
+            const stateSelect = document.getElementById('stateSelect');
+            if (stateSelect) stateSelect.value = savedForecast.stateCode;
+          }
+        }
+
+        // Pre-populate state from Budget Planner zip code if not already set by saved forecast
+        if (!savedForecast || !savedForecast.stateCode) {
+          const budgetPlannerData = StorageUtils.get('budgetPlannerData');
+          if (budgetPlannerData && budgetPlannerData.zipCode) {
+            const stateCode = zipToStateCode(budgetPlannerData.zipCode);
+            if (stateCode) {
+              const stateSelect = document.getElementById('stateSelect');
+              if (stateSelect) stateSelect.value = stateCode;
+            }
+          }
         }
 
         // Load saved life events
