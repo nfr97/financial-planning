@@ -1297,6 +1297,11 @@
               }
             );
           }
+
+          // Initialize status bar
+          if (typeof StatusBar !== 'undefined') {
+            StatusBar.init();
+          }
         });
       } else {
         document.addEventListener('DOMContentLoaded', () => {
