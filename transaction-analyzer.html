@@ -1305,6 +1305,65 @@
         color: #991b1b;
       }
 
+      .export-help {
+        margin-top: 15px;
+        background: #fffbf0;
+        border: 1px solid #fde68a;
+        border-radius: 6px;
+        padding: 12px 15px;
+        font-size: 0.85em;
+        color: #92400e;
+      }
+
+      .export-help summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: #b45309;
+      }
+
+      .export-help ul {
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+        line-height: 1.6;
+      }
+
+      .export-help .export-help-tip {
+        margin: 10px 0 5px 0;
+        font-size: 1em;
+      }
+
+      .export-help .export-help-note {
+        margin: 5px 0 0 0;
+        font-style: italic;
+        font-size: 0.95em;
+      }
+
+      .subsection {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+      }
+
+      .subsection-divider {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin: 20px 0 0 0;
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.9em;
+      }
+
+      .subsection-divider::before,
+      .subsection-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #cbd5e1;
+      }
+
       .ynab-privacy {
         margin-top: 12px;
         font-size: 0.85em;
@@ -1996,56 +2055,38 @@
               Tip: Export 3-6 months of data for the most accurate monthly averages
             </p>
 
-            <div
-              style="
-                background: #fff4e6;
-                border: 1px solid #ffb020;
-                border-radius: 6px;
-                padding: 15px;
-                margin-top: 15px;
-              "
-            >
-              <strong style="color: #b45309; display: block; margin-bottom: 8px"
-                >&#128200; How to Export Multiple Statements:</strong
-              >
-              <ul
-                style="
-                  color: #92400e;
-                  font-size: 0.9em;
-                  margin: 0;
-                  padding-left: 20px;
-                  line-height: 1.6;
-                "
-              >
+            <details class="export-help">
+              <summary>&#128200; How to Export Multiple Statements</summary>
+              <ul>
                 <li>
-                  <strong>Chase:</strong> Log in → Activity → Select account → Download → Choose
-                  date range → CSV format
+                  <strong>Chase:</strong> Log in &rarr; Activity &rarr; Select account &rarr;
+                  Download &rarr; Choose date range &rarr; CSV format
                 </li>
                 <li>
-                  <strong>Bank of America:</strong> Accounts → Select account → Export Transactions
-                  → CSV
+                  <strong>Bank of America:</strong> Accounts &rarr; Select account &rarr; Export
+                  Transactions &rarr; CSV
                 </li>
                 <li>
-                  <strong>Wells Fargo:</strong> Accounts → Select account → Download Transactions →
-                  CSV
+                  <strong>Wells Fargo:</strong> Accounts &rarr; Select account &rarr; Download
+                  Transactions &rarr; CSV
                 </li>
-                <li><strong>Citi:</strong> Account Activity → Download → CSV</li>
+                <li><strong>Citi:</strong> Account Activity &rarr; Download &rarr; CSV</li>
                 <li>
-                  <strong>American Express:</strong> Account → Statements & Activity → Download →
-                  CSV
+                  <strong>American Express:</strong> Account &rarr; Statements &amp; Activity &rarr;
+                  Download &rarr; CSV
                 </li>
-                <li><strong>Capital One:</strong> Transactions → Download → CSV</li>
+                <li><strong>Capital One:</strong> Transactions &rarr; Download &rarr; CSV</li>
               </ul>
-              <p style="margin: 10px 0 5px 0; color: #b45309; font-size: 0.9em">
+              <p class="export-help-tip">
                 <strong>&#10004; Multiple File Upload:</strong> You can select and upload multiple
                 CSV files at once (Ctrl/Cmd+Click to select multiple files)
               </p>
-              <p style="margin: 5px 0 0 0; color: #b45309; font-size: 0.85em; font-style: italic">
+              <p class="export-help-note">
                 &#9888; Automatic Deduplication: Inter-account transfers (like credit card payments
                 from checking) are automatically detected and excluded from income/spending totals
                 to prevent double-counting.
               </p>
-            </div>
+            </details>
           </div>
 
           <div class="upload-area" id="uploadArea">
@@ -2143,57 +2184,60 @@
               &rarr; Personal Access Tokens &rarr; New Token
             </div>
           </div>
-        </div>
 
-        <!-- AI Categorization (Optional) -->
-        <div class="section" id="aiSection">
-          <h2>AI Categorization (Optional)</h2>
-          <p style="color: #666; margin-bottom: 15px">
-            Use your own API key to auto-categorize transactions.
-          </p>
+          <div class="subsection-divider">Optional</div>
 
-          <details style="margin-bottom: 15px; font-size: 0.85em; color: #64748b">
-            <summary style="cursor: pointer">Data sent to AI provider</summary>
-            <p style="margin: 8px 0 0 0">
-              Date, description, and amount for each uncategorized transaction. Sent directly to the
-              provider you select. API key stored in browser localStorage.
+          <div class="subsection" id="aiSection">
+            <h3>AI Categorization</h3>
+            <p style="color: #475569; font-size: 0.95em; margin-bottom: 15px">
+              After uploading, most transactions are automatically categorized by pattern matching.
+              AI can handle remaining uncategorized or low-confidence items. Uses your own API
+              key&mdash;no data is stored server-side.
             </p>
-          </details>
 
-          <div class="api-key-wrapper">
-            <select id="aiProvider" class="provider-select">
-              <option value="gemini">Google Gemini</option>
-              <option value="openai">OpenAI (GPT-4o-mini)</option>
-              <option value="anthropic">Anthropic Claude</option>
-            </select>
-            <input
-              type="password"
-              id="apiKey"
-              placeholder="Enter API key..."
-              class="api-key-input"
-            />
-            <button class="btn btn-secondary" onclick="analyzer.toggleApiKeyVisibility()">
-              Show
-            </button>
-          </div>
-          <div style="margin-top: 10px">
-            <button
-              class="btn btn-primary"
-              id="aiCategorizeBtn"
-              onclick="analyzer.aiCategorize()"
-              disabled
-            >
-              Categorize Remaining Transactions with AI
-            </button>
-          </div>
-          <div id="aiStatus" class="ai-status"></div>
-          <div class="api-help">
-            <strong>Get a free API key:</strong>
-            <a href="https://aistudio.google.com/apikey" target="_blank"
-              >Google Gemini (free tier)</a
-            >
-            | <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI</a> |
-            <a href="https://console.anthropic.com/" target="_blank">Anthropic</a>
+            <details style="margin-bottom: 15px; font-size: 0.85em; color: #64748b">
+              <summary style="cursor: pointer">Data sent to AI provider</summary>
+              <p style="margin: 8px 0 0 0">
+                Date, description, and amount for each uncategorized transaction. Sent directly to
+                the provider you select. API key stored in browser localStorage.
+              </p>
+            </details>
+
+            <div class="api-key-wrapper">
+              <select id="aiProvider" class="provider-select">
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI (GPT-4o-mini)</option>
+                <option value="anthropic">Anthropic Claude</option>
+              </select>
+              <input
+                type="password"
+                id="apiKey"
+                placeholder="Enter API key..."
+                class="api-key-input"
+              />
+              <button class="btn btn-secondary" onclick="analyzer.toggleApiKeyVisibility()">
+                Show
+              </button>
+            </div>
+            <div style="margin-top: 10px">
+              <button
+                class="btn btn-primary"
+                id="aiCategorizeBtn"
+                onclick="analyzer.aiCategorize()"
+                disabled
+              >
+                Categorize Remaining Transactions with AI
+              </button>
+            </div>
+            <div id="aiStatus" class="ai-status"></div>
+            <div class="api-help">
+              <strong>Get a free API key:</strong>
+              <a href="https://aistudio.google.com/apikey" target="_blank"
+                >Google Gemini (free tier)</a
+              >
+              | <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI</a> |
+              <a href="https://console.anthropic.com/" target="_blank">Anthropic</a>
+            </div>
           </div>
         </div>
 
@@ -3620,9 +3664,9 @@ Return ONLY a JSON object (no markdown, no explanation):
           const DAYS_TOLERANCE = 3; // Reduced from 5 for fewer false positives
           const AMOUNT_TOLERANCE = 0.01; // Exact match for most transfers
 
-          // Reset all isTransfer flags (but preserve manual overrides)
+          // Reset all isTransfer flags (but preserve manual overrides and YNAB-flagged transfers)
           this.transactions.forEach((t) => {
-            if (!t.manuallyUnmarkedTransfer) {
+            if (!t.manuallyUnmarkedTransfer && !t.ynabTransferAccountId) {
               t.isTransfer = false;
             }
           });
@@ -5077,6 +5121,8 @@ Return ONLY a JSON object (no markdown, no explanation):
                 sourceFile: 'YNAB',
                 ynabCategory: t.category_name || null,
                 ynabAccountName: t.account_name || null,
+                ynabTransferAccountId: t.transfer_account_id || null,
+                ynabTransferTransactionId: t.transfer_transaction_id || null,
               });
             }
 
@@ -5090,6 +5136,23 @@ Return ONLY a JSON object (no markdown, no explanation):
             // Set transactions and process
             this.transactions = transactions;
             this.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Mark YNAB transfers using the API's transfer_account_id field
+            this.transactions.forEach((t) => {
+              if (t.ynabTransferAccountId && !t.manuallyUnmarkedTransfer) {
+                t.isTransfer = true;
+                // Link matched transfer pairs
+                if (t.ynabTransferTransactionId) {
+                  const matchId = `ynab-${t.ynabTransferTransactionId}`;
+                  const match = this.transactions.find((tx) => tx.id === matchId);
+                  if (match) {
+                    t.transferMatch = match.id;
+                    match.transferMatch = t.id;
+                    match.isTransfer = true;
+                  }
+                }
+              }
+            });
 
             // Deduplicate inter-account transfers
             this.deduplicateTransfers();
