@@ -32,7 +32,7 @@ This is a static HTML/JS application. To develop:
 3. Run tests and checks before committing:
 
    ```bash
-   npm test          # Run 390 automated tests
+   npm test          # Run 474 automated tests
    npm run lint      # Check for code issues
    npm run format    # Auto-format all files
    ```
@@ -86,7 +86,7 @@ Core logic is extracted into ES modules for testing:
 
 ### Test Suite (`tests/`)
 
-390 automated tests using Vitest. Run with `npm test`. Tests cover all lib/ modules plus shared.js utilities. Key test files:
+474 automated tests using Vitest. Run with `npm test`. Tests cover all lib/ modules plus shared.js utilities. Key test files:
 
 - `simulation.test.js` - Monte Carlo, withdrawals, RMDs, edge cases
 - `social-security.test.js` - FRA, PIA calculations, bend points
@@ -140,8 +140,9 @@ Tools share data via localStorage:
 **`TransactionAnalyzer`**
 
 - CSV parsing with auto-detection of date/description/amount columns
+- YNAB direct import via API (personal access token)
 - Pattern-based auto-categorization before AI fallback
-- Transfer detection algorithm: matches opposite-sign transactions within 3 days with transfer keywords
+- Transfer detection: heuristic matching (opposite amounts within 3 days with transfer keywords) plus YNAB `transfer_account_id` flag
 - Categories align with income-allocation: fixed-costs, guilt-free, long-term, short-term, income
 
 ## localStorage Keys
